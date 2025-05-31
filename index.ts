@@ -1,1 +1,5 @@
-console.log("Hello via Bun!");
+const hello = () => {
+    console.log("Hello via Bun!");
+};
+
+hello();
