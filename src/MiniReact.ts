@@ -1,23 +1,19 @@
-/* **************** */
-/* Type Definitions */
-/* **************** */
-
-export type ElementType = string; // Only string type is supported for now
-
-export interface ElementProps {
-    // biome-ignore lint/suspicious/noExplicitAny: Props can be of any type
-    [key: string]: any;
-    children: Array<MiniReactElement | string>;
-}
-
-export interface MiniReactElement {
-    type: ElementType;
-    props: ElementProps;
-}
-
 /* ****************** */
 /* Core Functionality */
 /* ****************** */
+
+import {
+    TEXT_ELEMENT,
+    type AnyMiniReactElement,
+    type ElementType,
+    type InternalTextElement,
+    type MiniReactElement,
+    type VDOMInstance,
+} from "./types";
+import { reconcile } from "./reconciler";
+
+// Container-specific root instance tracking
+const rootInstances = new WeakMap<HTMLElement, VDOMInstance | null>();
 
 /**
  * Creates and returns a new MiniReact element of the given type.
@@ -29,33 +25,40 @@ export interface MiniReactElement {
  */
 export function createElement(
     type: ElementType,
-    // biome-ignore lint/suspicious/noExplicitAny: Config props can be of any type
-    configProps: Record<string, any> | null,
-    ...children: (MiniReactElement | string | number)[]
+    configProps: Record<string, unknown> | null,
+    ...childrenArgs: (AnyMiniReactElement | string | number)[]
 ): MiniReactElement {
-    const props: ElementProps = {
-        ...configProps,
-        children: children.map((child) =>
-            typeof child === "object" && child !== null
-                ? child
-                : createTextElement(child),
-        ),
+    const children: AnyMiniReactElement[] = childrenArgs.map((child) =>
+        typeof child === "object" && child !== null
+            ? child
+            : createTextElement(child),
+    );
+
+    const props: Record<string, unknown> & { children: AnyMiniReactElement[] } =
+    {
+        ...(configProps ?? {}),
+        children,
     };
 
     return { type, props };
 }
 
-export const TEXT_ELEMENT = "TEXT_ELEMENT";
-
-interface TextElement extends MiniReactElement {
-    type: typeof TEXT_ELEMENT;
-    props: {
-        nodeValue: string | number;
-        children: []; // Text elements don't have children
-    };
+/**
+ * Renders a MiniReact element into a container using the reconciler
+ * @param element The element to render (can be null to clear)
+ * @param containerNode The container DOM node
+ */
+export function render(
+    element: AnyMiniReactElement | null | undefined,
+    containerNode: HTMLElement,
+): void {
+    const newElement = element || null;
+    const oldInstance = rootInstances.get(containerNode) || null;
+    const newInstance = reconcile(containerNode, newElement, oldInstance);
+    rootInstances.set(containerNode, newInstance);
 }
 
-function createTextElement(text: string | number): TextElement {
+function createTextElement(text: string | number): InternalTextElement {
     return {
         type: TEXT_ELEMENT,
         props: {
@@ -63,88 +66,4 @@ function createTextElement(text: string | number): TextElement {
             children: [],
         },
     };
-}
-
-/**
- * Renders a MiniReact element into a DOM container.
- * In Phase 1, this function directly creates and appends DOM nodes.
- * @param element The MiniReact element to render.
- * @param containerNode The DOM node to render into.
- *
- * @returns The created DOM node.
- */
-export function render(
-    element: MiniReactElement | null | undefined,
-    containerNode: HTMLElement,
-): void {
-    if (element == null) {
-        containerNode.innerHTML = "";
-        return;
-    }
-
-    // Clear the container before rendering new content (simple approach for now)
-    containerNode.innerHTML = "";
-
-    const domNode = createDomNodeFromElement(element);
-    if (domNode) {
-        containerNode.appendChild(domNode);
-    }
-}
-
-function createDomNodeFromElement(element: MiniReactElement): Node | null {
-    if (!element) return null;
-
-    const { type, props } = element;
-
-    let domNode: Node;
-
-    if (type === TEXT_ELEMENT) {
-        domNode = document.createTextNode(props.nodeValue);
-    } else if (typeof type === "string") {
-        domNode = document.createElement(type);
-    } else {
-        console.error(`Unsupported element of type: ${typeof type}`, element);
-        throw new Error(`Unknown element type: ${type}`);
-    }
-
-    // biome-ignore lint/complexity/noForEach: <explanation>
-    Object.keys(props)
-        .filter((key) => key !== "children")
-        .forEach((name) => {
-            if (name === "nodeValue" && domNode.nodeType === Node.TEXT_NODE) {
-                // We're dealing with a text node and the prop is "nodeValue" (which holds the actual text content for our text elements)
-                (domNode as Text).nodeValue = props[name] as string;
-            } else if (name === "className" && domNode instanceof HTMLElement) {
-                (domNode as HTMLElement).className = props[name] as string;
-            } else if (
-                name.startsWith("on") &&
-                domNode instanceof HTMLElement
-            ) {
-                // Event handling will be expanded later
-            } else if (domNode instanceof HTMLElement) {
-                (domNode as HTMLElement).setAttribute(
-                    name,
-                    props[name] as string, // Simplification for now, will need to handle different props types alter
-                );
-            }
-        });
-
-    if (props.children && props.children.length > 0) {
-        // biome-ignore lint/complexity/noForEach: <explanation>
-        props.children.forEach((childElementOrText) => {
-            // If childElementOrText is already a MiniReactElement (e.g., from createTextElement),
-            // it will be handled correctly.
-            // If it were a raw string/number not wrapped by createTextElement,
-            // we'd need to handle that case here or ensure createElement always wraps.
-            // Our current createElement wraps primitives, so childElementOrText should be an Element.
-            const childDomNode = createDomNodeFromElement(
-                childElementOrText as MiniReactElement,
-            );
-            if (childDomNode) {
-                domNode.appendChild(childDomNode);
-            }
-        });
-    }
-
-    return domNode;
 }
