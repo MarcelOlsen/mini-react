@@ -1,5 +1,6 @@
 import { expect, test, describe } from "bun:test";
-import { createElement, TEXT_ELEMENT } from "../src/MiniReact";
+import { createElement } from "../src/MiniReact";
+import { TEXT_ELEMENT } from "../src/types";
 
 describe("MiniReact.createElement", () => {
     test("should create an element with type and props", () => {
