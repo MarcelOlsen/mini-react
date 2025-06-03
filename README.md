@@ -265,7 +265,7 @@ mini-react/
 
 ---
 
-### Phase 8: Context API (Optional/Advanced)
+### Phase 8: Context API
 
 **Features (Planned):**
 
@@ -281,7 +281,7 @@ mini-react/
 
 ---
 
-### Phase 9: Portals and Fragments (Optional/Advanced)
+### Phase 9: Portals and Fragments
 
 **Features (Planned):**
 
