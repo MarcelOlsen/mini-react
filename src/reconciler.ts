@@ -142,36 +142,17 @@ function updateVDOMInstance(
         };
     }
 
-    // Handle host elements - naive rerender for now
-    // Later on, this would be more sophisticated with prop diffing
+    // Handle host elements - use efficient prop diffing
+    const oldProps = instance.element.props as Record<string, unknown>;
     instance.element = newElement;
 
-    // For host elements, update the DOM attributes naively
+    // For host elements, update only changed DOM attributes using diffProps
     if (instance.dom && instance.dom.nodeType === Node.ELEMENT_NODE) {
         const domElement = instance.dom as Element;
         const newProps = props as Record<string, unknown>;
 
-        // Clear existing attributes (naive approach)
-        const existingAttributes = Array.from(domElement.attributes);
-        for (const attr of existingAttributes) {
-            domElement.removeAttribute(attr.name);
-        }
-
-        // Set new attributes
-        // biome-ignore lint/complexity/noForEach: <explanation>
-        Object.entries(newProps).forEach(([key, value]) => {
-            if (key === "children") return;
-
-            if (key === "className") {
-                domElement.setAttribute("class", String(value));
-            } else if (key.startsWith("on") && typeof value === "function") {
-                // Event handling placeholder for future phases
-                // const eventType = key.slice(2).toLowerCase();
-                // domElement.addEventListener(eventType, value as EventListener);
-            } else if (value !== undefined && value !== null) {
-                domElement.setAttribute(key, String(value));
-            }
-        });
+        // Use efficient prop diffing instead of naive clear-and-set approach
+        diffProps(domElement, oldProps, newProps);
     }
 
     // For now, we'll just update the DOM node if it's a text element
@@ -219,4 +200,89 @@ function isSameElementType(
     newElement: AnyMiniReactElement,
 ): boolean {
     return oldElement.type === newElement.type;
+}
+
+/**
+ * Efficiently diffs props and applies only the necessary DOM updates
+ * @param domElement The DOM element to update
+ * @param oldProps The previous props
+ * @param newProps The new props
+ */
+function diffProps(
+    domElement: Element,
+    oldProps: Record<string, unknown>,
+    newProps: Record<string, unknown>,
+): void {
+    // Create sets of old and new prop keys (excluding children)
+    const oldKeys = new Set(
+        Object.keys(oldProps).filter((key) => key !== "children")
+    );
+    const newKeys = new Set(
+        Object.keys(newProps).filter((key) => key !== "children")
+    );
+
+    // Remove attributes that are no longer present
+    for (const key of oldKeys) {
+        if (!newKeys.has(key)) {
+            removeAttribute(domElement, key);
+        }
+    }
+
+    // Add or update attributes
+    for (const key of newKeys) {
+        const oldValue = oldProps[key];
+        const newValue = newProps[key];
+
+        // Only update if the value has actually changed
+        if (oldValue !== newValue) {
+            setAttribute(domElement, key, newValue);
+        }
+    }
+}
+
+/**
+ * Sets an attribute on a DOM element with proper handling for special cases
+ * @param domElement The DOM element
+ * @param key The attribute key
+ * @param value The attribute value
+ */
+function setAttribute(
+    domElement: Element,
+    key: string,
+    value: unknown,
+): void {
+    if (key === "className") {
+        domElement.setAttribute("class", String(value));
+    } else if (key.startsWith("on") && typeof value === "function") {
+        // Event handling placeholder for future phases
+        // const eventType = key.slice(2).toLowerCase();
+        // domElement.addEventListener(eventType, value as EventListener);
+    } else if (typeof value === "boolean") {
+        // Handle boolean attributes specially
+        if (value) {
+            domElement.setAttribute(key, "");
+        } else {
+            // Remove the attribute when boolean value is false
+            domElement.removeAttribute(key);
+        }
+    } else if (value !== undefined && value !== null) {
+        // Handle all other non-null, non-undefined values
+        domElement.setAttribute(key, String(value));
+    } else {
+        // Remove attribute for null/undefined values
+        domElement.removeAttribute(key);
+    }
+}
+
+/**
+ * Removes an attribute from a DOM element with proper handling for special cases
+ * @param domElement The DOM element
+ * @param key The attribute key
+ */
+function removeAttribute(domElement: Element, key: string): void {
+    if (key === "className") {
+        domElement.removeAttribute("class");
+    } else {
+        domElement.removeAttribute(key);
+    }
 }
