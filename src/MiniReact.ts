@@ -58,6 +58,11 @@ export function render(
     rootInstances.set(containerNode, newInstance);
 }
 
+/**
+ * Creates a text element for MiniReact
+ * @param text The text to create a text element for
+ * @returns The created text element
+ */
 function createTextElement(text: string | number): InternalTextElement {
     return {
         type: TEXT_ELEMENT,

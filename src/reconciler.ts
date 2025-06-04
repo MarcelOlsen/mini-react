@@ -49,6 +49,10 @@ export function reconcile(
 
 /**
  * Creates a new VDOM instance and corresponding DOM node for initial render
+ *
+ * @param parentDom The parent DOM node
+ * @param element The element to create a VDOM instance for
+ * @returns The VDOM instance
  */
 function createVDOMInstance(
     parentDom: Node,
@@ -95,6 +99,10 @@ function createVDOMInstance(
 
 /**
  * Updates an existing VDOM instance with a new element (same type)
+ *
+ * @param instance The existing VDOM instance
+ * @param newElement The new element to update the VDOM instance with
+ * @returns The updated VDOM instance
  */
 function updateVDOMInstance(
     instance: VDOMInstance,
@@ -201,6 +209,10 @@ function updateVDOMInstance(
 
 /**
  * Checks if two elements have the same type for reconciliation purposes
+ *
+ * @param oldElement The old element
+ * @param newElement The new element
+ * @returns True if the elements have the same type, false otherwise
  */
 function isSameElementType(
     oldElement: AnyMiniReactElement,

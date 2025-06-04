@@ -6,6 +6,9 @@ import { TEXT_ELEMENT, type AnyMiniReactElement } from "./types";
 
 /**
  * Creates a DOM node from a MiniReact element (without children processing)
+ *
+ * @param element The element to create a DOM node for
+ * @returns The created DOM node
  */
 export function createDomNode(element: AnyMiniReactElement): Node {
     const { type, props } = element;
@@ -36,6 +39,8 @@ export function createDomNode(element: AnyMiniReactElement): Node {
 
 /**
  * Removes a DOM node from its parent
+ *
+ * @param domNode The DOM node to remove
  */
 export function removeDomNode(domNode: Node): void {
     if (domNode.parentNode) {
@@ -45,6 +50,9 @@ export function removeDomNode(domNode: Node): void {
 
 /**
  * Replaces an old DOM node with a new one
+ *
+ * @param oldDom The old DOM node
+ * @param newDom The new DOM node
  */
 export function replaceDomNode(oldDom: Node, newDom: Node): void {
     if (oldDom.parentNode) {
