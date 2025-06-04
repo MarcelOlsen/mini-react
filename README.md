@@ -19,8 +19,8 @@ A learning project to build a simplified React-like library from scratch, with a
   - [Phase 5: State with useState Hook 🚧](#phase-5-state-with-usestate-hook)
   - [Phase 6: Event Handling](#phase-6-event-handling)
   - [Phase 7: Effects with useEffect](#phase-7-effects-with-useeffect)
-  - [Phase 8: Context API (Optional/Advanced)](#phase-8-context-api-optionaladvanced)
-  - [Phase 9: Portals and Fragments (Optional/Advanced)](#phase-9-portals-and-fragments-optionaladvanced)
+  - [Phase 8: Context API](#phase-8-context-api)
+  - [Phase 9: Portals and Fragments](#phase-9-portals-and-fragments)
 - [API Reference](#api-reference)
 - [Testing](#testing)
 - [Code Quality](#code-quality)
@@ -313,7 +313,7 @@ mini-react/
 
 ---
 
-### Phase 8: Context API (Optional/Advanced)
+### Phase 8: Context API
 
 **Features (Planned):**
 
@@ -323,7 +323,7 @@ mini-react/
 
 ---
 
-### Phase 9: Portals and Fragments (Optional/Advanced)
+### Phase 9: Portals and Fragments
 
 **Features (Planned):**
 
@@ -417,16 +417,6 @@ const Button: FunctionalComponent = (props) => {
 - **Reconciliation Tests**: Virtual DOM diffing and updates
 - **Performance Tests**: Large lists and memory pressure scenarios
 - **Edge Case Tests**: Error handling and boundary conditions
-
-### Test Coverage:
-
-| File                                | Tests | Focus                          |
-| ----------------------------------- | ----- | ------------------------------ |
-| `MiniReact.createElement.test.ts`   | 3     | Basic element creation         |
-| `MiniReact.createElementFC.test.ts` | 18    | Functional component creation  |
-| `MiniReact.render.test.ts`          | 58    | Rendering & reconciliation     |
-| `MiniReact.renderFC.test.ts`        | 16    | Functional component rendering |
-| `MiniReact.reconciler.test.ts`      | 19    | Core reconciliation logic      |
 
 ### Running Tests:
 
@@ -525,5 +515,3 @@ MIT License - see LICENSE file for details
 **Happy hacking and learning! 🚀**
 
 _Building React from scratch to understand how modern UI frameworks really work under the hood._
-
-**Stats**: 4 phases complete • 101 tests passing • 0 linter issues • TypeScript ready
