@@ -1,5 +1,5 @@
-import { expect, test, describe, beforeEach } from "bun:test";
-import { render, createElement } from "../src/MiniReact";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { createElement, render } from "../src/MiniReact";
 import type { FunctionalComponent } from "../src/types";
 
 describe("MiniReact.render", () => {
@@ -187,9 +187,7 @@ describe("MiniReact.render", () => {
     test("should handle props with empty string values", () => {
         const element = createElement("input", { id: "test", value: "" });
         render(element, container);
-        const input = container.querySelector(
-            "#test",
-        ) as HTMLInputElement | null;
+        const input = container.querySelector("#test") as HTMLInputElement | null;
         expect(input).not.toBeNull();
         if (input) {
             expect(input.value).toBe("");
@@ -214,11 +212,7 @@ describe("MiniReact.render", () => {
 
     describe("Reconciliation and rootInstance management", () => {
         test("should correctly initialize rootInstance on first render", () => {
-            const element = createElement(
-                "div",
-                { id: "first-render" },
-                "First",
-            );
+            const element = createElement("div", { id: "first-render" }, "First");
             render(element, container);
 
             const firstDiv = container.querySelector("#first-render");
@@ -228,22 +222,14 @@ describe("MiniReact.render", () => {
 
         test("should trigger reconciliation process on subsequent renders", () => {
             // Initial render
-            const element1 = createElement(
-                "div",
-                { id: "changeable" },
-                "Original",
-            );
+            const element1 = createElement("div", { id: "changeable" }, "Original");
             render(element1, container);
 
             const originalDiv = container.querySelector("#changeable");
             expect(originalDiv?.textContent).toBe("Original");
 
             // Update render - same type should reuse DOM node
-            const element2 = createElement(
-                "div",
-                { id: "changeable" },
-                "Updated",
-            );
+            const element2 = createElement("div", { id: "changeable" }, "Updated");
             render(element2, container);
 
             const updatedDiv = container.querySelector("#changeable");
@@ -265,11 +251,7 @@ describe("MiniReact.render", () => {
             expect(originalElement?.tagName).toBe("DIV");
 
             // Update to p element - should replace DOM
-            const pElement = createElement(
-                "p",
-                { id: "type-change" },
-                "I am a p",
-            );
+            const pElement = createElement("p", { id: "type-change" }, "I am a p");
             render(pElement, container);
 
             const newElement = container.querySelector("#type-change");
@@ -289,13 +271,9 @@ describe("MiniReact.render", () => {
             elements.forEach((element, index) => {
                 render(element, container);
 
-                const renderedElement = container.querySelector(
-                    `.render-${index + 1}`,
-                );
+                const renderedElement = container.querySelector(`.render-${index + 1}`);
                 expect(renderedElement).not.toBeNull();
-                expect(renderedElement?.textContent).toBe(
-                    `Render ${index + 1}`,
-                );
+                expect(renderedElement?.textContent).toBe(`Render ${index + 1}`);
 
                 // Only one element should be in the container
                 expect(container.children).toHaveLength(1);
@@ -312,17 +290,17 @@ describe("MiniReact.render", () => {
             const element1 = createElement(Component, { message: "Hello" });
             render(element1, container);
 
-            expect(
-                container.querySelector("#component-output")?.textContent,
-            ).toBe("Hello");
+            expect(container.querySelector("#component-output")?.textContent).toBe(
+                "Hello",
+            );
 
             // Update render - should re-execute component
             const element2 = createElement(Component, { message: "Goodbye" });
             render(element2, container);
 
-            expect(
-                container.querySelector("#component-output")?.textContent,
-            ).toBe("Goodbye");
+            expect(container.querySelector("#component-output")?.textContent).toBe(
+                "Goodbye",
+            );
         });
 
         test("should handle clearing and re-rendering", () => {
@@ -338,9 +316,7 @@ describe("MiniReact.render", () => {
             // Re-render
             const newElement = createElement("p", {}, "New content");
             render(newElement, container);
-            expect(container.querySelector("p")?.textContent).toBe(
-                "New content",
-            );
+            expect(container.querySelector("p")?.textContent).toBe("New content");
         });
     });
 
@@ -363,9 +339,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const div = container.querySelector(
-                "#prop-diff-test",
-            ) as HTMLElement;
+            const div = container.querySelector("#prop-diff-test") as HTMLElement;
             expect(div).not.toBeNull();
             expect(div.className).toBe("initial-class");
             expect(div.getAttribute("data-value")).toBe("initial");
@@ -420,9 +394,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const div = container.querySelector(
-                "#remove-attr-test",
-            ) as HTMLElement;
+            const div = container.querySelector("#remove-attr-test") as HTMLElement;
             expect(div.getAttribute("data-temp")).toBe("temporary");
             expect(div.title).toBe("Test Title");
 
@@ -500,9 +472,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#add-children",
-            ) as HTMLElement;
+            const parent = container.querySelector("#add-children") as HTMLElement;
             expect(parent.children).toHaveLength(2);
             expect(parent.children[0].textContent).toBe("Child 1");
             expect(parent.children[1].textContent).toBe("Child 2");
@@ -540,9 +510,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#remove-children",
-            ) as HTMLElement;
+            const parent = container.querySelector("#remove-children") as HTMLElement;
             expect(parent.children).toHaveLength(4);
 
             // Update with fewer children
@@ -578,9 +546,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#mixed-children",
-            ) as HTMLElement;
+            const parent = container.querySelector("#mixed-children") as HTMLElement;
             expect(parent.textContent).toBe("Text beforeMiddleText after");
 
             // Update with different mix
@@ -598,13 +564,11 @@ describe("MiniReact.render", () => {
             const updatedParent = container.querySelector(
                 "#mixed-children",
             ) as HTMLElement;
-            expect(updatedParent.textContent).toBe(
-                "StartNew textUpdated Middle42",
-            );
+            expect(updatedParent.textContent).toBe("StartNew textUpdated Middle42");
             expect(updatedParent.querySelector("#start-strong")).not.toBeNull();
-            expect(
-                updatedParent.querySelector("#middle-span")?.textContent,
-            ).toBe("Updated Middle");
+            expect(updatedParent.querySelector("#middle-span")?.textContent).toBe(
+                "Updated Middle",
+            );
         });
 
         test("should reorder children efficiently (may recreate nodes without keys)", () => {
@@ -612,28 +576,14 @@ describe("MiniReact.render", () => {
             const element1 = createElement(
                 "div",
                 { id: "reorder-unkeyed" },
-                createElement(
-                    "div",
-                    { className: "item", "data-item": "A" },
-                    "Item A",
-                ),
-                createElement(
-                    "div",
-                    { className: "item", "data-item": "B" },
-                    "Item B",
-                ),
-                createElement(
-                    "div",
-                    { className: "item", "data-item": "C" },
-                    "Item C",
-                ),
+                createElement("div", { className: "item", "data-item": "A" }, "Item A"),
+                createElement("div", { className: "item", "data-item": "B" }, "Item B"),
+                createElement("div", { className: "item", "data-item": "C" }, "Item C"),
             );
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#reorder-unkeyed",
-            ) as HTMLElement;
+            const parent = container.querySelector("#reorder-unkeyed") as HTMLElement;
             const originalNodes = Array.from(parent.children);
             expect(originalNodes[0].getAttribute("data-item")).toBe("A");
             expect(originalNodes[1].getAttribute("data-item")).toBe("B");
@@ -643,21 +593,9 @@ describe("MiniReact.render", () => {
             const element2 = createElement(
                 "div",
                 { id: "reorder-unkeyed" },
-                createElement(
-                    "div",
-                    { className: "item", "data-item": "C" },
-                    "Item C",
-                ),
-                createElement(
-                    "div",
-                    { className: "item", "data-item": "A" },
-                    "Item A",
-                ),
-                createElement(
-                    "div",
-                    { className: "item", "data-item": "B" },
-                    "Item B",
-                ),
+                createElement("div", { className: "item", "data-item": "C" }, "Item C"),
+                createElement("div", { className: "item", "data-item": "A" }, "Item A"),
+                createElement("div", { className: "item", "data-item": "B" }, "Item B"),
             );
 
             render(element2, container);
@@ -702,9 +640,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#reorder-keyed",
-            ) as HTMLElement;
+            const parent = container.querySelector("#reorder-keyed") as HTMLElement;
             const originalNodes = Array.from(parent.children);
             const originalA = originalNodes[0];
             const originalB = originalNodes[1];
@@ -786,12 +722,8 @@ describe("MiniReact.render", () => {
             expect(updatedParent.children[2]).toBe(originalC);
 
             // New nodes should be inserted in correct positions
-            expect(updatedParent.children[1].getAttribute("data-item")).toBe(
-                "B",
-            );
-            expect(updatedParent.children[3].getAttribute("data-item")).toBe(
-                "D",
-            );
+            expect(updatedParent.children[1].getAttribute("data-item")).toBe("B");
+            expect(updatedParent.children[3].getAttribute("data-item")).toBe("D");
         });
 
         test("should remove keyed children while preserving others", () => {
@@ -807,9 +739,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#remove-keyed",
-            ) as HTMLElement;
+            const parent = container.querySelector("#remove-keyed") as HTMLElement;
             const originalA = parent.children[0];
             const originalC = parent.children[2];
 
@@ -859,14 +789,12 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#complex-keyed",
-            ) as HTMLElement;
+            const parent = container.querySelector("#complex-keyed") as HTMLElement;
             const originalNodes = Array.from(parent.children);
             const nodeMap = new Map();
-            originalNodes.forEach((node) => {
+            for (const node of originalNodes) {
                 nodeMap.set(node.getAttribute("data-item"), node);
-            });
+            }
 
             // Update to: E, A, F, C (removed B,D; added F; reordered)
             const element2 = createElement(
@@ -914,9 +842,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#mixed-keys",
-            ) as HTMLElement;
+            const parent = container.querySelector("#mixed-keys") as HTMLElement;
             expect(parent.children).toHaveLength(3);
 
             // Update with different mix
@@ -936,15 +862,9 @@ describe("MiniReact.render", () => {
             expect(updatedParent.children).toHaveLength(3);
 
             // Check that the structure is correct
-            expect(updatedParent.children[0].getAttribute("data-item")).toBe(
-                "C",
-            );
-            expect(updatedParent.children[1].getAttribute("data-item")).toBe(
-                "D",
-            );
-            expect(updatedParent.children[2].getAttribute("data-item")).toBe(
-                "A",
-            );
+            expect(updatedParent.children[0].getAttribute("data-item")).toBe("C");
+            expect(updatedParent.children[1].getAttribute("data-item")).toBe("D");
+            expect(updatedParent.children[2].getAttribute("data-item")).toBe("A");
         });
     });
 
@@ -959,7 +879,7 @@ describe("MiniReact.render", () => {
             ];
 
             // Track if nodes are being reused across multiple renders
-            let nodeTracker = new Map();
+            const nodeTracker = new Map();
 
             states.forEach((state, index) => {
                 const element = createElement(
@@ -976,31 +896,29 @@ describe("MiniReact.render", () => {
 
                 render(element, container);
 
-                const parent = container.querySelector(
-                    "#rapid-renders",
-                ) as HTMLElement;
+                const parent = container.querySelector("#rapid-renders") as HTMLElement;
                 const currentNodes = Array.from(parent.children);
 
                 if (index === 0) {
                     // First render - store initial nodes
-                    currentNodes.forEach((node) => {
+                    for (const node of currentNodes) {
                         nodeTracker.set(node.getAttribute("data-item"), node);
-                    });
+                    }
                 } else {
                     // Subsequent renders - check if nodes are reused
-                    currentNodes.forEach((node) => {
+                    for (const node of currentNodes) {
                         const item = node.getAttribute("data-item");
                         const originalNode = nodeTracker.get(item);
                         if (originalNode) {
                             expect(node).toBe(originalNode); // Should reuse same DOM node
                         }
-                    });
+                    }
                 }
 
                 // Verify correct order
-                expect(
-                    currentNodes.map((n) => n.getAttribute("data-item")),
-                ).toEqual(state);
+                expect(currentNodes.map((n) => n.getAttribute("data-item"))).toEqual(
+                    state,
+                );
             });
         });
 
@@ -1054,9 +972,9 @@ describe("MiniReact.render", () => {
         test("should handle props with special values and edge cases", () => {
             const element1 = createElement("div", {
                 id: "edge-case-props",
-                "data-number": NaN,
-                "data-infinity": Infinity,
-                "data-negative-infinity": -Infinity,
+                "data-number": Number.NaN,
+                "data-infinity": Number.POSITIVE_INFINITY,
+                "data-negative-infinity": Number.NEGATIVE_INFINITY,
                 "data-zero": 0,
                 "data-negative-zero": -0,
                 "data-empty-string": "",
@@ -1065,14 +983,10 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const div = container.querySelector(
-                "#edge-case-props",
-            ) as HTMLElement;
+            const div = container.querySelector("#edge-case-props") as HTMLElement;
             expect(div.getAttribute("data-number")).toBe("NaN");
             expect(div.getAttribute("data-infinity")).toBe("Infinity");
-            expect(div.getAttribute("data-negative-infinity")).toBe(
-                "-Infinity",
-            );
+            expect(div.getAttribute("data-negative-infinity")).toBe("-Infinity");
             expect(div.getAttribute("data-zero")).toBe("0");
             expect(div.getAttribute("data-empty-string")).toBe("");
             expect(div.getAttribute("data-whitespace")).toBe("   ");
@@ -1093,14 +1007,10 @@ describe("MiniReact.render", () => {
             ) as HTMLElement;
             expect(updatedDiv.getAttribute("data-number")).toBe("42");
             expect(updatedDiv.getAttribute("data-infinity")).toBe("finite");
-            expect(updatedDiv.getAttribute("data-new-prop")).toBe(
-                "Symbol(test)",
-            );
+            expect(updatedDiv.getAttribute("data-new-prop")).toBe("Symbol(test)");
 
             // Removed props should be null
-            expect(
-                updatedDiv.getAttribute("data-negative-infinity"),
-            ).toBeNull();
+            expect(updatedDiv.getAttribute("data-negative-infinity")).toBeNull();
             expect(updatedDiv.getAttribute("data-zero")).toBeNull();
         });
 
@@ -1126,9 +1036,7 @@ describe("MiniReact.render", () => {
                 render(element, container);
             }
 
-            const finalDiv = container.querySelector(
-                "#rapid-props",
-            ) as HTMLElement;
+            const finalDiv = container.querySelector("#rapid-props") as HTMLElement;
 
             // Should reuse the same DOM node
             expect(finalDiv).toBe(originalDiv);
@@ -1149,15 +1057,11 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const div = container.querySelector(
-                "#unicode-props",
-            ) as HTMLElement;
+            const div = container.querySelector("#unicode-props") as HTMLElement;
             expect(div.getAttribute("data-emoji")).toBe("🚀✨");
             expect(div.getAttribute("data-chinese")).toBe("你好世界");
             expect(div.getAttribute("data-arabic")).toBe("مرحبا بالعالم");
-            expect(div.getAttribute("data-special")).toBe(
-                "quotes\"and'symbols&<>",
-            );
+            expect(div.getAttribute("data-special")).toBe("quotes\"and'symbols&<>");
             expect(div.getAttribute("data-unicode")).toBe("☃♥♠");
         });
     });
@@ -1168,28 +1072,18 @@ describe("MiniReact.render", () => {
             const element1 = createElement(
                 "div",
                 { id: "duplicate-keys" },
-                createElement(
-                    "span",
-                    { key: "duplicate", "data-order": "1" },
-                    "First",
-                ),
+                createElement("span", { key: "duplicate", "data-order": "1" }, "First"),
                 createElement(
                     "span",
                     { key: "duplicate", "data-order": "2" },
                     "Second",
                 ),
-                createElement(
-                    "span",
-                    { key: "unique", "data-order": "3" },
-                    "Third",
-                ),
+                createElement("span", { key: "unique", "data-order": "3" }, "Third"),
             );
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#duplicate-keys",
-            ) as HTMLElement;
+            const parent = container.querySelector("#duplicate-keys") as HTMLElement;
             expect(parent.children).toHaveLength(3);
 
             // Update with different duplicate keys
@@ -1201,11 +1095,7 @@ describe("MiniReact.render", () => {
                     { key: "duplicate", "data-order": "1-updated" },
                     "First Updated",
                 ),
-                createElement(
-                    "span",
-                    { key: "new-key", "data-order": "4" },
-                    "Fourth",
-                ),
+                createElement("span", { key: "new-key", "data-order": "4" }, "Fourth"),
                 createElement(
                     "span",
                     { key: "duplicate", "data-order": "2-updated" },
@@ -1255,9 +1145,7 @@ describe("MiniReact.render", () => {
             const largeList1 = createLargeList("initial", 500);
             render(largeList1, container);
 
-            const parent = container.querySelector(
-                "#large-list",
-            ) as HTMLElement;
+            const parent = container.querySelector("#large-list") as HTMLElement;
             expect(parent.children).toHaveLength(500);
 
             // Store references to some DOM nodes
@@ -1301,9 +1189,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#reverse-list",
-            ) as HTMLElement;
+            const parent = container.querySelector("#reverse-list") as HTMLElement;
             const originalNodes = Array.from(parent.children);
 
             // Completely reverse: E, D, C, B, A
@@ -1353,9 +1239,7 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#interleaved-ops",
-            ) as HTMLElement;
+            const parent = container.querySelector("#interleaved-ops") as HTMLElement;
             const nodeA = parent.children[0];
             const nodeC = parent.children[2];
 
@@ -1414,15 +1298,9 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#nested-mixed",
-            ) as HTMLElement;
-            const wrapper1 = parent.querySelector(
-                '[key="wrapper-1"]',
-            ) as HTMLElement;
-            const nestedA = wrapper1.querySelector(
-                '[key="nested-A"]',
-            ) as HTMLElement;
+            const parent = container.querySelector("#nested-mixed") as HTMLElement;
+            const wrapper1 = parent.querySelector('[key="wrapper-1"]') as HTMLElement;
+            const nestedA = wrapper1.querySelector('[key="nested-A"]') as HTMLElement;
 
             // Rearrange and modify nested structure
             const element2 = createElement(
@@ -1439,16 +1317,8 @@ describe("MiniReact.render", () => {
                 createElement(
                     "div",
                     { key: "wrapper-1" },
-                    createElement(
-                        "span",
-                        { key: "nested-B" },
-                        "Updated Nested B",
-                    ),
-                    createElement(
-                        "span",
-                        { key: "nested-A" },
-                        "Updated Nested A",
-                    ),
+                    createElement("span", { key: "nested-B" }, "Updated Nested B"),
+                    createElement("span", { key: "nested-A" }, "Updated Nested A"),
                     // Removed inner text, reordered nested elements
                 ),
             );
@@ -1483,11 +1353,7 @@ describe("MiniReact.render", () => {
                     id: string;
                     content: string;
                 };
-                return createElement(
-                    "div",
-                    { "data-component-id": id },
-                    content,
-                );
+                return createElement("div", { "data-component-id": id }, content);
             };
 
             const element1 = createElement(
@@ -1557,13 +1423,11 @@ describe("MiniReact.render", () => {
             expect(updatedComponentA.textContent).toBe("Updated Component A");
 
             // Verify order: B, C, A
-            const order = Array.from(updatedParent.children).map(
-                (child, index) => {
-                    if (child.tagName === "SPAN") return "B";
-                    const componentId = child.getAttribute("data-component-id");
-                    return componentId;
-                },
-            );
+            const order = Array.from(updatedParent.children).map((child, index) => {
+                if (child.tagName === "SPAN") return "B";
+                const componentId = child.getAttribute("data-component-id");
+                return componentId;
+            });
             expect(order).toEqual(["B", "C", "A"]);
         });
     });
@@ -1594,9 +1458,7 @@ describe("MiniReact.render", () => {
                 );
                 render(element, container);
 
-                const parent = container.querySelector(
-                    "#memory-test",
-                ) as HTMLElement;
+                const parent = container.querySelector("#memory-test") as HTMLElement;
                 expect(parent.children).toHaveLength(100);
             }
 
@@ -1637,14 +1499,12 @@ describe("MiniReact.render", () => {
 
             render(element1, container);
 
-            const parent = container.querySelector(
-                "#extreme-reorder",
-            ) as HTMLElement;
+            const parent = container.querySelector("#extreme-reorder") as HTMLElement;
             const originalNodes = new Map();
-            Array.from(parent.children).forEach((child) => {
+            for (const child of Array.from(parent.children)) {
                 const value = child.getAttribute("data-value");
                 originalNodes.set(value, child);
-            });
+            }
 
             // Apply multiple random shuffles
             for (let shuffle = 1; shuffle <= 5; shuffle++) {
@@ -1670,14 +1530,14 @@ describe("MiniReact.render", () => {
             expect(finalParent.children).toHaveLength(50);
 
             // Verify all original DOM nodes were reused
-            Array.from(finalParent.children).forEach((child) => {
+            for (const child of Array.from(finalParent.children)) {
                 const value = child.getAttribute("data-value");
                 expect(child).toBe(originalNodes.get(value));
-            });
+            }
 
             // Verify final order matches last shuffle
             const finalOrder = Array.from(finalParent.children).map((child) =>
-                parseInt(child.getAttribute("data-value") || "0"),
+                Number.parseInt(child.getAttribute("data-value") || "0"),
             );
             expect(finalOrder).toEqual(currentOrder);
         });
