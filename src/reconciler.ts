@@ -1,9 +1,9 @@
-import type {
-    AnyMiniReactElement,
-    VDOMInstance,
-    FunctionalComponent,
-} from "./types";
 import { createDomNode, removeDomNode, replaceDomNode } from "./domRenderer";
+import type {
+	AnyMiniReactElement,
+	FunctionalComponent,
+	VDOMInstance,
+} from "./types";
 
 /* ********** */
 /* Reconciler */
@@ -11,40 +11,41 @@ import { createDomNode, removeDomNode, replaceDomNode } from "./domRenderer";
 
 /**
  * Core reconciliation function that creates/updates VDOM instances and corresponding DOM nodes
+ *
  * @param parentDom The parent DOM node
  * @param newElement The new element to render (can be null for removal)
  * @param oldInstance The existing VDOM instance (can be null for initial render)
  * @returns The new or updated VDOM instance (or null if element was removed)
  */
 export function reconcile(
-    parentDom: Node,
-    newElement: AnyMiniReactElement | null,
-    oldInstance: VDOMInstance | null,
+	parentDom: Node,
+	newElement: AnyMiniReactElement | null,
+	oldInstance: VDOMInstance | null,
 ): VDOMInstance | null {
-    // Case 1: Element removal - newElement is null but oldInstance exists
-    if (newElement == null) {
-        if (oldInstance?.dom) {
-            removeDomNode(oldInstance.dom);
-        }
-        return null;
-    }
+	// Case 1: Element removal - newElement is null but oldInstance exists
+	if (newElement == null) {
+		if (oldInstance?.dom) {
+			removeDomNode(oldInstance.dom);
+		}
+		return null;
+	}
 
-    // Case 2: Initial render - oldInstance is null
-    if (oldInstance == null) {
-        return createVDOMInstance(parentDom, newElement);
-    }
+	// Case 2: Initial render - oldInstance is null
+	if (oldInstance == null) {
+		return createVDOMInstance(parentDom, newElement);
+	}
 
-    // Case 3: Type change - recreate everything
-    if (!isSameElementType(oldInstance.element, newElement)) {
-        const newInstance = createVDOMInstance(parentDom, newElement);
-        if (oldInstance.dom && newInstance.dom) {
-            replaceDomNode(oldInstance.dom, newInstance.dom);
-        }
-        return newInstance;
-    }
+	// Case 3: Type change - recreate everything
+	if (!isSameElementType(oldInstance.element, newElement)) {
+		const newInstance = createVDOMInstance(parentDom, newElement);
+		if (oldInstance.dom && newInstance.dom) {
+			replaceDomNode(oldInstance.dom, newInstance.dom);
+		}
+		return newInstance;
+	}
 
-    // Case 4: Same type - update existing instance
-    return updateVDOMInstance(oldInstance, newElement);
+	// Case 4: Same type - update existing instance
+	return updateVDOMInstance(oldInstance, newElement);
 }
 
 /**
@@ -55,46 +56,46 @@ export function reconcile(
  * @returns The VDOM instance
  */
 function createVDOMInstance(
-    parentDom: Node,
-    element: AnyMiniReactElement,
+	parentDom: Node,
+	element: AnyMiniReactElement,
 ): VDOMInstance {
-    const { type, props } = element;
+	const { type, props } = element;
 
-    // Handle functional components
-    if (typeof type === "function") {
-        const childElement = (type as FunctionalComponent)(props);
-        const childInstance = childElement
-            ? createVDOMInstance(parentDom, childElement)
-            : null;
+	// Handle functional components
+	if (typeof type === "function") {
+		const childElement = (type as FunctionalComponent)(props);
+		const childInstance = childElement
+			? createVDOMInstance(parentDom, childElement)
+			: null;
 
-        return {
-            element,
-            dom: childInstance?.dom || null,
-            childInstances: childInstance ? [childInstance] : [],
-        };
-    }
+		return {
+			element,
+			dom: childInstance?.dom || null,
+			childInstances: childInstance ? [childInstance] : [],
+		};
+	}
 
-    // Handle host elements (including text elements)
-    const domNode = createDomNode(element);
-    const childInstances: VDOMInstance[] = [];
+	// Handle host elements (including text elements)
+	const domNode = createDomNode(element);
+	const childInstances: VDOMInstance[] = [];
 
-    // Process children
-    for (const child of props.children) {
-        const childInstance = createVDOMInstance(domNode, child);
-        childInstances.push(childInstance);
-        if (childInstance.dom) {
-            domNode.appendChild(childInstance.dom);
-        }
-    }
+	// Process children
+	for (const child of props.children) {
+		const childInstance = createVDOMInstance(domNode, child);
+		childInstances.push(childInstance);
+		if (childInstance.dom) {
+			domNode.appendChild(childInstance.dom);
+		}
+	}
 
-    // Append to parent
-    parentDom.appendChild(domNode);
+	// Append to parent
+	parentDom.appendChild(domNode);
 
-    return {
-        element,
-        dom: domNode,
-        childInstances,
-    };
+	return {
+		element,
+		dom: domNode,
+		childInstances,
+	};
 }
 
 /**
@@ -105,87 +106,71 @@ function createVDOMInstance(
  * @returns The updated VDOM instance
  */
 function updateVDOMInstance(
-    instance: VDOMInstance,
-    newElement: AnyMiniReactElement,
+	instance: VDOMInstance,
+	newElement: AnyMiniReactElement,
 ): VDOMInstance {
-    const { type, props } = newElement;
+	const { type, props } = newElement;
 
-    // Handle functional components - re-execute and reconcile output
-    if (typeof type === "function") {
-        const newChildElement = (type as FunctionalComponent)(props);
-        const oldChildInstance = instance.childInstances[0] || null;
+	// Handle functional components - re-execute and reconcile output
+	if (typeof type === "function") {
+		const newChildElement = (type as FunctionalComponent)(props);
+		const oldChildInstance = instance.childInstances[0] || null;
 
-        // Find the correct parent node to reconcile in
-        let parentNode: Node | null = null;
-        if (oldChildInstance?.dom?.parentNode) {
-            parentNode = oldChildInstance.dom.parentNode;
-        } else if (instance.dom?.parentNode) {
-            parentNode = instance.dom.parentNode;
-        }
+		// Find the correct parent node to reconcile in
+		let parentNode: Node | null = null;
+		if (oldChildInstance?.dom?.parentNode) {
+			parentNode = oldChildInstance.dom.parentNode;
+		} else if (instance.dom?.parentNode) {
+			parentNode = instance.dom.parentNode;
+		}
 
-        if (!parentNode) {
-            throw new Error(
-                "Unable to find parent node for functional component reconciliation",
-            );
-        }
+		if (!parentNode) {
+			throw new Error(
+				"Unable to find parent node for functional component reconciliation",
+			);
+		}
 
-        const newChildInstance = reconcile(
-            parentNode,
-            newChildElement,
-            oldChildInstance,
-        );
+		const newChildInstance = reconcile(
+			parentNode,
+			newChildElement,
+			oldChildInstance,
+		);
 
-        return {
-            element: newElement,
-            dom: newChildInstance?.dom || null,
-            childInstances: newChildInstance ? [newChildInstance] : [],
-        };
-    }
+		return {
+			element: newElement,
+			dom: newChildInstance?.dom || null,
+			childInstances: newChildInstance ? [newChildInstance] : [],
+		};
+	}
 
-    // Handle host elements - use efficient prop diffing
-    const oldProps = instance.element.props as Record<string, unknown>;
-    instance.element = newElement;
+	// Handle host elements - use efficient prop diffing
+	const oldProps = instance.element.props as Record<string, unknown>;
+	instance.element = newElement;
 
-    // For host elements, update only changed DOM attributes using diffProps
-    if (instance.dom && instance.dom.nodeType === Node.ELEMENT_NODE) {
-        const domElement = instance.dom as Element;
-        const newProps = props as Record<string, unknown>;
+	// For host elements, update only changed DOM attributes using diffProps
+	if (instance.dom && instance.dom.nodeType === Node.ELEMENT_NODE) {
+		const domElement = instance.dom as Element;
+		const newProps = props as Record<string, unknown>;
 
-        // Use efficient prop diffing instead of naive clear-and-set approach
-        diffProps(domElement, oldProps, newProps);
-    }
+		// Use efficient prop diffing instead of naive clear-and-set approach
+		diffProps(domElement, oldProps, newProps);
+	}
 
-    // For now, we'll just update the DOM node if it's a text element
-    if (instance.dom && instance.dom.nodeType === Node.TEXT_NODE) {
-        instance.dom.nodeValue = String(props.nodeValue);
-    }
+	// For now, we'll just update the DOM node if it's a text element
+	if (instance.dom && instance.dom.nodeType === Node.TEXT_NODE) {
+		instance.dom.nodeValue = String(props.nodeValue);
+	}
 
-    // Naive children reconciliation - reconcile all children
-    const newChildren = props.children;
-    const childInstances: VDOMInstance[] = [];
-    const maxLength = Math.max(
-        instance.childInstances.length,
-        newChildren.length,
-    );
+	// Efficient children reconciliation with key-based diffing
+	if (instance.dom) {
+		instance.childInstances = reconcileChildren(
+			instance.dom,
+			instance.childInstances,
+			props.children,
+		);
+	}
 
-    for (let i = 0; i < maxLength; i++) {
-        const oldChildInstance = instance.childInstances[i] || null;
-        const newChildElement = newChildren[i] || null;
-
-        if (instance.dom) {
-            const newChildInstance = reconcile(
-                instance.dom,
-                newChildElement,
-                oldChildInstance,
-            );
-            if (newChildInstance) {
-                childInstances.push(newChildInstance);
-            }
-        }
-    }
-
-    instance.childInstances = childInstances;
-    return instance;
+	return instance;
 }
 
 /**
@@ -196,93 +181,216 @@ function updateVDOMInstance(
  * @returns True if the elements have the same type, false otherwise
  */
 function isSameElementType(
-    oldElement: AnyMiniReactElement,
-    newElement: AnyMiniReactElement,
+	oldElement: AnyMiniReactElement,
+	newElement: AnyMiniReactElement,
 ): boolean {
-    return oldElement.type === newElement.type;
+	return oldElement.type === newElement.type;
 }
 
 /**
  * Efficiently diffs props and applies only the necessary DOM updates
+ *
  * @param domElement The DOM element to update
  * @param oldProps The previous props
  * @param newProps The new props
  */
 function diffProps(
-    domElement: Element,
-    oldProps: Record<string, unknown>,
-    newProps: Record<string, unknown>,
+	domElement: Element,
+	oldProps: Record<string, unknown>,
+	newProps: Record<string, unknown>,
 ): void {
-    // Create sets of old and new prop keys (excluding children)
-    const oldKeys = new Set(
-        Object.keys(oldProps).filter((key) => key !== "children")
-    );
-    const newKeys = new Set(
-        Object.keys(newProps).filter((key) => key !== "children")
-    );
+	// Create sets of old and new prop keys (excluding children)
+	const oldKeys = new Set(
+		Object.keys(oldProps).filter((key) => key !== "children"),
+	);
+	const newKeys = new Set(
+		Object.keys(newProps).filter((key) => key !== "children"),
+	);
 
-    // Remove attributes that are no longer present
-    for (const key of oldKeys) {
-        if (!newKeys.has(key)) {
-            removeAttribute(domElement, key);
-        }
-    }
+	// Remove attributes that are no longer present
+	for (const key of oldKeys) {
+		if (!newKeys.has(key)) {
+			removeAttribute(domElement, key);
+		}
+	}
 
-    // Add or update attributes
-    for (const key of newKeys) {
-        const oldValue = oldProps[key];
-        const newValue = newProps[key];
+	// Add or update attributes
+	for (const key of newKeys) {
+		const oldValue = oldProps[key];
+		const newValue = newProps[key];
 
-        // Only update if the value has actually changed
-        if (oldValue !== newValue) {
-            setAttribute(domElement, key, newValue);
-        }
-    }
+		// Only update if the value has actually changed
+		if (oldValue !== newValue) {
+			setAttribute(domElement, key, newValue);
+		}
+	}
 }
 
 /**
  * Sets an attribute on a DOM element with proper handling for special cases
+ *
  * @param domElement The DOM element
  * @param key The attribute key
  * @param value The attribute value
  */
-function setAttribute(
-    domElement: Element,
-    key: string,
-    value: unknown,
-): void {
-    if (key === "className") {
-        domElement.setAttribute("class", String(value));
-    } else if (key.startsWith("on") && typeof value === "function") {
-        // Event handling placeholder for future phases
-        // const eventType = key.slice(2).toLowerCase();
-        // domElement.addEventListener(eventType, value as EventListener);
-    } else if (typeof value === "boolean") {
-        // Handle boolean attributes specially
-        if (value) {
-            domElement.setAttribute(key, "");
-        } else {
-            // Remove the attribute when boolean value is false
-            domElement.removeAttribute(key);
-        }
-    } else if (value !== undefined && value !== null) {
-        // Handle all other non-null, non-undefined values
-        domElement.setAttribute(key, String(value));
-    } else {
-        // Remove attribute for null/undefined values
-        domElement.removeAttribute(key);
-    }
+function setAttribute(domElement: Element, key: string, value: unknown): void {
+	if (key === "className") {
+		domElement.setAttribute("class", String(value));
+	} else if (key.startsWith("on") && typeof value === "function") {
+		// Event handling placeholder for future phases
+		// const eventType = key.slice(2).toLowerCase();
+		// domElement.addEventListener(eventType, value as EventListener);
+	} else if (typeof value === "boolean") {
+		// Handle boolean attributes specially
+		if (value) {
+			domElement.setAttribute(key, "");
+		} else {
+			// Remove the attribute when boolean value is false
+			domElement.removeAttribute(key);
+		}
+	} else if (value !== undefined && value !== null) {
+		// Handle all other non-null, non-undefined values
+		domElement.setAttribute(key, String(value));
+	} else {
+		// Remove attribute for null/undefined values
+		domElement.removeAttribute(key);
+	}
 }
 
 /**
  * Removes an attribute from a DOM element with proper handling for special cases
+ *
  * @param domElement The DOM element
  * @param key The attribute key
  */
 function removeAttribute(domElement: Element, key: string): void {
-    if (key === "className") {
-        domElement.removeAttribute("class");
-    } else {
-        domElement.removeAttribute(key);
-    }
+	if (key === "className") {
+		domElement.removeAttribute("class");
+	} else {
+		domElement.removeAttribute(key);
+	}
+}
+
+/**
+ * Efficiently reconciles children using key-based diffing and DOM node reuse
+ *
+ * @param parentDom The parent DOM node
+ * @param oldChildInstances The existing child VDOM instances
+ * @param newChildElements The new child elements to render
+ * @returns The updated child instances
+ */
+function reconcileChildren(
+	parentDom: Node,
+	oldChildInstances: VDOMInstance[],
+	newChildElements: AnyMiniReactElement[],
+): VDOMInstance[] {
+	// Separate keyed and unkeyed children
+	const oldKeyed = new Map<string, VDOMInstance>();
+	const oldUnkeyed: VDOMInstance[] = [];
+	const newKeyed = new Map<string, AnyMiniReactElement>();
+	const newUnkeyed: AnyMiniReactElement[] = [];
+
+	// Categorize old children by key
+	for (const oldChild of oldChildInstances) {
+		const key = getElementKey(oldChild.element);
+		if (key !== null) {
+			oldKeyed.set(key, oldChild);
+		} else {
+			oldUnkeyed.push(oldChild);
+		}
+	}
+
+	// Categorize new children by key
+	for (const newChild of newChildElements) {
+		const key = getElementKey(newChild);
+		if (key !== null) {
+			newKeyed.set(key, newChild);
+		} else {
+			newUnkeyed.push(newChild);
+		}
+	}
+
+	const newChildInstances: VDOMInstance[] = [];
+	let unkeyedIndex = 0;
+
+	// Process new children in order
+	for (let i = 0; i < newChildElements.length; i++) {
+		const newChild = newChildElements[i];
+		const key = getElementKey(newChild);
+		let newChildInstance: VDOMInstance | null = null;
+
+		if (key !== null) {
+			// Handle keyed child
+			const oldChildInstance = oldKeyed.get(key) || null;
+			newChildInstance = reconcile(parentDom, newChild, oldChildInstance);
+
+			// Remove from oldKeyed so we know it's been processed
+			if (oldChildInstance) {
+				oldKeyed.delete(key);
+			}
+		} else {
+			// Handle unkeyed child - match with next available unkeyed old child
+			const oldChildInstance = oldUnkeyed[unkeyedIndex] || null;
+			newChildInstance = reconcile(parentDom, newChild, oldChildInstance);
+			unkeyedIndex++;
+		}
+
+		if (newChildInstance) {
+			newChildInstances.push(newChildInstance);
+		}
+	}
+
+	// Remove any remaining old keyed children that weren't reused
+	for (const [, oldChild] of oldKeyed) {
+		if (oldChild.dom) {
+			removeDomNode(oldChild.dom);
+		}
+	}
+
+	// Remove any remaining old unkeyed children that weren't reused
+	for (let i = unkeyedIndex; i < oldUnkeyed.length; i++) {
+		const oldChild = oldUnkeyed[i];
+		if (oldChild.dom) {
+			removeDomNode(oldChild.dom);
+		}
+	}
+
+	// Ensure DOM nodes are in correct order
+	reorderDomNodes(parentDom, newChildInstances);
+
+	return newChildInstances;
+}
+
+/**
+ * Extracts the key from an element, returning null if no key is present
+ *
+ * @param element The element to get the key from
+ * @returns The key string or null
+ */
+function getElementKey(element: AnyMiniReactElement): string | null {
+	const key = (element.props as Record<string, unknown>).key;
+	return key !== undefined && key !== null ? String(key) : null;
+}
+
+/**
+ * Reorders DOM nodes to match the order of VDOM instances
+ *
+ * @param parentDom The parent DOM node
+ * @param childInstances The child instances in the desired order
+ */
+function reorderDomNodes(
+	parentDom: Node,
+	childInstances: VDOMInstance[],
+): void {
+	let currentDomChild = parentDom.firstChild;
+
+	for (const childInstance of childInstances) {
+		if (childInstance.dom) {
+			// If this DOM node is not in the correct position, move it
+			if (currentDomChild !== childInstance.dom) {
+				parentDom.insertBefore(childInstance.dom, currentDomChild);
+			}
+			currentDomChild = childInstance.dom.nextSibling;
+		}
+	}
 }

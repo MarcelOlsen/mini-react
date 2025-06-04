@@ -2,15 +2,15 @@
 /* Core Functionality */
 /* ****************** */
 
-import {
-    TEXT_ELEMENT,
-    type AnyMiniReactElement,
-    type ElementType,
-    type InternalTextElement,
-    type MiniReactElement,
-    type VDOMInstance,
-} from "./types";
 import { reconcile } from "./reconciler";
+import {
+	type AnyMiniReactElement,
+	type ElementType,
+	type InternalTextElement,
+	type MiniReactElement,
+	TEXT_ELEMENT,
+	type VDOMInstance,
+} from "./types";
 
 // Container-specific root instance tracking
 const rootInstances = new WeakMap<HTMLElement, VDOMInstance | null>();
@@ -24,23 +24,22 @@ const rootInstances = new WeakMap<HTMLElement, VDOMInstance | null>();
  * @returns The created MiniReact element.
  */
 export function createElement(
-    type: ElementType,
-    configProps: Record<string, unknown> | null,
-    ...childrenArgs: (AnyMiniReactElement | string | number)[]
+	type: ElementType,
+	configProps: Record<string, unknown> | null,
+	...childrenArgs: (AnyMiniReactElement | string | number)[]
 ): MiniReactElement {
-    const children: AnyMiniReactElement[] = childrenArgs.map((child) =>
-        typeof child === "object" && child !== null
-            ? child
-            : createTextElement(child),
-    );
+	const children: AnyMiniReactElement[] = childrenArgs.map((child) =>
+		typeof child === "object" && child !== null
+			? child
+			: createTextElement(child),
+	);
 
-    const props: Record<string, unknown> & { children: AnyMiniReactElement[] } =
-    {
-        ...(configProps ?? {}),
-        children,
-    };
+	const props: Record<string, unknown> & { children: AnyMiniReactElement[] } = {
+		...(configProps ?? {}),
+		children,
+	};
 
-    return { type, props };
+	return { type, props };
 }
 
 /**
@@ -49,13 +48,13 @@ export function createElement(
  * @param containerNode The container DOM node
  */
 export function render(
-    element: AnyMiniReactElement | null | undefined,
-    containerNode: HTMLElement,
+	element: AnyMiniReactElement | null | undefined,
+	containerNode: HTMLElement,
 ): void {
-    const newElement = element || null;
-    const oldInstance = rootInstances.get(containerNode) || null;
-    const newInstance = reconcile(containerNode, newElement, oldInstance);
-    rootInstances.set(containerNode, newInstance);
+	const newElement = element || null;
+	const oldInstance = rootInstances.get(containerNode) || null;
+	const newInstance = reconcile(containerNode, newElement, oldInstance);
+	rootInstances.set(containerNode, newInstance);
 }
 
 /**
@@ -64,11 +63,11 @@ export function render(
  * @returns The created text element
  */
 function createTextElement(text: string | number): InternalTextElement {
-    return {
-        type: TEXT_ELEMENT,
-        props: {
-            nodeValue: text,
-            children: [],
-        },
-    };
+	return {
+		type: TEXT_ELEMENT,
+		props: {
+			nodeValue: text,
+			children: [],
+		},
+	};
 }

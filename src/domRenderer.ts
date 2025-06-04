@@ -1,8 +1,8 @@
-import { TEXT_ELEMENT, type AnyMiniReactElement } from "./types";
+import { type AnyMiniReactElement, TEXT_ELEMENT } from "./types";
 
-/* ******************* */
+/* ******************** */
 /* DOM Renderer Utility */
-/* ******************* */
+/* ******************** */
 
 /**
  * Creates a DOM node from a MiniReact element (without children processing)
@@ -21,7 +21,7 @@ export function createDomNode(element: AnyMiniReactElement): Node {
     const domNode = document.createElement(type as string);
 
     // Set attributes
-    // biome-ignore lint/complexity/noForEach: <explanation>
+    // biome-ignore lint/complexity/noForEach: forEach is appropriate here as we need to iterate over object entries with side effects (setting DOM attributes), not transforming to a new array
     Object.entries(props).forEach(([key, value]) => {
         if (key === "children") return;
 
