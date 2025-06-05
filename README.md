@@ -16,9 +16,9 @@ A learning project to build a simplified React-like library from scratch, with a
   - [Phase 2: Functional Components ✅](#phase-2-functional-components-)
   - [Phase 3: Virtual DOM & Basic Reconciliation ✅](#phase-3-virtual-dom--basic-reconciliation-)
   - [Phase 4: Prop Diffing & Efficient Children Reconciliation ✅](#phase-4-prop-diffing--efficient-children-reconciliation-)
-  - [Phase 5: State with useState Hook 🚧](#phase-5-state-with-usestate-hook)
+  - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook)
   - [Phase 6: Event Handling](#phase-6-event-handling)
-  - [Phase 7: Effects with useEffect](#phase-7-effects-with-useeffect)
+  - [Phase 7: Effects with useEffect 🚧](#phase-7-effects-with-useeffect)
   - [Phase 8: Context API](#phase-8-context-api)
   - [Phase 9: Portals and Fragments](#phase-9-portals-and-fragments)
   - [Phase 10: JSX Support](#phase-10-jsx-support)
@@ -34,7 +34,7 @@ A learning project to build a simplified React-like library from scratch, with a
 
 **MiniReact** is a step-by-step implementation of a React-like UI library designed for learning and understanding how modern UI frameworks work under the hood. The project emphasizes:
 
-- **Test-driven development** with 91 comprehensive tests
+- **Test-driven development** with 112 comprehensive tests
 - **Production-quality code** with full TypeScript support and linting
 - **Incremental complexity** with well-documented phases
 - **Performance optimization** with efficient reconciliation algorithms
@@ -46,17 +46,17 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ## Current Status
 
-🎯 **Current Phase**: 4 ✅ **COMPLETED**
+🎯 **Current Phase**: 5 ✅ **COMPLETED**
 
 **Latest Achievements**:
 
-- ✅ **Phase 4 Complete**: Prop diffing and efficient children reconciliation
-- ✅ **91 Tests Passing**: Comprehensive test suite covering all functionality
+- ✅ **Phase 5 Complete**: State with useState Hook
+- ✅ **112 Tests Passing**: Comprehensive test suite covering all functionality
 - ✅ **Zero Linter Issues**: Clean codebase with consistent formatting
 - ✅ **Performance Optimized**: Key-based reconciliation for efficient list operations
 - ✅ **Production Ready**: Robust virtual DOM with advanced reconciliation
 
-**Overall Progress**: 4/10 phases complete (40% of planned features)
+**Overall Progress**: 5/10 phases complete (50% of planned features)
 
 ---
 
@@ -154,8 +154,9 @@ bunx biome check
 - **🧩 Functional Components**: Full support for functional components with props and children
 - **🔄 Dynamic Updates**: Efficient re-rendering with state preservation
 - **📦 TypeScript Support**: Complete type safety with comprehensive type definitions
-- **🧪 Comprehensive Testing**: 91 tests covering all functionality and edge cases
+- **🧪 Comprehensive Testing**: 112 tests covering all functionality and edge cases
 - **📏 Code Quality**: Zero linter issues with consistent formatting
+- **🔄 State Management**: useState hook with functional updates and state preservation
 
 ### 🎨 Advanced Capabilities
 
@@ -182,7 +183,8 @@ mini-react/
 │   ├── MiniReact.createElementFC.test.ts    # Functional component creation (18 tests)
 │   ├── MiniReact.render.test.ts             # Rendering & reconciliation (58 tests)
 │   ├── MiniReact.renderFC.test.ts           # Functional component rendering (16 tests)
-│   └── MiniReact.reconciler.test.ts         # Core reconciliation (19 tests)
+│   ├── MiniReact.reconciler.test.ts         # Core reconciliation (19 tests)
+│   └── MiniReact.useState.test.ts           # useState hook tests (11 tests)
 ├── bunfig.toml                # Bun configuration
 ├── biome.json                 # Biome linter/formatter config
 ├── tsconfig.json              # TypeScript configuration
@@ -274,17 +276,17 @@ mini-react/
 
 ---
 
-### Phase 5: State with useState Hook 🚧
+### Phase 5: State with useState Hook ✅
 
 **Features (Planned):**
 
-- 🚧 Implement a basic `useState` hook for functional components
-- 🚧 Trigger re-renders on state changes
-- 🚧 Preserve state across renders
-- 🚧 Component state isolation
-- 🚧 Support for functional state updates
-- 🚧 Multiple hooks per component
-- 🚧 Hook order consistency
+- ✅ Implement a basic `useState` hook for functional components
+- ✅ Trigger re-renders on state changes
+- ✅ Preserve state across renders
+- ✅ Component state isolation
+- ✅ Support for functional state updates
+- ✅ Multiple hooks per component
+- ✅ Hook order consistency
 
 **Implementation Goals:**
 
@@ -296,13 +298,13 @@ mini-react/
 
 ---
 
-### Phase 6: Event Handling
+### Phase 6: Event Handling 🚧
 
 **Features (Planned):**
 
-- Support for event props (e.g., `onClick`) on host elements
-- Attach/detach event listeners as props change
-- Proper event delegation and cleanup
+- 🚧 Support for event props (e.g., `onClick`) on host elements
+- 🚧 Attach/detach event listeners as props change
+- 🚧 Proper event delegation and cleanup
 
 **Implementation Goals:**
 
