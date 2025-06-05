@@ -30,12 +30,24 @@ export interface InternalTextElement {
 
 export const TEXT_ELEMENT = "TEXT_ELEMENT";
 
-// **************** //
+// ********** //
+// Hook Types //
+// ********** //
+
+export interface Hook {
+    state: unknown;
+    setState: (newState: unknown) => void;
+}
+
+export type UseStateHook<T> = [T, (newState: T | ((prevState: T) => T)) => void];
+
+// ******************* //
 // VDOM Instance Types //
-// **************** //
+// ******************* //
 
 export interface VDOMInstance {
     element: AnyMiniReactElement;
     dom: Node | null;
     childInstances: VDOMInstance[];
+    hooks?: Hook[];
 }

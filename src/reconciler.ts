@@ -63,16 +63,27 @@ function createVDOMInstance(
 
 	// Handle functional components
 	if (typeof type === "function") {
+		// Create instance first to establish hook context
+		const instance: VDOMInstance = {
+			element,
+			dom: null,
+			childInstances: [],
+			hooks: [], // Initialize hooks array
+		};
+
+		// Set hook context before calling component
+		setCurrentRenderInstance(instance);
 		const childElement = (type as FunctionalComponent)(props);
+		setCurrentRenderInstance(null); // Clear context after call
+
 		const childInstance = childElement
 			? createVDOMInstance(parentDom, childElement)
 			: null;
 
-		return {
-			element,
-			dom: childInstance?.dom || null,
-			childInstances: childInstance ? [childInstance] : [],
-		};
+		instance.dom = childInstance?.dom || null;
+		instance.childInstances = childInstance ? [childInstance] : [];
+
+		return instance;
 	}
 
 	// Handle host elements (including text elements)
@@ -113,7 +124,11 @@ function updateVDOMInstance(
 
 	// Handle functional components - re-execute and reconcile output
 	if (typeof type === "function") {
+		// Set hook context before calling component
+		setCurrentRenderInstance(instance);
 		const newChildElement = (type as FunctionalComponent)(props);
+		setCurrentRenderInstance(null); // Clear context after call
+
 		const oldChildInstance = instance.childInstances[0] || null;
 
 		// Find the correct parent node to reconcile in
@@ -140,6 +155,7 @@ function updateVDOMInstance(
 			element: newElement,
 			dom: newChildInstance?.dom || null,
 			childInstances: newChildInstance ? [newChildInstance] : [],
+			hooks: instance.hooks, // Preserve hooks across renders
 		};
 	}
 
@@ -171,6 +187,20 @@ function updateVDOMInstance(
 	}
 
 	return instance;
+}
+
+// Hook context function - will be set by MiniReact module
+let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
+	() => {};
+
+/**
+ * Sets the hook context function from MiniReact module
+ * @param fn The setCurrentRenderInstance function
+ */
+export function setHookContext(
+	fn: (instance: VDOMInstance | null) => void,
+): void {
+	setCurrentRenderInstance = fn;
 }
 
 /**
