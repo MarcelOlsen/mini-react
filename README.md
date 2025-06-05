@@ -21,6 +21,7 @@ A learning project to build a simplified React-like library from scratch, with a
   - [Phase 7: Effects with useEffect](#phase-7-effects-with-useeffect)
   - [Phase 8: Context API](#phase-8-context-api)
   - [Phase 9: Portals and Fragments](#phase-9-portals-and-fragments)
+  - [Phase 10: JSX Support](#phase-10-jsx-support)
 - [API Reference](#api-reference)
 - [Testing](#testing)
 - [Code Quality](#code-quality)
@@ -33,7 +34,7 @@ A learning project to build a simplified React-like library from scratch, with a
 
 **MiniReact** is a step-by-step implementation of a React-like UI library designed for learning and understanding how modern UI frameworks work under the hood. The project emphasizes:
 
-- **Test-driven development** with 101 comprehensive tests
+- **Test-driven development** with 91 comprehensive tests
 - **Production-quality code** with full TypeScript support and linting
 - **Incremental complexity** with well-documented phases
 - **Performance optimization** with efficient reconciliation algorithms
@@ -49,13 +50,13 @@ Each phase includes clear specifications, working implementations, and extensive
 
 **Latest Achievements**:
 
-- ✅ **Phase 4 Complete**: Advanced prop diffing and efficient children reconciliation
-- ✅ **101 Tests Passing**: Comprehensive test suite covering all functionality
+- ✅ **Phase 4 Complete**: Prop diffing and efficient children reconciliation
+- ✅ **91 Tests Passing**: Comprehensive test suite covering all functionality
 - ✅ **Zero Linter Issues**: Clean codebase with consistent formatting
-- ✅ **Key-based Reconciliation**: Efficient list updates with DOM node reuse
-- ✅ **Performance Optimized**: Minimal DOM operations and smart diffing
+- ✅ **Performance Optimized**: Key-based reconciliation for efficient list operations
+- ✅ **Production Ready**: Robust virtual DOM with advanced reconciliation
 
-**Overall Progress**: 4/9 phases complete (44% of planned features)
+**Overall Progress**: 4/10 phases complete (40% of planned features)
 
 ---
 
@@ -71,7 +72,7 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/MarcelOlsen/mini-react.git
 cd mini-react
 
 # Install dependencies
@@ -87,18 +88,28 @@ import type { FunctionalComponent } from "./src/types";
 // Simple host element
 const simpleElement = createElement("h1", { id: "title" }, "Hello MiniReact!");
 
-// Functional component
+// Functional component with props
 const Greeting: FunctionalComponent = (props) => {
   const { name } = props as { name: string };
   return createElement("p", { className: "greeting" }, `Hello, ${name}!`);
 };
 
 // Component with children
-const App: FunctionalComponent = () => {
+const Layout: FunctionalComponent = (props) => {
+  const { title, children } = props as { title: string; children?: any[] };
   return createElement(
     "div",
     { className: "app" },
-    createElement("h1", null, "MiniReact Demo"),
+    createElement("h1", null, title),
+    createElement("div", { className: "content" }, ...(children || []))
+  );
+};
+
+// Complex component composition
+const App = () => {
+  return createElement(
+    Layout,
+    { title: "MiniReact Demo" },
     createElement(Greeting, { name: "World" }),
     createElement("p", null, "Building React from scratch!")
   );
@@ -143,7 +154,7 @@ bunx biome check
 - **🧩 Functional Components**: Full support for functional components with props and children
 - **🔄 Dynamic Updates**: Efficient re-rendering with state preservation
 - **📦 TypeScript Support**: Complete type safety with comprehensive type definitions
-- **🧪 Comprehensive Testing**: 101 tests covering all functionality and edge cases
+- **🧪 Comprehensive Testing**: 91 tests covering all functionality and edge cases
 - **📏 Code Quality**: Zero linter issues with consistent formatting
 
 ### 🎨 Advanced Capabilities
@@ -271,13 +282,17 @@ mini-react/
 - 🚧 Trigger re-renders on state changes
 - 🚧 Preserve state across renders
 - 🚧 Component state isolation
+- 🚧 Support for functional state updates
+- 🚧 Multiple hooks per component
+- 🚧 Hook order consistency
 
 **Implementation Goals:**
 
-- Hook state management system
-- Component-level state tracking
-- Batched updates for performance
-- Proper cleanup on unmount
+- Hook state management system with stable setState functions
+- Component-level state tracking via VDOM instances
+- Efficient re-render scheduling that finds the correct container
+- Hook context management during component execution
+- Type-safe useState implementation with TypeScript generics
 
 ---
 
@@ -329,6 +344,37 @@ mini-react/
 
 - Support for rendering children into a different part of the DOM (portals)
 - Support for fragments (multiple children without extra DOM nodes)
+
+---
+
+### Phase 10: JSX Support
+
+**Features (Planned):**
+
+- JSX syntax support for component definitions and element creation
+- JSX runtime functions (`jsx`, `jsxs`, `jsxDEV`) for build tool integration
+- Fragment support with `<>` and `</Fragment>` syntax
+- TypeScript JSX declarations for full type safety
+- Build tool configuration (TypeScript/Babel integration)
+- Development mode enhancements with source maps and debugging
+- Backward compatibility with existing `createElement` API
+
+**Implementation Goals:**
+
+- Modern JSX runtime (React 17+ style) with automatic imports
+- Classic JSX runtime support for flexibility
+- Fragment component for grouping without extra DOM nodes
+- Comprehensive TypeScript declarations for IntrinsicElements
+- JSX validation and error handling in development mode
+- Seamless migration path from `createElement` to JSX syntax
+
+**Key Benefits:**
+
+- Familiar React-like syntax for developers
+- Better developer experience with syntax highlighting
+- Reduced boilerplate compared to `createElement` calls
+- Component composition with natural nesting patterns
+- Ecosystem compatibility with JSX-expecting tools
 
 ---
 
@@ -388,19 +434,90 @@ render(app, document.getElementById("root")!);
 ### Functional Components
 
 ```typescript
-type FunctionalComponent = (
-  props: Record<string, unknown>
+type FunctionalComponent<P = Record<string, unknown>> = (
+  props: P & { children?: AnyMiniReactElement[] }
 ) => AnyMiniReactElement | null;
 ```
 
-Components are functions that take props and return virtual DOM elements.
+Components are functions that take props and return virtual DOM elements. The type is generic, allowing for strongly typed props with destructuring. **Now supports inferred component types just like React!**
 
-**Example:**
+**Examples:**
 
 ```typescript
-const Button: FunctionalComponent = (props) => {
-  const { text, onClick } = props as { text: string; onClick: () => void };
+// ✅ Inferred component (React-style) - RECOMMENDED
+const Component = ({ id }: { id: string }) => {
+  return createElement("div", { id }, "Hello World");
+};
+
+// ✅ Inferred with optional props
+const Greeting = ({
+  name = "Anonymous",
+  age,
+}: {
+  name?: string;
+  age?: number;
+}) => {
+  return createElement(
+    "p",
+    null,
+    age ? `${name} is ${age} years old` : `Hello, ${name}!`
+  );
+};
+
+// ✅ Inferred with complex props
+const UserCard = ({
+  user,
+  onAction,
+}: {
+  user: { name: string; id: number };
+  onAction: (id: number) => void;
+}) => {
+  return createElement(
+    "div",
+    {
+      onclick: () => onAction(user.id),
+    },
+    `User: ${user.name}`
+  );
+};
+
+// ✅ Inferred with no props
+const SimpleComponent = () => {
+  return createElement("span", null, "Simple component");
+};
+
+// Usage - no explicit typing needed!
+const app = createElement(
+  "div",
+  null,
+  createElement(Component, { id: "my-component" }),
+  createElement(Greeting, { name: "Alice", age: 30 }),
+  createElement(UserCard, {
+    user: { name: "Bob", id: 123 },
+    onAction: (id) => console.log(`Action for ${id}`),
+  }),
+  createElement(SimpleComponent, null)
+);
+
+// Legacy explicit typing (still supported for backward compatibility)
+const TypedButton: FunctionalComponent<{
+  text: string;
+  onClick: () => void;
+}> = ({ text, onClick }) => {
   return createElement("button", { onclick: onClick }, text);
+};
+
+// With children
+const Layout: FunctionalComponent<{ title: string }> = ({
+  title,
+  children,
+}) => {
+  return createElement(
+    "div",
+    null,
+    createElement("h1", null, title),
+    createElement("div", { className: "content" }, ...(children || []))
+  );
 };
 ```
 
@@ -408,7 +525,7 @@ const Button: FunctionalComponent = (props) => {
 
 ## Testing
 
-**Comprehensive Test Suite: 101 tests across 5 files**
+**Comprehensive Test Suite: 91 tests across 5 files**
 
 ### Test Categories:
 
