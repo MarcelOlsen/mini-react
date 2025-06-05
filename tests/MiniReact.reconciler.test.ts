@@ -3,7 +3,7 @@ import { createElement } from "../src/MiniReact";
 import { reconcile } from "../src/reconciler";
 import {
 	type AnyMiniReactElement,
-	type FunctionalComponent,
+	type MiniReactElement,
 	TEXT_ELEMENT,
 } from "../src/types";
 
@@ -97,9 +97,11 @@ describe("MiniReact.reconciler", () => {
 		});
 
 		test("should correctly handle functional components", () => {
-			const FunctionalComponent: FunctionalComponent = (props) => {
-				const name = (props as { name: string }).name;
-				return createElement("h1", { id: "greeting" }, `Hello, ${name}!`);
+			const FunctionalComponent = (props: {
+				name: string;
+				children?: MiniReactElement[];
+			}) => {
+				return createElement("h1", { id: "greeting" }, `Hello, ${props.name}!`);
 			};
 
 			const element = createElement(FunctionalComponent, {
@@ -124,7 +126,7 @@ describe("MiniReact.reconciler", () => {
 		});
 
 		test("should handle functional component returning null", () => {
-			const NullComponent: FunctionalComponent = () => null;
+			const NullComponent = () => null;
 			const element = createElement(NullComponent, {});
 			const instance = reconcile(container, element, null);
 
@@ -258,7 +260,7 @@ describe("MiniReact.reconciler", () => {
 			const hostElement = createElement("h1", {}, "Host Element");
 			const oldInstance = reconcile(container, hostElement, null);
 
-			const FuncComponent: FunctionalComponent = () =>
+			const FuncComponent = () =>
 				createElement("h2", {}, "Functional Component");
 			const funcElement = createElement(FuncComponent, {});
 			const newInstance = reconcile(container, funcElement, oldInstance);
@@ -353,9 +355,9 @@ describe("MiniReact.reconciler", () => {
 	describe("Updates - Same Type (Functional Component)", () => {
 		test("should re-execute functional component and reconcile output", () => {
 			let renderCount = 0;
-			const CountingComponent: FunctionalComponent = (props) => {
+			const CountingComponent = (props: { message: string }) => {
 				renderCount++;
-				const message = (props as { message: string }).message;
+				const message = props.message;
 				return createElement("div", { "data-render": renderCount }, message);
 			};
 
@@ -378,8 +380,8 @@ describe("MiniReact.reconciler", () => {
 		});
 
 		test("should handle functional component output type change", () => {
-			const ConditionalComponent: FunctionalComponent = (props) => {
-				const useDiv = (props as { useDiv: boolean }).useDiv;
+			const ConditionalComponent = (props: { useDiv: boolean }) => {
+				const useDiv = props.useDiv;
 				return useDiv
 					? createElement("div", {}, "I am a div")
 					: createElement("span", {}, "I am a span");
@@ -404,8 +406,8 @@ describe("MiniReact.reconciler", () => {
 		});
 
 		test("should handle functional component returning null after returning element", () => {
-			const ConditionalComponent: FunctionalComponent = (props) => {
-				const show = (props as { show: boolean }).show;
+			const ConditionalComponent = (props: { show: boolean }) => {
+				const show = props.show;
 				return show ? createElement("div", {}, "Visible") : null;
 			};
 
@@ -459,8 +461,11 @@ describe("MiniReact.reconciler", () => {
 		});
 
 		test("should handle mixed functional and host components", () => {
-			const Wrapper: FunctionalComponent = (props) => {
-				const title = (props as { title: string }).title;
+			const Wrapper = (props: {
+				title: string;
+				children?: MiniReactElement[];
+			}) => {
+				const title = props.title;
 				const children = props.children || [];
 				return createElement(
 					"div",

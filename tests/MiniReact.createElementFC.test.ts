@@ -1,17 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { createElement } from "../src/MiniReact";
-import type {
-	FunctionalComponent,
-	InternalTextElement,
-	MiniReactElement,
-} from "../src/types";
+import type { InternalTextElement, MiniReactElement } from "../src/types";
 import { TEXT_ELEMENT } from "../src/types";
 
 describe("MiniReact.createElement with Functional Components", () => {
-	const MyComponent: FunctionalComponent = (props) =>
-		createElement("div", props, "Component Content");
-	const MySimpleComponent: FunctionalComponent = () =>
-		createElement("span", null, "Simple");
+	const MyComponent = (
+		props: Record<string, unknown> & { children?: MiniReactElement[] },
+	) => createElement("div", props, "Component Content");
+	const MySimpleComponent = () => createElement("span", null, "Simple");
 
 	// --- Basic Functional Component Creation ---
 
@@ -278,10 +274,8 @@ describe("MiniReact.createElement with Functional Components", () => {
 	});
 
 	test("should preserve functional component reference integrity", () => {
-		const ComponentA: FunctionalComponent = () =>
-			createElement("div", null, "A");
-		const ComponentB: FunctionalComponent = () =>
-			createElement("div", null, "B");
+		const ComponentA = () => createElement("div", null, "A");
+		const ComponentB = () => createElement("div", null, "B");
 
 		const elementA1 = createElement(ComponentA, { id: "a1" });
 		const elementA2 = createElement(ComponentA, { id: "a2" });
@@ -361,8 +355,7 @@ describe("MiniReact.createElement with Functional Components", () => {
 	});
 
 	test("should handle functional component creation with no arguments except type", () => {
-		const MinimalComponent: FunctionalComponent = () =>
-			createElement("div", null);
+		const MinimalComponent = () => createElement("div", null);
 
 		const element = createElement(MinimalComponent, null);
 

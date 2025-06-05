@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { createElement, render } from "../src/MiniReact";
-import type { FunctionalComponent, MiniReactElement } from "../src/types";
+import type { MiniReactElement } from "../src/types";
 
 describe("MiniReact.render with Functional Components", () => {
 	let container: HTMLElement;
@@ -18,7 +18,7 @@ describe("MiniReact.render with Functional Components", () => {
 
 	test("should render a simple functional component returning a host element", () => {
 		// This component takes no specific props other than potentially children (which it doesn't use here)
-		const MyComponent: FunctionalComponent = () =>
+		const MyComponent = () =>
 			createElement("div", { id: "inner-div" }, "Hello from FC");
 
 		const element = createElement(MyComponent, null); // Pass null for props
@@ -34,8 +34,8 @@ describe("MiniReact.render with Functional Components", () => {
 
 	test("should pass props to a functional component", () => {
 		// This component has specific props: { name: string }
-		const Greeting: FunctionalComponent = (props) =>
-			createElement("p", null, `Hello, ${(props as { name: string }).name}!`);
+		const Greeting = (props: { name: string }) =>
+			createElement("p", null, `Hello, ${props.name}!`);
 
 		const element = createElement(Greeting, { name: "Alice" });
 		render(element, container);
@@ -49,7 +49,7 @@ describe("MiniReact.render with Functional Components", () => {
 
 	test("should pass children to a functional component", () => {
 		// This component takes no specific props other than children
-		const Layout: FunctionalComponent = (props) =>
+		const Layout = (props: { children?: MiniReactElement[] }) =>
 			createElement("div", { className: "layout" }, ...(props.children || []));
 
 		const element = createElement(
@@ -70,16 +70,12 @@ describe("MiniReact.render with Functional Components", () => {
 	test("functional component should be called with its props object", () => {
 		// Define props type for clarity if needed, or rely on inference
 		type MySpyProps = { text: string; id: string };
-		const mockFn = (
-			props: Record<string, unknown> & { children?: MiniReactElement[] },
-		) => createElement("div", null, (props as MySpyProps).text);
+		const mockFn = (props: MySpyProps & { children?: MiniReactElement[] }) =>
+			createElement("div", null, props.text);
 		const spiedComponent = spyOn({ MyComponent: mockFn }, "MyComponent");
 
 		const propsToPass: MySpyProps = { text: "Spy Test", id: "spy-id" };
-		const element = createElement(
-			spiedComponent as FunctionalComponent,
-			propsToPass,
-		);
+		const element = createElement(spiedComponent, propsToPass);
 		render(element, container);
 
 		expect(spiedComponent).toHaveBeenCalledTimes(1);
@@ -93,7 +89,7 @@ describe("MiniReact.render with Functional Components", () => {
 	// --- Edge Cases ---
 
 	test("should handle functional component returning null", () => {
-		const NullComponent: FunctionalComponent = () => null;
+		const NullComponent = () => null;
 
 		const element = createElement(NullComponent, null);
 		render(element, container);
@@ -103,8 +99,7 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component returning undefined", () => {
-		const UndefinedComponent: FunctionalComponent = () =>
-			undefined as unknown as null;
+		const UndefinedComponent = () => undefined as unknown as null;
 
 		const element = createElement(UndefinedComponent, null);
 		render(element, container);
@@ -114,7 +109,7 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component with empty props object", () => {
-		const EmptyPropsComponent: FunctionalComponent = (props) =>
+		const EmptyPropsComponent = (props: { children?: MiniReactElement[] }) =>
 			createElement(
 				"div",
 				null,
@@ -134,22 +129,22 @@ describe("MiniReact.render with Functional Components", () => {
 			boolean: boolean;
 			nullValue: null;
 			undefinedValue: undefined;
+			children?: MiniReactElement[];
 		};
 
-		const ComplexComponent: FunctionalComponent = (props) => {
-			const typed = props as ComplexProps;
+		const ComplexComponent = (props: ComplexProps) => {
 			return createElement(
 				"div",
 				{ id: "complex" },
-				typed.nested.deep.value,
-				` Array: [${typed.array.join(",")}]`,
-				` Boolean: ${typed.boolean}`,
-				` Null: ${typed.nullValue}`,
-				` Undefined: ${typed.undefinedValue}`,
+				props.nested.deep.value,
+				` Array: [${props.array.join(",")}]`,
+				` Boolean: ${props.boolean}`,
+				` Null: ${props.nullValue}`,
+				` Undefined: ${props.undefinedValue}`,
 			);
 		};
 
-		const complexProps: ComplexProps = {
+		const complexProps = {
 			nested: { deep: { value: "deep-value" } },
 			array: [1, 2, 3],
 			boolean: true,
@@ -166,28 +161,24 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle deeply nested functional components", () => {
-		const Level3: FunctionalComponent = (props) =>
-			createElement(
-				"span",
-				{ className: "level-3" },
-				(props as { value: string }).value,
-			);
+		const Level3 = (props: { value: string }) =>
+			createElement("span", { className: "level-3" }, props.value);
 
-		const Level2: FunctionalComponent = (props) =>
+		const Level2 = (props: { value: string }) =>
 			createElement(
 				"div",
 				{ className: "level-2" },
 				createElement(Level3, {
-					value: (props as { value: string }).value,
+					value: props.value,
 				}),
 			);
 
-		const Level1: FunctionalComponent = (props) =>
+		const Level1 = (props: { value: string }) =>
 			createElement(
 				"section",
 				{ className: "level-1" },
 				createElement(Level2, {
-					value: (props as { value: string }).value,
+					value: props.value,
 				}),
 			);
 
@@ -207,13 +198,12 @@ describe("MiniReact.render with Functional Components", () => {
 	// --- Complex Behavior ---
 
 	test("should handle conditional rendering in functional components", () => {
-		const ConditionalComponent: FunctionalComponent = (props) => {
-			const { show, content } = props as {
-				show: boolean;
-				content: string;
-			};
-			return show
-				? createElement("div", { className: "visible" }, content)
+		const ConditionalComponent = (props: {
+			show: boolean;
+			content: string;
+		}) => {
+			return props.show
+				? createElement("div", { className: "visible" }, props.content)
 				: createElement("div", { className: "hidden" }, "Hidden content");
 		};
 
@@ -237,7 +227,7 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component that transforms children", () => {
-		const ListWrapper: FunctionalComponent = (props) => {
+		const ListWrapper = (props: { children?: MiniReactElement[] }) => {
 			const children = props.children || [];
 			return createElement(
 				"ul",
@@ -268,7 +258,7 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component with mixed children types", () => {
-		const MixedContainer: FunctionalComponent = (props) => {
+		const MixedContainer = (props: { children?: MiniReactElement[] }) => {
 			return createElement(
 				"div",
 				{ className: "mixed" },
@@ -303,20 +293,19 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component with special character props", () => {
-		const SpecialCharsComponent: FunctionalComponent = (props) => {
-			const typed = props as {
-				"data-special": string;
-				"aria-label": string;
-				emoji: string;
-				unicode: string;
-			};
+		const SpecialCharsComponent = (props: {
+			"data-special": string;
+			"aria-label": string;
+			emoji: string;
+			unicode: string;
+		}) => {
 			return createElement(
 				"div",
 				{
-					"data-special": typed["data-special"],
-					"aria-label": typed["aria-label"],
+					"data-special": props["data-special"],
+					"aria-label": props["aria-label"],
 				},
-				`${typed.emoji} ${typed.unicode}`,
+				`${props.emoji} ${props.unicode}`,
 			);
 		};
 
@@ -336,26 +325,21 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component returning complex nested structure", () => {
-		const ComplexStructure: FunctionalComponent = (props) => {
-			const { title, items } = props as {
-				title: string;
-				items: string[];
-			};
-
+		const ComplexStructure = (props: { title: string; items: string[] }) => {
 			return createElement(
 				"article",
 				{ className: "complex" },
 				createElement(
 					"header",
 					null,
-					createElement("h1", null, title),
+					createElement("h1", null, props.title),
 					createElement(
 						"nav",
 						null,
 						createElement(
 							"ul",
 							null,
-							...items.map((item, index) =>
+							...props.items.map((item, index) =>
 								createElement(
 									"li",
 									{ key: index },
@@ -425,7 +409,7 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component with large number of props", () => {
-		const ManyPropsComponent: FunctionalComponent = (props) => {
+		const ManyPropsComponent = (props: { children?: MiniReactElement[] }) => {
 			const propCount = Object.keys(props).filter(
 				(k) => k !== "children",
 			).length;
@@ -455,11 +439,11 @@ describe("MiniReact.render with Functional Components", () => {
 	});
 
 	test("should handle functional component returning different types based on props", () => {
-		const DynamicComponent: FunctionalComponent = (props) => {
-			const { type, content } = props as {
-				type: "button" | "link" | "text";
-				content: string;
-			};
+		const DynamicComponent = (props: {
+			type: "button" | "link" | "text";
+			content: string;
+		}) => {
+			const { type, content } = props;
 
 			switch (type) {
 				case "button":

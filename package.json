@@ -1,13 +1,13 @@
 {
-    "name": "mini-react",
-    "module": "index.ts",
-    "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@happy-dom/global-registrator": "^17.5.6",
-        "@types/bun": "latest"
-    },
-    "peerDependencies": {
-        "typescript": "^5.0.0"
-    },
-    "type": "module"
+	"name": "mini-react",
+	"module": "index.ts",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@happy-dom/global-registrator": "^17.5.6",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"type": "module"
 }
