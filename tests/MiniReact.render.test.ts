@@ -179,8 +179,9 @@ describe("MiniReact.render", () => {
 
 		render(element, container);
 
+		// null and undefined children should be filtered out, not rendered as text
 		expect(container.firstChild?.textContent).toBe(
-			"BeforenullBetweenundefinedAfter",
+			"BeforeBetweenAfter",
 		);
 	});
 
