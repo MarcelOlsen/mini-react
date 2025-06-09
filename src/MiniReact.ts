@@ -2,55 +2,78 @@
 /* Core Functionality */
 /* ****************** */
 
+import { eventSystem } from "./eventSystem";
 import { reconcile, setHookContext } from "./reconciler";
 import {
-	type AnyMiniReactElement,
-	type ElementType,
-	type Hook,
-	type InternalTextElement,
-	type MiniReactElement,
-	TEXT_ELEMENT,
-	type UseStateHook,
-	type VDOMInstance,
+    type AnyMiniReactElement,
+    type ElementType,
+    type Hook,
+    TEXT_ELEMENT,
+    type UseStateHook,
+    type VDOMInstance,
 } from "./types";
 
-// Container-specific root instance tracking
+// Export event types for external use
+export type { SyntheticEvent } from "./eventSystem";
+
+/* ******** */
+/* Globals  */
+/* ******** */
+
+// Store root instances for each container
 const rootInstances = new Map<HTMLElement, VDOMInstance | null>();
 
 // Hook state management
 let currentRenderInstance: VDOMInstance | null = null;
-let currentHookIndex = 0;
+let hookIndex = 0;
 
-// Set up hook context with reconciler
-setHookContext(setCurrentRenderInstance);
+// Set the hook context function in the reconciler
+setHookContext((instance: VDOMInstance | null) => {
+    currentRenderInstance = instance;
+    hookIndex = 0;
+});
+
+/* *********** */
+/* Public APIs */
+/* *********** */
 
 /**
- * Creates and returns a new MiniReact element of the given type.
- * @param type The type of the element (e.g., 'div', 'p').
- * @param configProps The props for the element (e.g., { id: 'foo' }).
- * @param children Child elements or text content.
+ * Creates a MiniReact element (virtual DOM node)
  *
- * @returns The created MiniReact element.
+ * @param type The element type (string for host elements, function for components)
+ * @param props The element props (can be null)
+ * @param children The element children
+ * @returns A MiniReact element
  */
-
-// Main implementation with flexible ElementType that accepts any function
 export function createElement(
-	type: ElementType,
-	configProps: Record<string, unknown> | null,
-	...childrenArgs: (AnyMiniReactElement | string | number)[]
-): MiniReactElement {
-	const children: AnyMiniReactElement[] = childrenArgs.map((child) =>
-		typeof child === "object" && child !== null
-			? child
-			: createTextElement(child),
-	);
+    type: ElementType,
+    props: Record<string, unknown> | null,
+    ...children: (AnyMiniReactElement | string | number | null | undefined)[]
+): AnyMiniReactElement {
+    const normalizedChildren = children
+        .flat()
+        .filter((child) => child !== null && child !== undefined) // Filter out null/undefined
+        .map((child) => {
+            // Convert strings and numbers to text elements
+            if (typeof child === "string" || typeof child === "number") {
+                return {
+                    type: TEXT_ELEMENT,
+                    props: {
+                        nodeValue: child,
+                        children: [],
+                    },
+                };
+            }
+            return child;
+        });
 
-	const props: Record<string, unknown> & { children: AnyMiniReactElement[] } = {
-		...(configProps ?? {}),
-		children,
-	};
-
-	return { type, props };
+    return {
+        type,
+        props: {
+            ...(props || {}),
+            children: normalizedChildren,
+        },
+    };
 }
 
 /**
@@ -59,131 +82,123 @@ export function createElement(
  * @param containerNode The container DOM node
  */
 export function render(
-	element: AnyMiniReactElement | null | undefined,
-	containerNode: HTMLElement,
+    element: AnyMiniReactElement | null | undefined,
+    containerNode: HTMLElement,
 ): void {
-	const newElement = element || null;
-	const oldInstance = rootInstances.get(containerNode) || null;
-	const newInstance = reconcile(containerNode, newElement, oldInstance);
-	rootInstances.set(containerNode, newInstance);
+    // Initialize event system with the container
+    eventSystem.initialize(containerNode);
+
+    const newElement = element || null;
+    const oldInstance = rootInstances.get(containerNode) || null;
+    const newInstance = reconcile(containerNode, newElement, oldInstance);
+    rootInstances.set(containerNode, newInstance);
 }
 
 /**
  * useState hook implementation
- * @param initialState The initial state value
- * @returns A tuple of [state, setState] for managing component state
+ * @param initialState The initial state value or function that returns initial state
+ * @returns A tuple with current state and setState function
  */
 export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
-	if (!currentRenderInstance) {
-		throw new Error(
-			"useState can only be called inside a functional component",
-		);
-	}
+    if (!currentRenderInstance) {
+        throw new Error(
+            "useState must be called inside a functional component",
+        );
+    }
 
-	if (!currentRenderInstance.hooks) {
-		currentRenderInstance.hooks = [];
-	}
+    // Capture the current instance at hook creation time
+    const hookInstance = currentRenderInstance;
 
-	const hooks = currentRenderInstance.hooks;
-	const hookIndex = currentHookIndex++;
+    // Ensure hooks array exists
+    if (!hookInstance.hooks) {
+        hookInstance.hooks = [];
+    }
 
-	// Initialize hook if it doesn't exist
-	if (!hooks[hookIndex]) {
-		const initialValue =
-			typeof initialState === "function"
-				? (initialState as () => T)()
-				: initialState;
+    const hooks = hookInstance.hooks;
+    const currentHookIndex = hookIndex++;
 
-		// Create a stable setState function that will work across re-renders
-		const stableSetState = (newState: unknown) => {
-			const hook = hooks[hookIndex];
-			// Type assertion since we know this is a useState hook
-			const typedNewState = newState as T | ((prevState: T) => T);
-			const nextState =
-				typeof typedNewState === "function"
-					? (typedNewState as (prevState: T) => T)(hook.state as T)
-					: typedNewState;
+    // Initialize hook if it doesn't exist
+    if (hooks.length <= currentHookIndex) {
+        const initialStateValue =
+            typeof initialState === "function"
+                ? (initialState as () => T)()
+                : initialState;
 
-			if (hook.state !== nextState) {
-				hook.state = nextState;
-				// Find the root container and trigger re-render
-				scheduleRerenderForHook(hooks);
-			}
-		};
+        (hooks as Hook<T>[]).push({
+            state: initialStateValue,
+            setState: () => {}, // Will be set below
+        });
+    }
 
-		hooks[hookIndex] = {
-			state: initialValue,
-			setState: stableSetState,
-		};
-	}
+    const hook = hooks[currentHookIndex] as Hook<T>;
 
-	const hook = hooks[hookIndex];
-	return [
-		hook.state as T,
-		hook.setState as (newState: T | ((prevState: T) => T)) => void,
-	];
+    // Create setState function with closure over hook and container
+    const setState = (newState: T | ((prevState: T) => T)) => {
+        const nextState =
+            typeof newState === "function"
+                ? (newState as (prevState: T) => T)(hook.state as T)
+                : newState;
+
+        // Only update if state actually changed
+        if (nextState !== hook.state) {
+            hook.state = nextState;
+
+            // Find the root container for this instance and trigger re-render
+            const container = findRootContainer(hookInstance);
+            if (container) {
+                const rootElement =
+                    rootInstances.get(container)?.element || null;
+                render(rootElement, container);
+            }
+        }
+    };
+
+    // Update the setState function reference
+    hook.setState = setState;
+
+    return [hook.state as T, setState];
 }
 
 /**
- * Sets the current render instance for hook context
- * @param instance The VDOM instance being rendered
+ * Finds the root container for a given VDOM instance
+ * @param instance The VDOM instance
+ * @returns The root container element or null
  */
-export function setCurrentRenderInstance(instance: VDOMInstance | null): void {
-	currentRenderInstance = instance;
-	currentHookIndex = 0;
+function findRootContainer(instance: VDOMInstance): HTMLElement | null {
+    for (const [container, rootInstance] of rootInstances.entries()) {
+        if (rootInstance && isInstanceInTree(instance, rootInstance)) {
+            return container;
+        }
+    }
+    return null;
 }
 
 /**
- * Schedules a re-render by finding the component instance that owns the hook
- * @param hooks The hooks array
+ * Checks if a given instance is part of a VDOM tree
+ * @param targetInstance The instance to find
+ * @param rootInstance The root of the tree to search
+ * @returns True if the instance is in the tree
  */
-function scheduleRerenderForHook(hooks: Hook[]): void {
-	// Find the root container for any instance that has these hooks
-	for (const [container, rootInstance] of rootInstances.entries()) {
-		if (findInstanceWithHooks(rootInstance, hooks)) {
-			// Re-render the entire tree
-			setTimeout(() => {
-				const newInstance = reconcile(
-					container,
-					rootInstance?.element || null,
-					rootInstance,
-				);
-				rootInstances.set(container, newInstance);
-			}, 0);
-			break;
-		}
-	}
-}
-
-/**
- * Recursively finds an instance that has the specified hooks array
- * @param instance The instance to search
- * @param targetHooks The hooks array to find
- * @returns True if the instance or any of its children has the target hooks
- */
-function findInstanceWithHooks(
-	instance: VDOMInstance | null,
-	targetHooks: Hook[],
+function isInstanceInTree(
+    targetInstance: VDOMInstance,
+    rootInstance: VDOMInstance,
 ): boolean {
-	if (!instance) return false;
-	if (instance.hooks === targetHooks) return true;
+    if (targetInstance === rootInstance) {
+        return true;
+    }
 
-	return instance.childInstances.some((child) =>
-		findInstanceWithHooks(child, targetHooks),
-	);
+    for (const child of rootInstance.childInstances) {
+        if (isInstanceInTree(targetInstance, child)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-/**
- * Creates a text element for MiniReact
- * @param text The text to create a text element for
- * @returns The created text element
- */
-function createTextElement(text: string | number): InternalTextElement {
-	return {
-		type: TEXT_ELEMENT,
-		props: {
-			nodeValue: text,
-			children: [],
-		},
-	};
-}
+/* ******* */
+/* Exports */
+/* ******* */
+
+// Export types for external use
+export type { FunctionalComponent } from "./types";
