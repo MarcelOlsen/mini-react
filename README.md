@@ -17,7 +17,7 @@ A learning project to build a simplified React-like library from scratch, with a
   - [Phase 3: Virtual DOM & Basic Reconciliation ✅](#phase-3-virtual-dom--basic-reconciliation-)
   - [Phase 4: Prop Diffing & Efficient Children Reconciliation ✅](#phase-4-prop-diffing--efficient-children-reconciliation-)
   - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook)
-  - [Phase 6: Event Handling](#phase-6-event-handling)
+  - [Phase 6: Event Handling ✅](#phase-6-event-handling)
   - [Phase 7: Effects with useEffect 🚧](#phase-7-effects-with-useeffect)
   - [Phase 8: Context API](#phase-8-context-api)
   - [Phase 9: Portals and Fragments](#phase-9-portals-and-fragments)
@@ -34,8 +34,8 @@ A learning project to build a simplified React-like library from scratch, with a
 
 **MiniReact** is a step-by-step implementation of a React-like UI library designed for learning and understanding how modern UI frameworks work under the hood. The project emphasizes:
 
-- **Test-driven development** with 112 comprehensive tests
-- **Production-quality code** with full TypeScript support and linting
+- **Test-driven development** with 129 comprehensive tests
+- **Quality code** with full TypeScript support and linting
 - **Incremental complexity** with well-documented phases
 - **Performance optimization** with efficient reconciliation algorithms
 - **Real-world patterns** that mirror React's actual implementation
@@ -46,17 +46,17 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ## Current Status
 
-🎯 **Current Phase**: 5 ✅ **COMPLETED**
+🎯 **Current Phase**: 6 ✅ **COMPLETED**
 
 **Latest Achievements**:
 
-- ✅ **Phase 5 Complete**: State with useState Hook
-- ✅ **112 Tests Passing**: Comprehensive test suite covering all functionality
+- ✅ **Phase 6 Complete**: Event Handling with Delegation and Synthetic Events
+- ✅ **129 Tests Passing**: Comprehensive test suite covering all functionality
 - ✅ **Zero Linter Issues**: Clean codebase with consistent formatting
-- ✅ **Performance Optimized**: Key-based reconciliation for efficient list operations
-- ✅ **Production Ready**: Robust virtual DOM with advanced reconciliation
+- ✅ **Production-Ready Event System**: Complete event delegation with synthetic events
+- ✅ **Performance Optimized**: Key-based reconciliation and efficient event handling
 
-**Overall Progress**: 5/10 phases complete (50% of planned features)
+**Overall Progress**: 6/10 phases complete (60% of planned features)
 
 ---
 
@@ -154,9 +154,10 @@ bunx biome check
 - **🧩 Functional Components**: Full support for functional components with props and children
 - **🔄 Dynamic Updates**: Efficient re-rendering with state preservation
 - **📦 TypeScript Support**: Complete type safety with comprehensive type definitions
-- **🧪 Comprehensive Testing**: 112 tests covering all functionality and edge cases
+- **🧪 Comprehensive Testing**: 129 tests covering all functionality and edge cases
 - **📏 Code Quality**: Zero linter issues with consistent formatting
 - **🔄 State Management**: useState hook with functional updates and state preservation
+- **🎪 Event Handling**: Complete event system with delegation, synthetic events, and bubbling/capture
 
 ### 🎨 Advanced Capabilities
 
@@ -177,13 +178,15 @@ mini-react/
 │   ├── MiniReact.ts           # Main API exports
 │   ├── types.ts               # TypeScript type definitions
 │   ├── domRenderer.ts         # DOM manipulation utilities
-│   └── reconciler.ts          # Virtual DOM reconciliation logic
+│   ├── reconciler.ts          # Virtual DOM reconciliation logic
+│   └── eventSystem.ts         # Event delegation and synthetic events
 ├── tests/
 │   ├── MiniReact.createElement.test.ts      # Element creation tests (3 tests)
 │   ├── MiniReact.createElementFC.test.ts    # Functional component creation (18 tests)
 │   ├── MiniReact.render.test.ts             # Rendering & reconciliation (58 tests)
 │   ├── MiniReact.renderFC.test.ts           # Functional component rendering (16 tests)
 │   ├── MiniReact.reconciler.test.ts         # Core reconciliation (19 tests)
+│   ├── MiniReact.events.test.ts             # Event handling tests (17 tests)
 │   └── MiniReact.useState.test.ts           # useState hook tests (11 tests)
 ├── bunfig.toml                # Bun configuration
 ├── biome.json                 # Biome linter/formatter config
@@ -278,7 +281,7 @@ mini-react/
 
 ### Phase 5: State with useState Hook ✅
 
-**Features (Planned):**
+**Features:**
 
 - ✅ Implement a basic `useState` hook for functional components
 - ✅ Trigger re-renders on state changes
@@ -287,6 +290,15 @@ mini-react/
 - ✅ Support for functional state updates
 - ✅ Multiple hooks per component
 - ✅ Hook order consistency
+
+**Tests:** 11 tests passing
+
+- Basic state management with useState
+- State updates and re-renders
+- Component state isolation
+- Multiple hooks per component
+- Hook order consistency
+- Edge cases and special character handling
 
 **Implementation Goals:**
 
@@ -298,23 +310,42 @@ mini-react/
 
 ---
 
-### Phase 6: Event Handling 🚧
+### Phase 6: Event Handling ✅
 
-**Features (Planned):**
+**Features:**
 
-- 🚧 Support for event props (e.g., `onClick`) on host elements
-- 🚧 Attach/detach event listeners as props change
-- 🚧 Proper event delegation and cleanup
+- ✅ Support for event props (e.g., `onClick`) on host elements
+- ✅ Event delegation system for efficient event handling
+- ✅ Synthetic events with normalized cross-browser behavior
+- ✅ Event bubbling and capture phase support
+- ✅ Proper event cleanup and memory management
+- ✅ Integration with useState hook for stateful interactions
+
+**Tests:** 17 tests passing
+
+- Basic event handling (onClick, form events)
+- Event bubbling and propagation control
+- Event delegation for dynamic elements
+- useState integration with events
+- Event cleanup and memory management
+- Complex event scenarios and rapid firing
+
+**Key Implementations:**
+
+- Event delegation system with single root listener
+- Synthetic event objects with preventDefault/stopPropagation
+- Instance-based event registration and cleanup
+- Efficient event handler updates during reconciliation
 
 **Implementation Goals:**
 
-- Event listener management in reconciler
-- Synthetic event system (optional)
-- Memory leak prevention
+- ✅ Event listener management in reconciler
+- ✅ Synthetic event system with cross-browser normalization
+- ✅ Memory leak prevention with proper cleanup
 
 ---
 
-### Phase 7: Effects with useEffect
+### Phase 7: Effects with useEffect 🚧
 
 **Features (Planned):**
 
@@ -527,13 +558,15 @@ const Layout: FunctionalComponent<{ title: string }> = ({
 
 ## Testing
 
-**Comprehensive Test Suite: 91 tests across 5 files**
+**Comprehensive Test Suite: 129 tests across 7 files**
 
 ### Test Categories:
 
 - **Unit Tests**: Individual function testing (createElement, render)
 - **Integration Tests**: Full rendering pipeline testing
 - **Reconciliation Tests**: Virtual DOM diffing and updates
+- **Event Tests**: Event handling, delegation, and synthetic events
+- **Hook Tests**: useState hook functionality and state management
 - **Performance Tests**: Large lists and memory pressure scenarios
 - **Edge Case Tests**: Error handling and boundary conditions
 
