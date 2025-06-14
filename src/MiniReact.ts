@@ -284,8 +284,7 @@ function scheduleEffect(effectFn: () => void): void {
     effectQueue.push(effectFn);
 
     if (!isFlushingEffects) {
-        // Use setTimeout to defer effect execution until after render
-        setTimeout(flushEffects, 0);
+        queueMicrotask(flushEffects);
     }
 }
 
