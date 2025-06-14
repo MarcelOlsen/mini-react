@@ -11,15 +11,15 @@ import type {
 /* ********** */
 
 /**
- * Core reconciliation function that creates/updates VDOM instances and corresponding DOM nodes
+ * Main reconciliation function that handles creation, updates, and removal of VDOM instances
  *
- * @param parentDom The parent DOM node
- * @param newElement The new element to render (can be null for removal)
- * @param oldInstance The existing VDOM instance (can be null for initial render)
- * @returns The new or updated VDOM instance (or null if element was removed)
+ * @param parentDom The parent DOM node (can be null during cleanup)
+ * @param newElement The new element to reconcile
+ * @param oldInstance The existing VDOM instance to reconcile against
+ * @returns The resulting VDOM instance (null if removed)
  */
 export function reconcile(
-	parentDom: Node,
+	parentDom: Node | null,
 	newElement: AnyMiniReactElement | null,
 	oldInstance: VDOMInstance | null,
 ): VDOMInstance | null {
@@ -35,13 +35,9 @@ export function reconcile(
 				}
 			}
 
-			// Recursively clean up child instances
+			// Recursively clean up child instances - no parent DOM needed for cleanup
 			for (const childInstance of oldInstance.childInstances) {
-				reconcile(
-					oldInstance.dom || document.createElement("div"),
-					null,
-					childInstance,
-				);
+				reconcile(null, null, childInstance);
 			}
 
 			// Only handle DOM cleanup if instance has a DOM node
@@ -56,11 +52,17 @@ export function reconcile(
 
 	// Case 2: Initial render - oldInstance is null
 	if (oldInstance == null) {
+		if (!parentDom) {
+			throw new Error("Parent DOM node is required for initial render");
+		}
 		return createVDOMInstance(parentDom, newElement);
 	}
 
 	// Case 3: Type change - recreate everything
 	if (!isSameElementType(oldInstance.element, newElement)) {
+		if (!parentDom) {
+			throw new Error("Parent DOM node is required for type change reconciliation");
+		}
 		const newInstance = createVDOMInstance(parentDom, newElement);
 
 		// Clean up old instance hooks
@@ -259,7 +261,7 @@ function updateVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => {};
+	() => { };
 
 /**
  * Sets the hook context function from MiniReact module
