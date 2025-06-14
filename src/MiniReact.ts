@@ -225,14 +225,22 @@ export function useEffect(
         scheduleEffect(() => {
             // Run cleanup from previous effect if it exists
             if (hook.cleanup) {
-                hook.cleanup();
+                try {
+                    hook.cleanup();
+                } catch (error) {
+                    console.error("Error in useEffect cleanup:", error);
+                }
                 hook.cleanup = undefined;
             }
 
             // Run the effect
-            const cleanupFunction = hook.callback();
-            if (typeof cleanupFunction === "function") {
-                hook.cleanup = cleanupFunction;
+            try {
+                const cleanupFunction = hook.callback();
+                if (typeof cleanupFunction === "function") {
+                    hook.cleanup = cleanupFunction;
+                }
+            } catch (error) {
+                console.error("Error in useEffect callback:", error);
             }
 
             hook.hasRun = true;
