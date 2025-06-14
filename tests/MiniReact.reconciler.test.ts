@@ -290,13 +290,13 @@ describe("MiniReact.reconciler", () => {
 				{ id: "same-type" },
 				"Updated content",
 			);
-			const _newInstance = reconcile(container, element2, oldInstance);
+			const newInstance = reconcile(container, element2, oldInstance);
 
-			expect(_newInstance).not.toBeNull();
-			if (_newInstance && oldInstance) {
+			expect(newInstance).not.toBeNull();
+			if (newInstance && oldInstance) {
 				// Should reuse same DOM node (for now in Phase 3)
-				expect(_newInstance.dom).toBe(originalDom);
-				expect(_newInstance.element).toBe(element2);
+				expect(newInstance.dom).toBe(originalDom);
+				expect(newInstance.element).toBe(element2);
 			}
 		});
 
@@ -398,11 +398,12 @@ describe("MiniReact.reconciler", () => {
 			const element2 = createElement(ConditionalComponent, {
 				useDiv: false,
 			});
-			const _newInstance = reconcile(container, element2, oldInstance);
+			const newInstance = reconcile(container, element2, oldInstance);
 
 			expect(container.querySelector("div")).toBeNull();
 			expect(container.querySelector("span")).not.toBeNull();
 			expect(container.textContent).toBe("I am a span");
+			expect(newInstance).not.toBeNull();
 		});
 
 		test("should handle functional component returning null after returning element", () => {
@@ -488,11 +489,12 @@ describe("MiniReact.reconciler", () => {
 				createElement("p", {}, "Updated Content"),
 				createElement("footer", {}, "Footer"),
 			);
-			const _newInstance = reconcile(container, element2, oldInstance);
+			const newInstance = reconcile(container, element2, oldInstance);
 
 			expect(container.querySelector("h1")?.textContent).toBe("Updated Title");
 			expect(container.querySelector("p")?.textContent).toBe("Updated Content");
 			expect(container.querySelector("footer")?.textContent).toBe("Footer");
+			expect(newInstance).not.toBeNull();
 		});
 	});
 });

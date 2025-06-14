@@ -31,7 +31,7 @@ describe("MiniReact.useEffect Hook", () => {
 		render(createElement(Component, null), container);
 
 		// Wait for effect to run
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRan).toBe(true);
 	});
 
@@ -54,13 +54,13 @@ describe("MiniReact.useEffect Hook", () => {
 
 		// Initial render
 		render(createElement(Component, { shouldRender: true }), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRan).toBe(true);
 		expect(cleanupRan).toBe(false);
 
 		// Unmount component
 		render(createElement(Component, { shouldRender: false }), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(cleanupRan).toBe(true);
 	});
 
@@ -81,13 +81,13 @@ describe("MiniReact.useEffect Hook", () => {
 
 		// Initial render
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRan).toBe(true);
 		expect(cleanupRan).toBe(false);
 
 		// Unmount component directly
 		render(null, container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(cleanupRan).toBe(true);
 	});
 
@@ -107,21 +107,21 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(1);
 
 		// Update state - should trigger effect
 		if (setCount) {
 			setCount(1);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(2);
 
 		// Update with same value - should not trigger effect
 		if (setCount) {
 			setCount(1);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(2);
 	});
 
@@ -141,21 +141,21 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(1);
 
 		// Update state - should NOT trigger effect
 		if (setCount) {
 			setCount(1);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(1);
 
 		// Update state again - should still NOT trigger effect
 		if (setCount) {
 			setCount(2);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(1);
 	});
 
@@ -175,21 +175,21 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(1);
 
 		// Update state - should trigger effect
 		if (setCount) {
 			setCount(1);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(2);
 
 		// Update state again - should trigger effect again
 		if (setCount) {
 			setCount(2);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(3);
 	});
 
@@ -214,7 +214,7 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effect1RunCount).toBe(1);
 		expect(effect2RunCount).toBe(1);
 
@@ -222,7 +222,7 @@ describe("MiniReact.useEffect Hook", () => {
 		if (setCount) {
 			setCount(1);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effect1RunCount).toBe(1); // Should not run again (empty deps)
 		expect(effect2RunCount).toBe(2); // Should run again (depends on count)
 	});
@@ -243,21 +243,21 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(1);
 
 		// Update user object
 		if (setUser) {
 			setUser({ name: "Jane", age: 25 });
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(2); // Name changed
 
 		// Update age
 		if (setUser) {
 			setUser({ name: "Jane", age: 30 });
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effectRunCount).toBe(3); // Age changed
 	});
 
@@ -279,27 +279,27 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(cleanupCount).toBe(0);
 
 		// Change dependency
 		if (setToggle) {
 			setToggle(true);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(cleanupCount).toBe(1); // Previous effect cleaned up
 
 		// Change dependency again
 		if (setToggle) {
 			setToggle(false);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(cleanupCount).toBe(2); // Previous effect cleaned up again
 	});
 
 	test("should throw error when useEffect called outside component", () => {
 		expect(() => {
-			useEffect(() => {});
+			useEffect(() => { });
 		}).toThrow("useEffect must be called inside a functional component");
 	});
 
@@ -313,7 +313,7 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(document.title).toBe("Effect Test");
 	});
 
@@ -338,7 +338,7 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Parent, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(parentEffectRan).toBe(true);
 		expect(childEffectRan).toBe(true);
 	});
@@ -366,7 +366,7 @@ describe("MiniReact.useEffect Hook", () => {
 		};
 
 		render(createElement(Component, null), container);
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effect1Runs).toBe(1);
 		expect(effect2Runs).toBe(1);
 
@@ -374,7 +374,7 @@ describe("MiniReact.useEffect Hook", () => {
 		if (setCondition) {
 			setCondition(false);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		expect(effect1Runs).toBe(1); // Should not run again
 		expect(effect2Runs).toBe(2); // Should run again
 	});
