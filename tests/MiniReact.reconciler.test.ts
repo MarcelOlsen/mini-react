@@ -290,13 +290,13 @@ describe("MiniReact.reconciler", () => {
 				{ id: "same-type" },
 				"Updated content",
 			);
-			const newInstance = reconcile(container, element2, oldInstance);
+			const _newInstance = reconcile(container, element2, oldInstance);
 
-			expect(newInstance).not.toBeNull();
-			if (newInstance && oldInstance) {
+			expect(_newInstance).not.toBeNull();
+			if (_newInstance && oldInstance) {
 				// Should reuse same DOM node (for now in Phase 3)
-				expect(newInstance.dom).toBe(originalDom);
-				expect(newInstance.element).toBe(element2);
+				expect(_newInstance.dom).toBe(originalDom);
+				expect(_newInstance.element).toBe(element2);
 			}
 		});
 
@@ -398,7 +398,7 @@ describe("MiniReact.reconciler", () => {
 			const element2 = createElement(ConditionalComponent, {
 				useDiv: false,
 			});
-			const newInstance = reconcile(container, element2, oldInstance);
+			const _newInstance = reconcile(container, element2, oldInstance);
 
 			expect(container.querySelector("div")).toBeNull();
 			expect(container.querySelector("span")).not.toBeNull();
@@ -488,7 +488,7 @@ describe("MiniReact.reconciler", () => {
 				createElement("p", {}, "Updated Content"),
 				createElement("footer", {}, "Footer"),
 			);
-			const newInstance = reconcile(container, element2, oldInstance);
+			const _newInstance = reconcile(container, element2, oldInstance);
 
 			expect(container.querySelector("h1")?.textContent).toBe("Updated Title");
 			expect(container.querySelector("p")?.textContent).toBe("Updated Content");
