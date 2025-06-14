@@ -10,8 +10,8 @@ import {
     type EffectCallback,
     type EffectHook,
     type ElementType,
-    type Hook,
     type StateHook,
+    type StateOrEffectHook,
     TEXT_ELEMENT,
     type UseStateHook,
     type VDOMInstance,
@@ -139,7 +139,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
             setState: () => { }, // Will be set below
         };
 
-        (hooks as Hook<T>[]).push(stateHook);
+        (hooks as StateOrEffectHook<T>[]).push(stateHook);
     }
 
     const hook = hooks[currentHookIndex] as StateHook<T>;

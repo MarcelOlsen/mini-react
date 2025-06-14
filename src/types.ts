@@ -58,7 +58,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-		EventHandlers & { children: AnyMiniReactElement[] };
+	EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {
@@ -91,7 +91,11 @@ export interface EffectHook {
 	hasRun: boolean;
 }
 
-export type Hook<T = unknown> = StateHook<T> | EffectHook;
+/**
+ * Union type for hooks stored in component instances.
+ * Note: The generic parameter T only applies to StateHook, EffectHook ignores it.
+ */
+export type StateOrEffectHook<T = unknown> = StateHook<T> | EffectHook;
 
 export type UseStateHook<T> = [
 	T,
@@ -115,6 +119,6 @@ export interface VDOMInstance {
 	element: AnyMiniReactElement;
 	dom: Node | null;
 	childInstances: VDOMInstance[];
-	hooks?: Hook<unknown>[];
+	hooks?: StateOrEffectHook<unknown>[];
 	hookCursor?: number;
 }
