@@ -180,9 +180,7 @@ describe("MiniReact.render", () => {
 		render(element, container);
 
 		// null and undefined children should be filtered out, not rendered as text
-		expect(container.firstChild?.textContent).toBe(
-			"BeforeBetweenAfter",
-		);
+		expect(container.firstChild?.textContent).toBe("BeforeBetweenAfter");
 	});
 
 	test("should handle props with empty string values", () => {
@@ -1149,8 +1147,8 @@ describe("MiniReact.render", () => {
 			expect(parent.children).toHaveLength(500);
 
 			// Store references to some DOM nodes
-			const node100 = parent.children[100];
-			const node300 = parent.children[300];
+			const _node100 = parent.children[100];
+			const _node300 = parent.children[300];
 
 			// Update to 600 items (add 100, keep most existing)
 			const largeList2 = createLargeList("updated", 600);
@@ -1381,7 +1379,7 @@ describe("MiniReact.render", () => {
 			const parent = container.querySelector(
 				"#keyed-components",
 			) as HTMLElement;
-			const componentA = parent.querySelector(
+			const _componentA = parent.querySelector(
 				'[data-component-id="A"]',
 			) as HTMLElement;
 			const elementB = parent.querySelector("span") as HTMLElement;
@@ -1412,9 +1410,6 @@ describe("MiniReact.render", () => {
 			// Verify components and elements can be mixed and reordered
 			expect(updatedParent.children).toHaveLength(3);
 
-			const updatedComponentA = updatedParent.querySelector(
-				'[data-component-id="A"]',
-			) as HTMLElement;
 			const updatedElementB = updatedParent.querySelector(
 				"span",
 			) as HTMLElement;
@@ -1424,10 +1419,10 @@ describe("MiniReact.render", () => {
 			expect(updatedElementB.textContent).toBe("Updated Element B");
 
 			// Component output should be updated
-			expect(updatedComponentA.textContent).toBe("Updated Component A");
+			expect(updatedParent.children[2].textContent).toBe("Updated Component A");
 
 			// Verify order: B, C, A
-			const order = Array.from(updatedParent.children).map((child, index) => {
+			const order = Array.from(updatedParent.children).map((child) => {
 				if (child.tagName === "SPAN") return "B";
 				const componentId = child.getAttribute("data-component-id");
 				return componentId;

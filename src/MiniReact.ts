@@ -6,8 +6,12 @@ import { eventSystem } from "./eventSystem";
 import { reconcile, setHookContext } from "./reconciler";
 import {
     type AnyMiniReactElement,
+    type DependencyList,
+    type EffectCallback,
+    type EffectHook,
     type ElementType,
     type Hook,
+    type StateHook,
     TEXT_ELEMENT,
     type UseStateHook,
     type VDOMInstance,
@@ -25,12 +29,18 @@ const rootInstances = new Map<HTMLElement, VDOMInstance | null>();
 
 // Hook state management
 let currentRenderInstance: VDOMInstance | null = null;
-let hookIndex = 0;
+
+// Effect queue management
+const effectQueue: (() => void)[] = [];
+let isFlushingEffects = false;
 
 // Set the hook context function in the reconciler
 setHookContext((instance: VDOMInstance | null) => {
     currentRenderInstance = instance;
-    hookIndex = 0;
+    // Reset hookCursor to 0 at the beginning of each component's render
+    if (instance) {
+        instance.hookCursor = 0;
+    }
 });
 
 /* *********** */
@@ -101,9 +111,7 @@ export function render(
  */
 export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
     if (!currentRenderInstance) {
-        throw new Error(
-            "useState must be called inside a functional component",
-        );
+        throw new Error("useState must be called inside a functional component");
     }
 
     // Capture the current instance at hook creation time
@@ -115,7 +123,8 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
     }
 
     const hooks = hookInstance.hooks;
-    const currentHookIndex = hookIndex++;
+    const currentHookIndex = hookInstance.hookCursor ?? 0;
+    hookInstance.hookCursor = currentHookIndex + 1;
 
     // Initialize hook if it doesn't exist
     if (hooks.length <= currentHookIndex) {
@@ -124,13 +133,16 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
                 ? (initialState as () => T)()
                 : initialState;
 
-        (hooks as Hook<T>[]).push({
+        const stateHook: StateHook<T> = {
+            type: "state",
             state: initialStateValue,
-            setState: () => {}, // Will be set below
-        });
+            setState: () => { }, // Will be set below
+        };
+
+        (hooks as Hook<T>[]).push(stateHook);
     }
 
-    const hook = hooks[currentHookIndex] as Hook<T>;
+    const hook = hooks[currentHookIndex] as StateHook<T>;
 
     // Create setState function with closure over hook and container
     const setState = (newState: T | ((prevState: T) => T)) => {
@@ -146,8 +158,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
             // Find the root container for this instance and trigger re-render
             const container = findRootContainer(hookInstance);
             if (container) {
-                const rootElement =
-                    rootInstances.get(container)?.element || null;
+                const rootElement = rootInstances.get(container)?.element || null;
                 render(rootElement, container);
             }
         }
@@ -157,6 +168,76 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
     hook.setState = setState;
 
     return [hook.state as T, setState];
+}
+
+/**
+ * useEffect hook implementation
+ * @param callback Effect callback function that may return a cleanup function
+ * @param dependencies Optional dependency array
+ */
+export function useEffect(
+    callback: EffectCallback,
+    dependencies?: DependencyList,
+): void {
+    if (!currentRenderInstance) {
+        throw new Error("useEffect must be called inside a functional component");
+    }
+
+    // Capture the current instance at hook creation time
+    const hookInstance = currentRenderInstance;
+
+    // Ensure hooks array exists
+    if (!hookInstance.hooks) {
+        hookInstance.hooks = [];
+    }
+
+    const hooks = hookInstance.hooks;
+    const currentHookIndex = hookInstance.hookCursor ?? 0;
+    hookInstance.hookCursor = currentHookIndex + 1;
+
+    // Initialize hook if it doesn't exist
+    if (hooks.length <= currentHookIndex) {
+        const effectHook: EffectHook = {
+            type: "effect",
+            callback,
+            dependencies,
+            hasRun: false,
+        };
+        hooks.push(effectHook);
+    }
+
+    const hook = hooks[currentHookIndex] as EffectHook;
+    const prevDependencies = hook.dependencies;
+
+    // Check if dependencies have changed
+    const dependenciesChanged =
+        dependencies === undefined ||
+        prevDependencies === undefined ||
+        dependencies.length !== prevDependencies.length ||
+        dependencies.some((dep, index) => dep !== prevDependencies[index]);
+
+    // Update hook data
+    hook.callback = callback;
+    hook.dependencies = dependencies;
+
+    // Schedule effect if dependencies changed or it's the first run
+    if (!hook.hasRun || dependenciesChanged) {
+        scheduleEffect(() => {
+            // Run cleanup from previous effect if it exists
+            if (hook.cleanup) {
+                hook.cleanup();
+                hook.cleanup = undefined;
+            }
+
+            // Run the effect
+            const cleanupFunction = hook.callback();
+            if (typeof cleanupFunction === "function") {
+                hook.cleanup = cleanupFunction;
+            }
+
+            hook.hasRun = true;
+        });
+    }
 }
 
 /**
@@ -194,6 +275,38 @@ function isInstanceInTree(
     }
 
     return false;
+}
+
+/**
+ * Schedules an effect to be run after the current render
+ */
+function scheduleEffect(effectFn: () => void): void {
+    effectQueue.push(effectFn);
+
+    if (!isFlushingEffects) {
+        // Use setTimeout to defer effect execution until after render
+        setTimeout(flushEffects, 0);
+    }
+}
+
+/**
+ * Flushes all queued effects
+ */
+function flushEffects(): void {
+    if (isFlushingEffects) return;
+
+    isFlushingEffects = true;
+
+    try {
+        while (effectQueue.length > 0) {
+            const effect = effectQueue.shift();
+            if (effect) {
+                effect();
+            }
+        }
+    } finally {
+        isFlushingEffects = false;
+    }
 }
 
 /* ******* */
