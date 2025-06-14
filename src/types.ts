@@ -116,4 +116,5 @@ export interface VDOMInstance {
 	dom: Node | null;
 	childInstances: VDOMInstance[];
 	hooks?: Hook<unknown>[];
+	hookCursor?: number;
 }

@@ -5,16 +5,16 @@
 import { eventSystem } from "./eventSystem";
 import { reconcile, setHookContext } from "./reconciler";
 import {
-	type AnyMiniReactElement,
-	type DependencyList,
-	type EffectCallback,
-	type EffectHook,
-	type ElementType,
-	type Hook,
-	type StateHook,
-	TEXT_ELEMENT,
-	type UseStateHook,
-	type VDOMInstance,
+    type AnyMiniReactElement,
+    type DependencyList,
+    type EffectCallback,
+    type EffectHook,
+    type ElementType,
+    type Hook,
+    type StateHook,
+    TEXT_ELEMENT,
+    type UseStateHook,
+    type VDOMInstance,
 } from "./types";
 
 // Export event types for external use
@@ -29,7 +29,6 @@ const rootInstances = new Map<HTMLElement, VDOMInstance | null>();
 
 // Hook state management
 let currentRenderInstance: VDOMInstance | null = null;
-let hookIndex = 0;
 
 // Effect queue management
 const effectQueue: (() => void)[] = [];
@@ -37,8 +36,11 @@ let isFlushingEffects = false;
 
 // Set the hook context function in the reconciler
 setHookContext((instance: VDOMInstance | null) => {
-	currentRenderInstance = instance;
-	hookIndex = 0;
+    currentRenderInstance = instance;
+    // Reset hookCursor to 0 at the beginning of each component's render
+    if (instance) {
+        instance.hookCursor = 0;
+    }
 });
 
 /* *********** */
@@ -54,34 +56,34 @@ setHookContext((instance: VDOMInstance | null) => {
  * @returns A MiniReact element
  */
 export function createElement(
-	type: ElementType,
-	props: Record<string, unknown> | null,
-	...children: (AnyMiniReactElement | string | number | null | undefined)[]
+    type: ElementType,
+    props: Record<string, unknown> | null,
+    ...children: (AnyMiniReactElement | string | number | null | undefined)[]
 ): AnyMiniReactElement {
-	const normalizedChildren = children
-		.flat()
-		.filter((child) => child !== null && child !== undefined) // Filter out null/undefined
-		.map((child) => {
-			// Convert strings and numbers to text elements
-			if (typeof child === "string" || typeof child === "number") {
-				return {
-					type: TEXT_ELEMENT,
-					props: {
-						nodeValue: child,
-						children: [],
-					},
-				};
-			}
-			return child;
-		});
+    const normalizedChildren = children
+        .flat()
+        .filter((child) => child !== null && child !== undefined) // Filter out null/undefined
+        .map((child) => {
+            // Convert strings and numbers to text elements
+            if (typeof child === "string" || typeof child === "number") {
+                return {
+                    type: TEXT_ELEMENT,
+                    props: {
+                        nodeValue: child,
+                        children: [],
+                    },
+                };
+            }
+            return child;
+        });
 
-	return {
-		type,
-		props: {
-			...(props || {}),
-			children: normalizedChildren,
-		},
-	};
+    return {
+        type,
+        props: {
+            ...(props || {}),
+            children: normalizedChildren,
+        },
+    };
 }
 
 /**
@@ -90,16 +92,16 @@ export function createElement(
  * @param containerNode The container DOM node
  */
 export function render(
-	element: AnyMiniReactElement | null | undefined,
-	containerNode: HTMLElement,
+    element: AnyMiniReactElement | null | undefined,
+    containerNode: HTMLElement,
 ): void {
-	// Initialize event system with the container
-	eventSystem.initialize(containerNode);
+    // Initialize event system with the container
+    eventSystem.initialize(containerNode);
 
-	const newElement = element || null;
-	const oldInstance = rootInstances.get(containerNode) || null;
-	const newInstance = reconcile(containerNode, newElement, oldInstance);
-	rootInstances.set(containerNode, newInstance);
+    const newElement = element || null;
+    const oldInstance = rootInstances.get(containerNode) || null;
+    const newInstance = reconcile(containerNode, newElement, oldInstance);
+    rootInstances.set(containerNode, newInstance);
 }
 
 /**
@@ -108,63 +110,64 @@ export function render(
  * @returns A tuple with current state and setState function
  */
 export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
-	if (!currentRenderInstance) {
-		throw new Error("useState must be called inside a functional component");
-	}
+    if (!currentRenderInstance) {
+        throw new Error("useState must be called inside a functional component");
+    }
 
-	// Capture the current instance at hook creation time
-	const hookInstance = currentRenderInstance;
+    // Capture the current instance at hook creation time
+    const hookInstance = currentRenderInstance;
 
-	// Ensure hooks array exists
-	if (!hookInstance.hooks) {
-		hookInstance.hooks = [];
-	}
+    // Ensure hooks array exists
+    if (!hookInstance.hooks) {
+        hookInstance.hooks = [];
+    }
 
-	const hooks = hookInstance.hooks;
-	const currentHookIndex = hookIndex++;
+    const hooks = hookInstance.hooks;
+    const currentHookIndex = hookInstance.hookCursor ?? 0;
+    hookInstance.hookCursor = currentHookIndex + 1;
 
-	// Initialize hook if it doesn't exist
-	if (hooks.length <= currentHookIndex) {
-		const initialStateValue =
-			typeof initialState === "function"
-				? (initialState as () => T)()
-				: initialState;
+    // Initialize hook if it doesn't exist
+    if (hooks.length <= currentHookIndex) {
+        const initialStateValue =
+            typeof initialState === "function"
+                ? (initialState as () => T)()
+                : initialState;
 
-		const stateHook: StateHook<T> = {
-			type: "state",
-			state: initialStateValue,
-			setState: () => {}, // Will be set below
-		};
+        const stateHook: StateHook<T> = {
+            type: "state",
+            state: initialStateValue,
+            setState: () => { }, // Will be set below
+        };
 
-		(hooks as Hook<T>[]).push(stateHook);
-	}
+        (hooks as Hook<T>[]).push(stateHook);
+    }
 
-	const hook = hooks[currentHookIndex] as StateHook<T>;
+    const hook = hooks[currentHookIndex] as StateHook<T>;
 
-	// Create setState function with closure over hook and container
-	const setState = (newState: T | ((prevState: T) => T)) => {
-		const nextState =
-			typeof newState === "function"
-				? (newState as (prevState: T) => T)(hook.state as T)
-				: newState;
+    // Create setState function with closure over hook and container
+    const setState = (newState: T | ((prevState: T) => T)) => {
+        const nextState =
+            typeof newState === "function"
+                ? (newState as (prevState: T) => T)(hook.state as T)
+                : newState;
 
-		// Only update if state actually changed
-		if (nextState !== hook.state) {
-			hook.state = nextState;
+        // Only update if state actually changed
+        if (nextState !== hook.state) {
+            hook.state = nextState;
 
-			// Find the root container for this instance and trigger re-render
-			const container = findRootContainer(hookInstance);
-			if (container) {
-				const rootElement = rootInstances.get(container)?.element || null;
-				render(rootElement, container);
-			}
-		}
-	};
+            // Find the root container for this instance and trigger re-render
+            const container = findRootContainer(hookInstance);
+            if (container) {
+                const rootElement = rootInstances.get(container)?.element || null;
+                render(rootElement, container);
+            }
+        }
+    };
 
-	// Update the setState function reference
-	hook.setState = setState;
+    // Update the setState function reference
+    hook.setState = setState;
 
-	return [hook.state as T, setState];
+    return [hook.state as T, setState];
 }
 
 /**
@@ -173,67 +176,68 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
  * @param dependencies Optional dependency array
  */
 export function useEffect(
-	callback: EffectCallback,
-	dependencies?: DependencyList,
+    callback: EffectCallback,
+    dependencies?: DependencyList,
 ): void {
-	if (!currentRenderInstance) {
-		throw new Error("useEffect must be called inside a functional component");
-	}
+    if (!currentRenderInstance) {
+        throw new Error("useEffect must be called inside a functional component");
+    }
 
-	// Capture the current instance at hook creation time
-	const hookInstance = currentRenderInstance;
+    // Capture the current instance at hook creation time
+    const hookInstance = currentRenderInstance;
 
-	// Ensure hooks array exists
-	if (!hookInstance.hooks) {
-		hookInstance.hooks = [];
-	}
+    // Ensure hooks array exists
+    if (!hookInstance.hooks) {
+        hookInstance.hooks = [];
+    }
 
-	const hooks = hookInstance.hooks;
-	const currentHookIndex = hookIndex++;
+    const hooks = hookInstance.hooks;
+    const currentHookIndex = hookInstance.hookCursor ?? 0;
+    hookInstance.hookCursor = currentHookIndex + 1;
 
-	// Initialize hook if it doesn't exist
-	if (hooks.length <= currentHookIndex) {
-		const effectHook: EffectHook = {
-			type: "effect",
-			callback,
-			dependencies,
-			hasRun: false,
-		};
-		hooks.push(effectHook);
-	}
+    // Initialize hook if it doesn't exist
+    if (hooks.length <= currentHookIndex) {
+        const effectHook: EffectHook = {
+            type: "effect",
+            callback,
+            dependencies,
+            hasRun: false,
+        };
+        hooks.push(effectHook);
+    }
 
-	const hook = hooks[currentHookIndex] as EffectHook;
-	const prevDependencies = hook.dependencies;
+    const hook = hooks[currentHookIndex] as EffectHook;
+    const prevDependencies = hook.dependencies;
 
-	// Check if dependencies have changed
-	const dependenciesChanged =
-		dependencies === undefined ||
-		prevDependencies === undefined ||
-		dependencies.length !== prevDependencies.length ||
-		dependencies.some((dep, index) => dep !== prevDependencies[index]);
+    // Check if dependencies have changed
+    const dependenciesChanged =
+        dependencies === undefined ||
+        prevDependencies === undefined ||
+        dependencies.length !== prevDependencies.length ||
+        dependencies.some((dep, index) => dep !== prevDependencies[index]);
 
-	// Update hook data
-	hook.callback = callback;
-	hook.dependencies = dependencies;
+    // Update hook data
+    hook.callback = callback;
+    hook.dependencies = dependencies;
 
-	// Schedule effect if dependencies changed or it's the first run
-	if (!hook.hasRun || dependenciesChanged) {
-		scheduleEffect(() => {
-			// Run cleanup from previous effect if it exists
-			if (hook.cleanup) {
-				hook.cleanup();
-				hook.cleanup = undefined;
-			}
+    // Schedule effect if dependencies changed or it's the first run
+    if (!hook.hasRun || dependenciesChanged) {
+        scheduleEffect(() => {
+            // Run cleanup from previous effect if it exists
+            if (hook.cleanup) {
+                hook.cleanup();
+                hook.cleanup = undefined;
+            }
 
-			// Run the effect
-			const cleanupFunction = hook.callback();
-			if (typeof cleanupFunction === "function") {
-				hook.cleanup = cleanupFunction;
-			}
+            // Run the effect
+            const cleanupFunction = hook.callback();
+            if (typeof cleanupFunction === "function") {
+                hook.cleanup = cleanupFunction;
+            }
 
-			hook.hasRun = true;
-		});
-	}
+            hook.hasRun = true;
+        });
+    }
 }
 
 /**
@@ -242,12 +246,12 @@ export function useEffect(
  * @returns The root container element or null
  */
 function findRootContainer(instance: VDOMInstance): HTMLElement | null {
-	for (const [container, rootInstance] of rootInstances.entries()) {
-		if (rootInstance && isInstanceInTree(instance, rootInstance)) {
-			return container;
-		}
-	}
-	return null;
+    for (const [container, rootInstance] of rootInstances.entries()) {
+        if (rootInstance && isInstanceInTree(instance, rootInstance)) {
+            return container;
+        }
+    }
+    return null;
 }
 
 /**
@@ -257,52 +261,52 @@ function findRootContainer(instance: VDOMInstance): HTMLElement | null {
  * @returns True if the instance is in the tree
  */
 function isInstanceInTree(
-	targetInstance: VDOMInstance,
-	rootInstance: VDOMInstance,
+    targetInstance: VDOMInstance,
+    rootInstance: VDOMInstance,
 ): boolean {
-	if (targetInstance === rootInstance) {
-		return true;
-	}
+    if (targetInstance === rootInstance) {
+        return true;
+    }
 
-	for (const child of rootInstance.childInstances) {
-		if (isInstanceInTree(targetInstance, child)) {
-			return true;
-		}
-	}
+    for (const child of rootInstance.childInstances) {
+        if (isInstanceInTree(targetInstance, child)) {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 /**
  * Schedules an effect to be run after the current render
  */
 function scheduleEffect(effectFn: () => void): void {
-	effectQueue.push(effectFn);
+    effectQueue.push(effectFn);
 
-	if (!isFlushingEffects) {
-		// Use setTimeout to defer effect execution until after render
-		setTimeout(flushEffects, 0);
-	}
+    if (!isFlushingEffects) {
+        // Use setTimeout to defer effect execution until after render
+        setTimeout(flushEffects, 0);
+    }
 }
 
 /**
  * Flushes all queued effects
  */
 function flushEffects(): void {
-	if (isFlushingEffects) return;
+    if (isFlushingEffects) return;
 
-	isFlushingEffects = true;
+    isFlushingEffects = true;
 
-	try {
-		while (effectQueue.length > 0) {
-			const effect = effectQueue.shift();
-			if (effect) {
-				effect();
-			}
-		}
-	} finally {
-		isFlushingEffects = false;
-	}
+    try {
+        while (effectQueue.length > 0) {
+            const effect = effectQueue.shift();
+            if (effect) {
+                effect();
+            }
+        }
+    } finally {
+        isFlushingEffects = false;
+    }
 }
 
 /* ******* */
