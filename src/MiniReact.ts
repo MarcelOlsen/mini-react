@@ -26,6 +26,8 @@ export type { SyntheticEvent } from "./eventSystem";
 
 // Store root instances for each container
 const rootInstances = new Map<HTMLElement, VDOMInstance | null>();
+// Store original root elements for re-rendering
+const rootElements = new Map<HTMLElement, AnyMiniReactElement | null>();
 
 // Hook state management
 let currentRenderInstance: VDOMInstance | null = null;
@@ -99,6 +101,10 @@ export function render(
     eventSystem.initialize(containerNode);
 
     const newElement = element || null;
+
+    // Store the original element for re-renders
+    rootElements.set(containerNode, newElement);
+
     const oldInstance = rootInstances.get(containerNode) || null;
     const newInstance = reconcile(containerNode, newElement, oldInstance);
     rootInstances.set(containerNode, newInstance);
@@ -158,7 +164,8 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
             // Find the root container for this instance and trigger re-render
             const container = findRootContainer(hookInstance);
             if (container) {
-                const rootElement = rootInstances.get(container)?.element || null;
+                // Use the original root element for re-render instead of stale element from instance
+                const rootElement = rootElements.get(container) || null;
                 render(rootElement, container);
             }
         }
