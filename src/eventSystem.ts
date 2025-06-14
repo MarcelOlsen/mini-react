@@ -77,6 +77,26 @@ type NativeEventName =
 	(typeof MINI_REACT_EVENT_TO_NATIVE_EVENT)[MiniReactEventName];
 
 /**
+ * Events that need to be captured in the capture phase for proper handling
+ */
+const CAPTURE_EVENTS = new Set<NativeEventName>([
+	"focus",
+	"blur",
+	"scroll",
+	"load",
+	"error",
+]);
+
+/**
+ * Events that should use passive listeners for better performance
+ */
+const PASSIVE_EVENTS = new Set<NativeEventName>([
+	"wheel",
+	"touchstart",
+	"touchmove",
+]);
+
+/**
  * Synthetic event interface that wraps native DOM events with additional
  * MiniReact-compatible functionality and normalized behavior across browsers.
  *
@@ -328,15 +348,12 @@ class EventSystem {
 		eventName: NativeEventName,
 	): boolean | AddEventListenerOptions {
 		// Some events need to be captured in capture phase
-		const captureEvents = new Set(["focus", "blur", "scroll", "load", "error"]);
-
-		if (captureEvents.has(eventName)) {
+		if (CAPTURE_EVENTS.has(eventName)) {
 			return { capture: true };
 		}
 
 		// Passive events for better performance
-		const passiveEvents = new Set(["wheel", "touchstart", "touchmove"]);
-		if (passiveEvents.has(eventName)) {
+		if (PASSIVE_EVENTS.has(eventName)) {
 			return { passive: true };
 		}
 
