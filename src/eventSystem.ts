@@ -218,10 +218,10 @@ function createSyntheticEvent(nativeEvent: Event): SyntheticEvent {
  * - Memory leak prevention through proper cleanup
  */
 class EventSystem {
-	/** The root DOM element where all events are delegated */
+	/** The root DOM container where events are delegated from */
 	private rootContainer: Element | null = null;
 
-	/** Set of native event types that have listeners registered */
+	/** Set of native event types that have been registered for delegation */
 	private registeredEvents = new Set<NativeEventName>();
 
 	/** Maps VDOM instances to their corresponding DOM nodes */
@@ -229,6 +229,14 @@ class EventSystem {
 
 	/** Maps DOM nodes to their corresponding VDOM instances */
 	private nodeToInstance = new WeakMap<Node, VDOMInstance>();
+
+	/** Cached bound handler function to ensure same reference for add/remove event listeners */
+	private boundHandleDelegatedEvent: (event: Event) => void;
+
+	constructor() {
+		// Cache the bound handler function once to ensure consistent reference
+		this.boundHandleDelegatedEvent = this.handleDelegatedEvent.bind(this);
+	}
 
 	/**
 	 * Initializes the event system with a root container element.
@@ -300,7 +308,7 @@ class EventSystem {
 
 			this.rootContainer.addEventListener(
 				nativeEventName,
-				this.handleDelegatedEvent.bind(this),
+				this.boundHandleDelegatedEvent,
 				eventOptions,
 			);
 
@@ -567,7 +575,7 @@ class EventSystem {
 			for (const eventName of this.registeredEvents) {
 				this.rootContainer.removeEventListener(
 					eventName,
-					this.handleDelegatedEvent.bind(this),
+					this.boundHandleDelegatedEvent,
 				);
 			}
 		}
