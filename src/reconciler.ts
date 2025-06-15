@@ -6,6 +6,13 @@ import type {
 	VDOMInstance,
 } from "./types";
 
+// Import scheduleEffect to properly schedule cleanup
+let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
+
+export function setScheduleEffect(scheduleEffect: (effectFn: () => void) => void): void {
+	scheduleEffectFunction = scheduleEffect;
+}
+
 /* ********** */
 /* Reconciler */
 /* ********** */
@@ -26,11 +33,18 @@ export function reconcile(
 	// Case 1: Element removal - newElement is null but oldInstance exists
 	if (newElement == null) {
 		if (oldInstance) {
-			// Run cleanup for all effects before removing (regardless of DOM existence)
-			if (oldInstance.hooks) {
+			// Schedule cleanup for all effects before removing (maintain async timing)
+			if (oldInstance.hooks && scheduleEffectFunction) {
 				for (const hook of oldInstance.hooks) {
 					if (hook.type === "effect" && hook.cleanup) {
-						hook.cleanup();
+						const cleanup = hook.cleanup;
+						scheduleEffectFunction(() => {
+							try {
+								cleanup();
+							} catch (error) {
+								console.error("Error in useEffect cleanup during unmount:", error);
+							}
+						});
 					}
 				}
 			}
@@ -66,10 +80,17 @@ export function reconcile(
 		const newInstance = createVDOMInstance(parentDom, newElement);
 
 		// Clean up old instance hooks
-		if (oldInstance.hooks) {
+		if (oldInstance.hooks && scheduleEffectFunction) {
 			for (const hook of oldInstance.hooks) {
 				if (hook.type === "effect" && hook.cleanup) {
-					hook.cleanup();
+					const cleanup = hook.cleanup;
+					scheduleEffectFunction(() => {
+						try {
+							cleanup();
+						} catch (error) {
+							console.error("Error in useEffect cleanup during type change:", error);
+						}
+					});
 				}
 			}
 		}
@@ -201,11 +222,18 @@ function updateVDOMInstance(
 		// Special case: if component was rendering something but now returns null,
 		// we need to clean up the functional component's effects
 		if (oldChildInstance && newChildElement === null) {
-			// Clean up the functional component's hooks when it stops rendering
-			if (instance.hooks) {
+			// Schedule cleanup for the functional component's hooks when it stops rendering
+			if (instance.hooks && scheduleEffectFunction) {
 				for (const hook of instance.hooks) {
 					if (hook.type === "effect" && hook.cleanup) {
-						hook.cleanup();
+						const cleanup = hook.cleanup;
+						scheduleEffectFunction(() => {
+							try {
+								cleanup();
+							} catch (error) {
+								console.error("Error in useEffect cleanup during null return:", error);
+							}
+						});
 						hook.cleanup = undefined;
 						hook.hasRun = false; // Reset for potential future re-renders
 					}

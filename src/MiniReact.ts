@@ -3,7 +3,7 @@
 /* ****************** */
 
 import { eventSystem } from "./eventSystem";
-import { reconcile, setHookContext } from "./reconciler";
+import { reconcile, setHookContext, setScheduleEffect } from "./reconciler";
 import {
     type AnyMiniReactElement,
     type DependencyList,
@@ -44,6 +44,9 @@ setHookContext((instance: VDOMInstance | null) => {
         instance.hookCursor = 0;
     }
 });
+
+// Set the scheduleEffect function in the reconciler so it can schedule cleanup
+setScheduleEffect(scheduleEffect);
 
 /* *********** */
 /* Public APIs */
@@ -102,20 +105,23 @@ export function render(
 
     const newElement = element || null;
 
+    // Get the old instance BEFORE potentially deleting it
+    const oldInstance = rootInstances.get(containerNode) || null;
+
     if (newElement === null) {
-        // When unmounting, remove container from maps to prevent memory leaks
+        // When unmounting, remove original element from map to prevent memory leaks
         rootElements.delete(containerNode);
-        rootInstances.delete(containerNode);
     } else {
         // Store the original element for re-renders
         rootElements.set(containerNode, newElement);
     }
 
-    const oldInstance = rootInstances.get(containerNode) || null;
     const newInstance = reconcile(containerNode, newElement, oldInstance);
 
     if (newElement === null) {
-        // Ensure rootInstances is cleaned up after reconciliation
+        // Ensure container is completely cleared when rendering null
+        containerNode.innerHTML = "";
+        // Clean up rootInstances after reconciliation
         rootInstances.delete(containerNode);
     } else {
         rootInstances.set(containerNode, newInstance);
