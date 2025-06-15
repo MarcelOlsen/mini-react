@@ -29,7 +29,7 @@ jobs:
       - name: Install Bun v1.3.3
         if: steps.bun-cache.outputs.cache-hit != 'true'
         run: |
-          curl -fsSL https://bun.sh/install | bash -s -- --version 1.3.3
+          curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.16"
       - name: Add bun to PATH
         run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
