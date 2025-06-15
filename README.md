@@ -34,7 +34,7 @@ A learning project to build a simplified React-like library from scratch, with a
 
 **MiniReact** is a step-by-step implementation of a React-like UI library designed for learning and understanding how modern UI frameworks work under the hood. The project emphasizes:
 
-- **Test-driven development** with 142 comprehensive tests
+- **Test-driven development** with full test coverage
 - **Quality code** with full TypeScript support and linting
 - **Incremental complexity** with well-documented phases
 - **Performance optimization** with efficient reconciliation algorithms
