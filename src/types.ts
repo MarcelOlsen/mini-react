@@ -77,15 +77,39 @@ export const TEXT_ELEMENT = "TEXT_ELEMENT";
 // Hook Types //
 // ********** //
 
-export interface Hook<T = unknown> {
+export interface StateHook<T = unknown> {
+	type: "state";
 	state: T;
 	setState: (newState: T | ((prevState: T) => T)) => void;
 }
+
+export interface EffectHook {
+	type: "effect";
+	callback: EffectCallback;
+	cleanup?: () => void;
+	dependencies?: DependencyList;
+	hasRun: boolean;
+}
+
+/**
+ * Union type for hooks stored in component instances.
+ * Note: The generic parameter T only applies to StateHook, EffectHook ignores it.
+ */
+export type StateOrEffectHook<T = unknown> = StateHook<T> | EffectHook;
 
 export type UseStateHook<T> = [
 	T,
 	(newState: T | ((prevState: T) => T)) => void,
 ];
+
+// Effect types
+export type EffectCallback = (() => void) | (() => () => void);
+export type DependencyList = readonly unknown[];
+
+export type UseEffectHook = (
+	callback: EffectCallback,
+	dependencies?: DependencyList,
+) => void;
 
 // ******************* //
 // VDOM Instance Types //
@@ -95,5 +119,6 @@ export interface VDOMInstance {
 	element: AnyMiniReactElement;
 	dom: Node | null;
 	childInstances: VDOMInstance[];
-	hooks?: Hook[];
+	hooks?: StateOrEffectHook<unknown>[];
+	hookCursor?: number;
 }

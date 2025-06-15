@@ -403,6 +403,7 @@ describe("MiniReact.reconciler", () => {
 			expect(container.querySelector("div")).toBeNull();
 			expect(container.querySelector("span")).not.toBeNull();
 			expect(container.textContent).toBe("I am a span");
+			expect(newInstance).not.toBeNull();
 		});
 
 		test("should handle functional component returning null after returning element", () => {
@@ -493,6 +494,7 @@ describe("MiniReact.reconciler", () => {
 			expect(container.querySelector("h1")?.textContent).toBe("Updated Title");
 			expect(container.querySelector("p")?.textContent).toBe("Updated Content");
 			expect(container.querySelector("footer")?.textContent).toBe("Footer");
+			expect(newInstance).not.toBeNull();
 		});
 	});
 });
