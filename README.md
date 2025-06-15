@@ -18,8 +18,8 @@ A learning project to build a simplified React-like library from scratch, with a
   - [Phase 4: Prop Diffing & Efficient Children Reconciliation ✅](#phase-4-prop-diffing--efficient-children-reconciliation-)
   - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook)
   - [Phase 6: Event Handling ✅](#phase-6-event-handling)
-  - [Phase 7: Effects with useEffect 🚧](#phase-7-effects-with-useeffect)
-  - [Phase 8: Context API](#phase-8-context-api)
+  - [Phase 7: Effects with useEffect ✅](#phase-7-effects-with-useeffect-)
+  - [Phase 8: Context API 🚧](#phase-8-context-api-)
   - [Phase 9: Portals and Fragments](#phase-9-portals-and-fragments)
   - [Phase 10: JSX Support](#phase-10-jsx-support)
 - [API Reference](#api-reference)
@@ -46,17 +46,17 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ## Current Status
 
-🎯 **Current Phase**: 7 ✅ **COMPLETED**
+🎯 **Current Phase**: 8 ✅ **IN PROGRESS**
 
 **Latest Achievements**:
 
-- ✅ **Phase 7 Complete**: Effects with useEffect Hook
+- ✅ **Phase 7 Complete**: useEffect Hook
 - ✅ **142 Tests Passing**: Comprehensive test suite covering all functionality
 - ✅ **Zero Linter Issues**: Clean codebase with consistent formatting
-- ✅ **Complete Hook System**: useState and useEffect with proper lifecycle management
+- ✅ **Almost Complete Hook System**: useState, useEffect with proper lifecycle management
 - ✅ **Advanced Effect Management**: Dependencies, cleanup, and scheduling
 
-**Overall Progress**: 7/10 phases complete (70% of planned features)
+**Overall Progress**: 8/10 phases complete (80% of planned features)
 
 ---
 
@@ -154,7 +154,7 @@ bunx biome check
 - **🧩 Functional Components**: Full support for functional components with props and children
 - **🔄 Dynamic Updates**: Efficient re-rendering with state preservation
 - **📦 TypeScript Support**: Complete type safety with comprehensive type definitions
-- **🧪 Comprehensive Testing**: 129 tests covering all functionality and edge cases
+- **🧪 Comprehensive Testing**: Unit and integration tests covering all functionality and edge cases
 - **📏 Code Quality**: Zero linter issues with consistent formatting
 - **🔄 State Management**: useState hook with functional updates and state preservation
 - **🎪 Event Handling**: Complete event system with delegation, synthetic events, and bubbling/capture
@@ -181,13 +181,13 @@ mini-react/
 │   ├── reconciler.ts          # Virtual DOM reconciliation logic
 │   └── eventSystem.ts         # Event delegation and synthetic events
 ├── tests/
-│   ├── MiniReact.createElement.test.ts      # Element creation tests (3 tests)
-│   ├── MiniReact.createElementFC.test.ts    # Functional component creation (18 tests)
-│   ├── MiniReact.render.test.ts             # Rendering & reconciliation (58 tests)
-│   ├── MiniReact.renderFC.test.ts           # Functional component rendering (16 tests)
-│   ├── MiniReact.reconciler.test.ts         # Core reconciliation (19 tests)
-│   ├── MiniReact.events.test.ts             # Event handling tests (17 tests)
-│   └── MiniReact.useState.test.ts           # useState hook tests (11 tests)
+│   ├── MiniReact.createElement.test.ts      # Element creation tests
+│   ├── MiniReact.createElementFC.test.ts    # Functional component creation
+│   ├── MiniReact.render.test.ts             # Rendering & reconciliation
+│   ├── MiniReact.renderFC.test.ts           # Functional component rendering
+│   ├── MiniReact.reconciler.test.ts         # Core reconciliation
+│   ├── MiniReact.events.test.ts             # Event handling tests
+│   └── MiniReact.useState.test.ts           # useState hook tests
 ├── bunfig.toml                # Bun configuration
 ├── biome.json                 # Biome linter/formatter config
 ├── tsconfig.json              # TypeScript configuration
@@ -208,7 +208,7 @@ mini-react/
 - ✅ Support for text nodes and nested children
 - ✅ Basic props handling and attribute setting
 
-**Tests:** 3 tests passing
+**Test Coverage:**
 
 - Element creation with/without props and children
 - Text and number children handling
@@ -225,7 +225,7 @@ mini-react/
 - ✅ Components can return other components or host elements
 - ✅ Proper handling of null/undefined returns
 
-**Tests:** 18 tests passing
+**Test Coverage:**
 
 - Functional component creation with various prop types
 - Complex nested props and children
@@ -243,7 +243,7 @@ mini-react/
 - ✅ Support for updating props and children
 - ✅ Proper cleanup and node reuse
 
-**Tests:** 19 tests passing
+**Test Coverage:**
 
 - Initial render scenarios
 - Element type changes and replacements
@@ -261,7 +261,7 @@ mini-react/
 - ✅ Support for keyed children (key-based diffing for lists)
 - ✅ Minimal DOM operations for performance
 
-**Tests:** 58 comprehensive tests passing
+**Test Coverage:**
 
 - Fine-grained prop updates and removals
 - Adding/removing/reordering children with and without keys
@@ -291,7 +291,7 @@ mini-react/
 - ✅ Multiple hooks per component
 - ✅ Hook order consistency
 
-**Tests:** 11 tests passing
+**Test Coverage:**
 
 - Basic state management with useState
 - State updates and re-renders
@@ -321,7 +321,7 @@ mini-react/
 - ✅ Proper event cleanup and memory management
 - ✅ Integration with useState hook for stateful interactions
 
-**Tests:** 17 tests passing
+**Test Coverage:**
 
 - Basic event handling (onClick, form events)
 - Event bubbling and propagation control
@@ -558,7 +558,7 @@ const Layout: FunctionalComponent<{ title: string }> = ({
 
 ## Testing
 
-**Comprehensive Test Suite: 129 tests across 7 files**
+**Comprehensive Test Suite: Unit and integration tests across 7 files**
 
 ### Test Categories:
 
@@ -590,7 +590,7 @@ bun test --verbose
 
 - **DOM Environment**: happy-dom for fast, headless testing
 - **Async Testing**: Support for promises and timeouts
-- **Performance Testing**: Large dataset handling (500+ elements)
+- **Performance Testing**: Large dataset handling
 - **Memory Testing**: Cleanup and leak detection
 - **Edge Case Coverage**: Unicode, special characters, extreme scenarios
 
