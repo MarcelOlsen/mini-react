@@ -102,12 +102,24 @@ export function render(
 
     const newElement = element || null;
 
-    // Store the original element for re-renders
-    rootElements.set(containerNode, newElement);
+    if (newElement === null) {
+        // When unmounting, remove container from maps to prevent memory leaks
+        rootElements.delete(containerNode);
+        rootInstances.delete(containerNode);
+    } else {
+        // Store the original element for re-renders
+        rootElements.set(containerNode, newElement);
+    }
 
     const oldInstance = rootInstances.get(containerNode) || null;
     const newInstance = reconcile(containerNode, newElement, oldInstance);
-    rootInstances.set(containerNode, newInstance);
+
+    if (newElement === null) {
+        // Ensure rootInstances is cleaned up after reconciliation
+        rootInstances.delete(containerNode);
+    } else {
+        rootInstances.set(containerNode, newInstance);
+    }
 }
 
 /**
