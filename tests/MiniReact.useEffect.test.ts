@@ -299,7 +299,7 @@ describe("MiniReact.useEffect Hook", () => {
 
 	test("should throw error when useEffect called outside component", () => {
 		expect(() => {
-			useEffect(() => { });
+			useEffect(() => {});
 		}).toThrow("useEffect must be called inside a functional component");
 	});
 
