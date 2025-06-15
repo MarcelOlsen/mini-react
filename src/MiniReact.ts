@@ -221,7 +221,7 @@ export function useEffect(
         dependencies === undefined ||
         prevDependencies === undefined ||
         dependencies.length !== prevDependencies.length ||
-        dependencies.some((dep, index) => dep !== prevDependencies[index]);
+        dependencies.some((dep, index) => !Object.is(dep, prevDependencies[index]));
 
     // Update hook data
     hook.callback = callback;
