@@ -9,7 +9,9 @@ import type {
 // Import scheduleEffect to properly schedule cleanup
 let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
 
-export function setScheduleEffect(scheduleEffect: (effectFn: () => void) => void): void {
+export function setScheduleEffect(
+	scheduleEffect: (effectFn: () => void) => void,
+): void {
 	scheduleEffectFunction = scheduleEffect;
 }
 
@@ -42,7 +44,10 @@ export function reconcile(
 							try {
 								cleanup();
 							} catch (error) {
-								console.error("Error in useEffect cleanup during unmount:", error);
+								console.error(
+									"Error in useEffect cleanup during unmount:",
+									error,
+								);
 							}
 						});
 					}
@@ -75,7 +80,9 @@ export function reconcile(
 	// Case 3: Type change - recreate everything
 	if (!isSameElementType(oldInstance.element, newElement)) {
 		if (!parentDom) {
-			throw new Error("Parent DOM node is required for type change reconciliation");
+			throw new Error(
+				"Parent DOM node is required for type change reconciliation",
+			);
 		}
 		const newInstance = createVDOMInstance(parentDom, newElement);
 
@@ -88,7 +95,10 @@ export function reconcile(
 						try {
 							cleanup();
 						} catch (error) {
-							console.error("Error in useEffect cleanup during type change:", error);
+							console.error(
+								"Error in useEffect cleanup during type change:",
+								error,
+							);
 						}
 					});
 				}
@@ -231,7 +241,10 @@ function updateVDOMInstance(
 							try {
 								cleanup();
 							} catch (error) {
-								console.error("Error in useEffect cleanup during null return:", error);
+								console.error(
+									"Error in useEffect cleanup during null return:",
+									error,
+								);
 							}
 						});
 						hook.cleanup = undefined;
@@ -289,7 +302,7 @@ function updateVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => { };
+	() => {};
 
 /**
  * Sets the hook context function from MiniReact module
