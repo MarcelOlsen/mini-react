@@ -24,12 +24,12 @@ jobs:
               id: bun-cache
               with:
                   path: ~/.bun/bin
-                  key: bun-v1.3.3
+                  key: bun-v1.2.16
 
-            - name: Install Bun v1.3.3
+            - name: Install Bun v1.2.16
               if: steps.bun-cache.outputs.cache-hit != 'true'
               run: |
-                  curl -fsSL https://bun.sh/install | bash -s -- --version 1.3.3
+                  curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.16"
 
             - name: Add bun to PATH
               run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
@@ -53,9 +53,9 @@ jobs:
               id: bun-cache
               with:
                   path: ~/.bun/bin
-                  key: bun-v1.3.3
+                  key: bun-v1.2.16
 
-            - name: Install Bun v1.3.3
+            - name: Install Bun v1.2.16
               if: steps.bun-cache.outputs.cache-hit != 'true'
               run: |
                   curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.16"
