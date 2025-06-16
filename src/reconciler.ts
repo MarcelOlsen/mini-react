@@ -8,11 +8,24 @@ import type {
 
 // Import scheduleEffect to properly schedule cleanup
 let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
+// Context management functions
+let pushContextFunction:
+	| ((contextValues: Map<symbol, unknown>) => void)
+	| null = null;
+let popContextFunction: (() => void) | null = null;
 
 export function setScheduleEffect(
 	scheduleEffect: (effectFn: () => void) => void,
 ): void {
 	scheduleEffectFunction = scheduleEffect;
+}
+
+export function setContextHooks(
+	pushContext: (contextValues: Map<symbol, unknown>) => void,
+	popContext: () => void,
+): void {
+	pushContextFunction = pushContext;
+	popContextFunction = popContext;
 }
 
 /* ********** */
@@ -118,11 +131,11 @@ export function reconcile(
 }
 
 /**
- * Creates a new VDOM instance and corresponding DOM node for initial render
+ * Creates a new VDOM instance for the given element and attaches it to the parent DOM
  *
  * @param parentDom The parent DOM node
- * @param element The element to create a VDOM instance for
- * @returns The VDOM instance
+ * @param element The element to create an instance for
+ * @returns The created VDOM instance
  */
 function createVDOMInstance(
 	parentDom: Node,
@@ -132,7 +145,7 @@ function createVDOMInstance(
 
 	// Handle functional components
 	if (typeof type === "function") {
-		// Create instance first to establish hook context
+		// Create the instance
 		const instance: VDOMInstance = {
 			element,
 			dom: null,
@@ -142,12 +155,29 @@ function createVDOMInstance(
 
 		// Set hook context before calling component
 		setCurrentRenderInstance(instance);
+
 		const childElement = (type as FunctionalComponent)(props);
+
 		setCurrentRenderInstance(null); // Clear context after call
+
+		// Check if this component is a context provider (has contextValues)
+		// and push context BEFORE reconciling children
+		if (instance.contextValues && pushContextFunction) {
+			pushContextFunction(instance.contextValues);
+		}
 
 		const childInstance = childElement
 			? createVDOMInstance(parentDom, childElement)
 			: null;
+
+		// Pop context AFTER reconciling children
+		if (instance.contextValues && popContextFunction) {
+			popContextFunction();
+		}
+
+		if (childInstance) {
+			childInstance.parent = instance; // Set parent reference for functional component child
+		}
 
 		instance.dom = childInstance?.dom || null;
 		instance.childInstances = childInstance ? [childInstance] : [];
@@ -178,6 +208,7 @@ function createVDOMInstance(
 	// Process children
 	for (const child of props.children) {
 		const childInstance = createVDOMInstance(domNode, child);
+		childInstance.parent = instance; // Set parent reference
 		childInstances.push(childInstance);
 		if (childInstance.dom) {
 			domNode.appendChild(childInstance.dom);
@@ -189,113 +220,6 @@ function createVDOMInstance(
 
 	// Append to parent
 	parentDom.appendChild(domNode);
-
-	return instance;
-}
-
-/**
- * Updates an existing VDOM instance with a new element (same type)
- *
- * @param instance The existing VDOM instance
- * @param newElement The new element to update the VDOM instance with
- * @returns The updated VDOM instance
- */
-function updateVDOMInstance(
-	instance: VDOMInstance,
-	newElement: AnyMiniReactElement,
-): VDOMInstance {
-	const { type, props } = newElement;
-
-	// Handle functional components - re-execute and reconcile output
-	if (typeof type === "function") {
-		// Set hook context before calling component
-		setCurrentRenderInstance(instance);
-		const newChildElement = (type as FunctionalComponent)(props);
-		setCurrentRenderInstance(null); // Clear context after call
-
-		const oldChildInstance = instance.childInstances[0] || null;
-
-		// Find the correct parent node to reconcile in
-		let parentNode: Node | null = null;
-		if (oldChildInstance?.dom?.parentNode) {
-			parentNode = oldChildInstance.dom.parentNode;
-		} else if (instance.dom?.parentNode) {
-			parentNode = instance.dom.parentNode;
-		}
-
-		if (!parentNode) {
-			throw new Error(
-				"Unable to find parent node for functional component reconciliation",
-			);
-		}
-
-		// Special case: if component was rendering something but now returns null,
-		// we need to clean up the functional component's effects
-		if (oldChildInstance && newChildElement === null) {
-			// Schedule cleanup for the functional component's hooks when it stops rendering
-			if (instance.hooks && scheduleEffectFunction) {
-				for (const hook of instance.hooks) {
-					if (hook.type === "effect" && hook.cleanup) {
-						const cleanup = hook.cleanup;
-						scheduleEffectFunction(() => {
-							try {
-								cleanup();
-							} catch (error) {
-								console.error(
-									"Error in useEffect cleanup during null return:",
-									error,
-								);
-							}
-						});
-						hook.cleanup = undefined;
-						hook.hasRun = false; // Reset for potential future re-renders
-					}
-				}
-			}
-		}
-
-		const newChildInstance = reconcile(
-			parentNode,
-			newChildElement,
-			oldChildInstance,
-		);
-
-		// Update the existing instance in-place instead of creating a new one
-		// This preserves the event system mappings and other references
-		instance.element = newElement;
-		instance.dom = newChildInstance?.dom || null;
-		instance.childInstances = newChildInstance ? [newChildInstance] : [];
-		// hooks are already preserved on the instance
-
-		return instance;
-	}
-
-	// Handle host elements - use efficient prop diffing
-	const oldProps = instance.element.props as Record<string, unknown>;
-	instance.element = newElement;
-
-	// For host elements, update only changed DOM attributes using diffProps
-	if (instance.dom && instance.dom.nodeType === Node.ELEMENT_NODE) {
-		const domElement = instance.dom as Element;
-		const newProps = props as Record<string, unknown>;
-
-		// Use efficient prop diffing instead of naive clear-and-set approach
-		diffProps(domElement, oldProps, newProps);
-	}
-
-	// For now, we'll just update the DOM node if it's a text element
-	if (instance.dom && instance.dom.nodeType === Node.TEXT_NODE) {
-		instance.dom.nodeValue = String(props.nodeValue);
-	}
-
-	// Efficient children reconciliation with key-based diffing
-	if (instance.dom) {
-		instance.childInstances = reconcileChildren(
-			instance.dom,
-			instance.childInstances,
-			props.children,
-		);
-	}
 
 	return instance;
 }
@@ -421,12 +345,14 @@ function removeAttribute(domElement: Element, key: string): void {
  * @param parentDom The parent DOM node
  * @param oldChildInstances The existing child VDOM instances
  * @param newChildElements The new child elements to render
+ * @param parentInstance The parent VDOM instance (optional)
  * @returns The updated child instances
  */
 function reconcileChildren(
 	parentDom: Node,
 	oldChildInstances: VDOMInstance[],
 	newChildElements: AnyMiniReactElement[],
+	parentInstance?: VDOMInstance,
 ): VDOMInstance[] {
 	// Separate keyed and unkeyed children
 	const oldKeyed = new Map<string, VDOMInstance>();
@@ -480,6 +406,8 @@ function reconcileChildren(
 		}
 
 		if (newChildInstance) {
+			// Set parent reference for the new child instance
+			newChildInstance.parent = parentInstance;
 			newChildInstances.push(newChildInstance);
 		}
 	}
@@ -539,4 +467,126 @@ function reorderDomNodes(
 			currentDomChild = childInstance.dom.nextSibling;
 		}
 	}
+}
+
+/**
+ * Updates an existing VDOM instance with a new element (same type)
+ *
+ * @param instance The existing VDOM instance
+ * @param newElement The new element to update the VDOM instance with
+ * @returns The updated VDOM instance
+ */
+function updateVDOMInstance(
+	instance: VDOMInstance,
+	newElement: AnyMiniReactElement,
+): VDOMInstance {
+	const { type, props } = newElement;
+
+	// Handle functional components - re-execute and reconcile output
+	if (typeof type === "function") {
+		// Set hook context before calling component
+		setCurrentRenderInstance(instance);
+
+		const childElement = (type as FunctionalComponent)(props);
+
+		setCurrentRenderInstance(null); // Clear context after call
+
+		const oldChildInstance = instance.childInstances[0] || null;
+
+		// Find the correct parent node to reconcile in
+		let parentNode: Node | null = null;
+		if (oldChildInstance?.dom?.parentNode) {
+			parentNode = oldChildInstance.dom.parentNode;
+		} else if (instance.dom?.parentNode) {
+			parentNode = instance.dom.parentNode;
+		}
+
+		if (!parentNode) {
+			throw new Error(
+				"Unable to find parent node for functional component reconciliation",
+			);
+		}
+
+		// Special case: if component was rendering something but now returns null,
+		// we need to clean up the functional component's effects
+		if (oldChildInstance && childElement === null) {
+			// Schedule cleanup for the functional component's hooks when it stops rendering
+			if (instance.hooks && scheduleEffectFunction) {
+				for (const hook of instance.hooks) {
+					if (hook.type === "effect" && hook.cleanup) {
+						const cleanup = hook.cleanup;
+						scheduleEffectFunction(() => {
+							try {
+								cleanup();
+							} catch (error) {
+								console.error(
+									"Error in useEffect cleanup during null return:",
+									error,
+								);
+							}
+						});
+						hook.cleanup = undefined;
+						hook.hasRun = false; // Reset for potential future re-renders
+					}
+				}
+			}
+		}
+
+		// Check if this component is a context provider (has contextValues)
+		// and push context BEFORE reconciling children
+		if (instance.contextValues && pushContextFunction) {
+			pushContextFunction(instance.contextValues);
+		}
+
+		const newChildInstance = reconcile(
+			parentNode,
+			childElement,
+			oldChildInstance,
+		);
+
+		// Pop context AFTER reconciling children
+		if (instance.contextValues && popContextFunction) {
+			popContextFunction();
+		}
+
+		// Update the existing instance in-place instead of creating a new one
+		// This preserves the event system mappings and other references
+		instance.element = newElement;
+		instance.dom = newChildInstance?.dom || null;
+		instance.childInstances = newChildInstance ? [newChildInstance] : [];
+
+		// hooks are already preserved on the instance
+
+		return instance;
+	}
+
+	// Handle host elements - use efficient prop diffing
+	const oldProps = instance.element.props as Record<string, unknown>;
+	instance.element = newElement;
+
+	// For host elements, update only changed DOM attributes using diffProps
+	if (instance.dom && instance.dom.nodeType === Node.ELEMENT_NODE) {
+		const domElement = instance.dom as Element;
+		const newProps = props as Record<string, unknown>;
+
+		// Use efficient prop diffing instead of naive clear-and-set approach
+		diffProps(domElement, oldProps, newProps);
+	}
+
+	// For now, we'll just update the DOM node if it's a text element
+	if (instance.dom && instance.dom.nodeType === Node.TEXT_NODE) {
+		instance.dom.nodeValue = String(props.nodeValue);
+	}
+
+	// Efficient children reconciliation with key-based diffing
+	if (instance.dom) {
+		instance.childInstances = reconcileChildren(
+			instance.dom,
+			instance.childInstances,
+			props.children,
+			instance,
+		);
+	}
+
+	return instance;
 }
