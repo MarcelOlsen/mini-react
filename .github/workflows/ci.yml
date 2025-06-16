@@ -1,43 +1,72 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
+    push:
+        branches:
+            - main
+            - master
+    pull_request:
+        branches:
+            - main
+            - master
 
 jobs:
-  bun-tests:
-    name: bun test suite
-    runs-on: ubuntu-latest
+    linting:
+        name: Biome linting and formatting
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      - name: Cache bun
-        uses: actions/cache@v3
-        id: bun-cache
-        with:
-          path: ~/.bun/bin
-          key: bun-v1.3.3
+            - name: Cache bun
+              uses: actions/cache@v3
+              id: bun-cache
+              with:
+                  path: ~/.bun/bin
+                  key: bun-v1.2.16
 
-      - name: Install Bun v1.3.3
-        if: steps.bun-cache.outputs.cache-hit != 'true'
-        run: |
-          curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.16"
-      - name: Add bun to PATH
-        run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
+            - name: Install Bun v1.2.16
+              if: steps.bun-cache.outputs.cache-hit != 'true'
+              run: |
+                  curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.16"
 
-      - name: Verify Bun
-        run: bun --version
+            - name: Add bun to PATH
+              run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies
-        run: bun install
+            - name: Install dependencies
+              run: bun install
 
-      - name: Run tests
-        run: bun test
+            - name: Run Biome checks
+              run: bunx biome check
+
+    bun-tests:
+        name: bun test suite
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Cache bun
+              uses: actions/cache@v3
+              id: bun-cache
+              with:
+                  path: ~/.bun/bin
+                  key: bun-v1.2.16
+
+            - name: Install Bun v1.2.16
+              if: steps.bun-cache.outputs.cache-hit != 'true'
+              run: |
+                  curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.16"
+            - name: Add bun to PATH
+              run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+            - name: Verify Bun
+              run: bun --version
+
+            - name: Install dependencies
+              run: bun install
+
+            - name: Run tests
+              run: bun test
