@@ -416,6 +416,7 @@ describe("MiniReact.Context API", () => {
 			const TestContext = createContext("initial");
 			let capturedValue: string | undefined;
 			let renderCount = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				renderCount++;
@@ -429,13 +430,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [contextValue, setContextValue] = useState("initial");
-
-				// Expose setContextValue for testing
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -451,20 +446,11 @@ describe("MiniReact.Context API", () => {
 			expect(container.textContent).toBe("Value: initial, Renders: 1");
 
 			// Trigger context value change
-			(
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue?.("updated");
+			(exposedSetContextValue as unknown as (value: string) => void)("updated");
 
 			expect(capturedValue).toBe("updated");
 			expect(renderCount).toBe(2);
 			expect(container.textContent).toBe("Value: updated, Renders: 2");
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
 		});
 
 		test("should trigger re-renders in multiple child consumers", () => {
@@ -473,6 +459,7 @@ describe("MiniReact.Context API", () => {
 			let value2: string | undefined;
 			let renderCount1 = 0;
 			let renderCount2 = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
 
 			const Consumer1: FunctionalComponent = () => {
 				renderCount1++;
@@ -488,11 +475,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [contextValue, setContextValue] = useState("initial");
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -510,27 +493,19 @@ describe("MiniReact.Context API", () => {
 			expect(renderCount2).toBe(1);
 
 			// Trigger context value change
-			(
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue?.("changed");
+			(exposedSetContextValue as unknown as (value: string) => void)("changed");
 
 			expect(value1).toBe("changed");
 			expect(value2).toBe("changed");
 			expect(renderCount1).toBe(2);
 			expect(renderCount2).toBe(2);
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
 		});
 
 		test("should trigger re-renders in deeply nested consumers", () => {
 			const TestContext = createContext("initial");
 			let deepValue: string | undefined;
 			let deepRenderCount = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
 
 			const DeepConsumer: FunctionalComponent = () => {
 				deepRenderCount++;
@@ -549,11 +524,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [contextValue, setContextValue] = useState("initial");
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -568,19 +539,12 @@ describe("MiniReact.Context API", () => {
 			expect(deepRenderCount).toBe(1);
 
 			// Trigger context value change
-			(
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue?.("deep-changed");
+			(exposedSetContextValue as unknown as (value: string) => void)(
+				"deep-changed",
+			);
 
 			expect(deepValue).toBe("deep-changed");
 			expect(deepRenderCount).toBe(2);
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
 		});
 
 		test("should handle context value changes with object references", () => {
@@ -592,6 +556,7 @@ describe("MiniReact.Context API", () => {
 			const UserContext = createContext<User>({ name: "Guest", id: 0 });
 			let capturedUser: User | undefined;
 			let renderCount = 0;
+			let exposedSetUser: ((user: User) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				renderCount++;
@@ -605,9 +570,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [user, setUser] = useState<User>({ name: "Alice", id: 1 });
-				(
-					globalThis as typeof globalThis & { setTestUser?: typeof setUser }
-				).setTestUser = setUser;
+				exposedSetUser = setUser;
 
 				return createElement(
 					UserContext.Provider,
@@ -622,23 +585,20 @@ describe("MiniReact.Context API", () => {
 			expect(renderCount).toBe(1);
 
 			// Change user object
-			(
-				globalThis as typeof globalThis & { setTestUser?: (user: User) => void }
-			).setTestUser?.({ name: "Bob", id: 2 });
+			(exposedSetUser as unknown as (user: User) => void)({
+				name: "Bob",
+				id: 2,
+			});
 
 			expect(capturedUser).toEqual({ name: "Bob", id: 2 });
 			expect(renderCount).toBe(2);
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestUser?: unknown }
-			).setTestUser = undefined;
 		});
 
 		test("should handle context value changes to same value", () => {
 			const TestContext = createContext("initial");
 			let capturedValue: string | undefined;
 			let renderCount = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				renderCount++;
@@ -648,11 +608,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [contextValue, setContextValue] = useState("same");
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -667,29 +623,18 @@ describe("MiniReact.Context API", () => {
 			expect(renderCount).toBe(1);
 
 			// Set to same value - our useState implementation doesn't re-render if value is the same
-			(
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue?.("same");
+			(exposedSetContextValue as unknown as (value: string) => void)("same");
 
 			expect(capturedValue).toBe("same");
 			expect(renderCount).toBe(1); // Should stay 1 since value didn't change
 
 			// Now set to different value - should trigger re-render
-			(
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue?.("different");
+			(exposedSetContextValue as unknown as (value: string) => void)(
+				"different",
+			);
 
 			expect(capturedValue).toBe("different");
 			expect(renderCount).toBe(2); // Now should be 2
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
 		});
 	});
 
@@ -699,6 +644,8 @@ describe("MiniReact.Context API", () => {
 			const TestContext = createContext("default");
 			let capturedValue: string | undefined;
 			let renderCount = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
+			let exposedSetShowConsumer: ((show: boolean) => void) | null = null;
 
 			const ConditionalConsumer: FunctionalComponent<{ show: boolean }> = ({
 				show,
@@ -716,16 +663,8 @@ describe("MiniReact.Context API", () => {
 				const [contextValue, setContextValue] = useState("initial");
 				const [showConsumer, setShowConsumer] = useState(true);
 
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
-				(
-					globalThis as typeof globalThis & {
-						setShowConsumer?: typeof setShowConsumer;
-					}
-				).setShowConsumer = setShowConsumer;
+				exposedSetContextValue = setContextValue;
+				exposedSetShowConsumer = setShowConsumer;
 
 				return createElement(
 					TestContext.Provider,
@@ -741,35 +680,18 @@ describe("MiniReact.Context API", () => {
 			expect(container.textContent).toBe("Shown: initial");
 
 			// Hide consumer
-			const setShowConsumer = (
-				globalThis as typeof globalThis & {
-					setShowConsumer?: (value: boolean) => void;
-				}
-			).setShowConsumer;
-			const setTestContextValue = (
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue;
-
-			setShowConsumer?.(false);
+			(exposedSetShowConsumer as unknown as (show: boolean) => void)(false);
 			expect(container.textContent).toBe("Hidden");
 
 			// Change context while hidden
-			setTestContextValue?.("changed-while-hidden");
+			(exposedSetContextValue as unknown as (value: string) => void)(
+				"changed-while-hidden",
+			);
 
 			// Show consumer again - should see new value
-			setShowConsumer?.(true);
+			(exposedSetShowConsumer as unknown as (show: boolean) => void)(true);
 			expect(capturedValue).toBe("changed-while-hidden");
 			expect(container.textContent).toBe("Shown: changed-while-hidden");
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
-			(
-				globalThis as typeof globalThis & { setShowConsumer?: unknown }
-			).setShowConsumer = undefined;
 		});
 
 		test("should handle multiple contexts with independent changes", () => {
@@ -778,6 +700,8 @@ describe("MiniReact.Context API", () => {
 			let capturedTheme: string | undefined;
 			let capturedUser: string | undefined;
 			let renderCount = 0;
+			let exposedSetTheme: ((theme: string) => void) | null = null;
+			let exposedSetUser: ((user: string) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				renderCount++;
@@ -794,12 +718,8 @@ describe("MiniReact.Context API", () => {
 				const [theme, setTheme] = useState("light");
 				const [user, setUser] = useState("anonymous");
 
-				(
-					globalThis as typeof globalThis & { setTestTheme?: typeof setTheme }
-				).setTestTheme = setTheme;
-				(
-					globalThis as typeof globalThis & { setTestUser?: typeof setUser }
-				).setTestUser = setUser;
+				exposedSetTheme = setTheme;
+				exposedSetUser = setUser;
 
 				return createElement(
 					ThemeContext.Provider,
@@ -819,40 +739,24 @@ describe("MiniReact.Context API", () => {
 			expect(renderCount).toBe(1);
 
 			// Change only theme
-			const setTestTheme = (
-				globalThis as typeof globalThis & {
-					setTestTheme?: (value: string) => void;
-				}
-			).setTestTheme;
-			const setTestUser = (
-				globalThis as typeof globalThis & {
-					setTestUser?: (value: string) => void;
-				}
-			).setTestUser;
-
-			setTestTheme?.("dark");
+			(exposedSetTheme as unknown as (theme: string) => void)("dark");
 			expect(capturedTheme).toBe("dark");
 			expect(capturedUser).toBe("anonymous");
 			expect(renderCount).toBe(2);
 
 			// Change only user
-			setTestUser?.("alice");
+			(exposedSetUser as unknown as (user: string) => void)("alice");
 			expect(capturedTheme).toBe("dark");
 			expect(capturedUser).toBe("alice");
 			expect(renderCount).toBe(3);
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestTheme?: unknown }
-			).setTestTheme = undefined;
-			(
-				globalThis as typeof globalThis & { setTestUser?: unknown }
-			).setTestUser = undefined;
 		});
 
 		test("should handle context changes with falsy values", () => {
 			const TestContext = createContext<string | number | boolean>("initial");
 			let capturedValue: string | number | boolean | undefined;
+			let exposedSetContextValue:
+				| ((value: string | number | boolean) => void)
+				| null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				capturedValue = useContext(TestContext);
@@ -863,11 +767,7 @@ describe("MiniReact.Context API", () => {
 				const [contextValue, setContextValue] = useState<
 					string | number | boolean
 				>("initial");
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -880,34 +780,36 @@ describe("MiniReact.Context API", () => {
 			expect(capturedValue).toBe("initial");
 
 			// Test falsy values
-			const setValue = (
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string | number | boolean) => void;
-				}
-			).setTestContextValue;
-
-			setValue?.(0);
+			(
+				exposedSetContextValue as unknown as (
+					value: string | number | boolean,
+				) => void
+			)(0);
 			expect(capturedValue).toBe(0);
 			expect(container.textContent).toBe("0");
 
-			setValue?.(false);
+			(
+				exposedSetContextValue as unknown as (
+					value: string | number | boolean,
+				) => void
+			)(false);
 			expect(capturedValue).toBe(false);
 			expect(container.textContent).toBe("false");
 
-			setValue?.("");
+			(
+				exposedSetContextValue as unknown as (
+					value: string | number | boolean,
+				) => void
+			)("");
 			expect(capturedValue).toBe("");
 			expect(container.textContent).toBe("");
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
 		});
 
 		test("should handle rapid context value changes", () => {
 			const TestContext = createContext("initial");
 			let capturedValue: string | undefined;
 			let renderCount = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				renderCount++;
@@ -917,11 +819,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [contextValue, setContextValue] = useState("initial");
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -933,25 +831,15 @@ describe("MiniReact.Context API", () => {
 			render(createElement(App, null), container);
 
 			const initialRenderCount = renderCount;
-			const setValue = (
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue;
 
 			// Rapid changes
-			setValue?.("change1");
-			setValue?.("change2");
-			setValue?.("change3");
-			setValue?.("final");
+			(exposedSetContextValue as unknown as (value: string) => void)("change1");
+			(exposedSetContextValue as unknown as (value: string) => void)("change2");
+			(exposedSetContextValue as unknown as (value: string) => void)("change3");
+			(exposedSetContextValue as unknown as (value: string) => void)("final");
 
 			expect(capturedValue).toBe("final");
 			expect(renderCount).toBe(initialRenderCount + 4);
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
 		});
 
 		test("should handle context changes combined with component state", () => {
@@ -959,6 +847,8 @@ describe("MiniReact.Context API", () => {
 			let capturedContextValue: string | undefined;
 			let capturedLocalState: string | undefined;
 			let renderCount = 0;
+			let exposedSetContextValue: ((value: string) => void) | null = null;
+			let exposedSetLocalState: ((value: string) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				renderCount++;
@@ -966,11 +856,7 @@ describe("MiniReact.Context API", () => {
 				capturedContextValue = useContext(TestContext);
 				capturedLocalState = localState;
 
-				(
-					globalThis as typeof globalThis & {
-						setLocalState?: typeof setLocalState;
-					}
-				).setLocalState = setLocalState;
+				exposedSetLocalState = setLocalState;
 
 				return createElement(
 					"div",
@@ -981,11 +867,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [contextValue, setContextValue] = useState("context-initial");
-				(
-					globalThis as typeof globalThis & {
-						setTestContextValue?: typeof setContextValue;
-					}
-				).setTestContextValue = setContextValue;
+				exposedSetContextValue = setContextValue;
 
 				return createElement(
 					TestContext.Provider,
@@ -1001,37 +883,26 @@ describe("MiniReact.Context API", () => {
 			expect(renderCount).toBe(1);
 
 			// Change context value
-			(
-				globalThis as typeof globalThis & {
-					setTestContextValue?: (value: string) => void;
-				}
-			).setTestContextValue?.("context-changed");
+			(exposedSetContextValue as unknown as (value: string) => void)(
+				"context-changed",
+			);
 			expect(capturedContextValue).toBe("context-changed");
 			expect(capturedLocalState).toBe("local-initial");
 			expect(renderCount).toBe(2);
 
 			// Change local state
-			(
-				globalThis as typeof globalThis & {
-					setLocalState?: (value: string) => void;
-				}
-			).setLocalState?.("local-changed");
+			(exposedSetLocalState as unknown as (value: string) => void)(
+				"local-changed",
+			);
 			expect(capturedContextValue).toBe("context-changed");
 			expect(capturedLocalState).toBe("local-changed");
 			expect(renderCount).toBe(3);
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setTestContextValue?: unknown }
-			).setTestContextValue = undefined;
-			(
-				globalThis as typeof globalThis & { setLocalState?: unknown }
-			).setLocalState = undefined;
 		});
 
 		test("should handle context provider unmounting", () => {
 			const TestContext = createContext("default");
 			let capturedValue: string | undefined;
+			let exposedSetHasProvider: ((hasProvider: boolean) => void) | null = null;
 
 			const Consumer: FunctionalComponent = () => {
 				capturedValue = useContext(TestContext);
@@ -1053,11 +924,7 @@ describe("MiniReact.Context API", () => {
 
 			const App: FunctionalComponent = () => {
 				const [hasProvider, setHasProvider] = useState(true);
-				(
-					globalThis as typeof globalThis & {
-						setHasProvider?: typeof setHasProvider;
-					}
-				).setHasProvider = setHasProvider;
+				exposedSetHasProvider = setHasProvider;
 
 				return createElement(ConditionalProvider, { hasProvider });
 			};
@@ -1068,25 +935,18 @@ describe("MiniReact.Context API", () => {
 			expect(container.textContent).toBe("provided");
 
 			// Remove provider
-			const setHasProvider = (
-				globalThis as typeof globalThis & {
-					setHasProvider?: (value: boolean) => void;
-				}
-			).setHasProvider;
-
-			setHasProvider?.(false);
+			(exposedSetHasProvider as unknown as (hasProvider: boolean) => void)(
+				false,
+			);
 			expect(capturedValue).toBe("default");
 			expect(container.textContent).toBe("default");
 
 			// Restore provider
-			setHasProvider?.(true);
+			(exposedSetHasProvider as unknown as (hasProvider: boolean) => void)(
+				true,
+			);
 			expect(capturedValue).toBe("provided");
 			expect(container.textContent).toBe("provided");
-
-			// Clean up
-			(
-				globalThis as typeof globalThis & { setHasProvider?: unknown }
-			).setHasProvider = undefined;
 		});
 	});
 });
