@@ -1,17 +1,17 @@
 {
-    "name": "mini-react",
-    "module": "index.ts",
-    "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@happy-dom/global-registrator": "^17.5.6",
-        "@types/bun": "latest"
-    },
-    "scripts": {
-        "lint": "biome check .",
-        "format": "biome format --write ."
-    },
-    "peerDependencies": {
-        "typescript": "^5.0.0"
-    },
-    "type": "module"
+	"name": "mini-react",
+	"module": "index.ts",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@happy-dom/global-registrator": "^17.5.6",
+		"@types/bun": "latest"
+	},
+	"scripts": {
+		"lint": "biome check .",
+		"format": "biome format --write ."
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"type": "module"
 }
