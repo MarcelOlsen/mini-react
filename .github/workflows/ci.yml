@@ -38,7 +38,7 @@ jobs:
               run: bun install
 
             - name: Run Biome checks
-              run: bun biome check
+              run: bunx biome check
 
     bun-tests:
         name: bun test suite
