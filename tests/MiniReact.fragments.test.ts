@@ -118,11 +118,11 @@ describe("MiniReact Fragment Tests", () => {
             }
 
             // Initial render
-            render(createElement(TestComponent, null), container);
+            render(createElement(TestComponent, { items: ["A", "B"] }), container);
             expect(container.innerHTML).toBe("<div>A</div><div>B</div>");
 
             // Update
-            render(createElement(TestComponent, null), container);
+            render(createElement(TestComponent, { items: ["A", "B", "C"] }), container);
             expect(container.innerHTML).toBe(
                 "<div>A</div><div>B</div><div>C</div>",
             );
