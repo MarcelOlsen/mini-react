@@ -548,6 +548,9 @@ function updateVDOMInstance(
 		let childInstance: VDOMInstance | null = null;
 		try {
 			childInstance = reconcile(parentNode, childElement, oldChildInstance);
+			if (childInstance) {
+				childInstance.parent = instance;
+			}
 		} finally {
 			// Pop context AFTER reconciling children - ensure this happens even on exceptions
 			if (contextWasPushed && popContextFunction) {
