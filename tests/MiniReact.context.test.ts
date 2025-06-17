@@ -948,5 +948,46 @@ describe("MiniReact.Context API", () => {
 			expect(capturedValue).toBe("provided");
 			expect(container.textContent).toBe("provided");
 		});
+
+		test("should update _currentValue when provider value changes", () => {
+			const TestContext = createContext("default");
+
+			// Initially should have default value
+			expect(TestContext._currentValue).toBe("default");
+
+			const Consumer: FunctionalComponent = () => {
+				const value = useContext(TestContext);
+				return createElement("div", null, value);
+			};
+
+			const App: FunctionalComponent = () => {
+				return createElement(
+					TestContext.Provider,
+					{ value: "updated" },
+					createElement(Consumer, null),
+				);
+			};
+
+			render(createElement(App, null), container);
+
+			// After rendering with Provider, _currentValue should be updated
+			expect(TestContext._currentValue).toBe("updated");
+			expect(container.textContent).toBe("updated");
+
+			// Test with multiple updates
+			const App2: FunctionalComponent = () => {
+				return createElement(
+					TestContext.Provider,
+					{ value: "final" },
+					createElement(Consumer, null),
+				);
+			};
+
+			render(createElement(App2, null), container);
+
+			// _currentValue should reflect the latest value
+			expect(TestContext._currentValue).toBe("final");
+			expect(container.textContent).toBe("final");
+		});
 	});
 });

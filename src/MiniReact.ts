@@ -181,7 +181,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => {}, // Will be set below
+			setState: () => { }, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -302,10 +302,20 @@ export function useEffect(
 export function createContext<T>(defaultValue: T): MiniReactContext<T> {
 	const contextId = Symbol("MiniReactContext");
 
+	// Create the final context object that will be returned
+	const context: MiniReactContext<T> = {
+		_currentValue: defaultValue,
+		_defaultValue: defaultValue,
+		_contextId: contextId,
+	} as MiniReactContext<T>;
+
 	const Provider: FunctionalComponent<{
 		value: T;
 		children?: AnyMiniReactElement[];
 	}> = ({ value, children }) => {
+		// Update the context's current value to keep it in sync
+		context._currentValue = value;
+
 		// Store context value in the current instance so reconciler can manage context stack
 		if (currentRenderInstance) {
 			if (!currentRenderInstance.contextValues) {
@@ -331,12 +341,8 @@ export function createContext<T>(defaultValue: T): MiniReactContext<T> {
 		return result;
 	};
 
-	const context: MiniReactContext<T> = {
-		_currentValue: defaultValue,
-		_defaultValue: defaultValue,
-		_contextId: contextId,
-		Provider,
-	};
+	// Set the Provider function on the context object
+	context.Provider = Provider;
 
 	return context;
 }
