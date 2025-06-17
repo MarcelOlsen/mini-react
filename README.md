@@ -12,16 +12,30 @@ A learning project to build a simplified React-like library from scratch, with a
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Development Phases](#development-phases)
-  - [Phase 1: Element Creation & Basic Rendering ✅](#phase-1-element-creation--basic-rendering-)
-  - [Phase 2: Functional Components ✅](#phase-2-functional-components-)
-  - [Phase 3: Virtual DOM & Basic Reconciliation ✅](#phase-3-virtual-dom--basic-reconciliation-)
-  - [Phase 4: Prop Diffing & Efficient Children Reconciliation ✅](#phase-4-prop-diffing--efficient-children-reconciliation-)
-  - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook)
-  - [Phase 6: Event Handling ✅](#phase-6-event-handling)
-  - [Phase 7: Effects with useEffect ✅](#phase-7-effects-with-useeffect-)
-  - [Phase 8: Context API ✅](#phase-8-context-api-)
-  - [Phase 9: Portals and Fragments](#phase-9-portals-and-fragments)
-  - [Phase 10: JSX Support](#phase-10-jsx-support)
+  - [🚀 **ALPHA RELEASE TRACK** (Phases 1-11)](#🚀-alpha-release-track-phases-1-11)
+    - [Phase 1: Element Creation & Basic Rendering ✅](#phase-1-element-creation--basic-rendering-)
+    - [Phase 2: Functional Components ✅](#phase-2-functional-components-)
+    - [Phase 3: Virtual DOM & Basic Reconciliation ✅](#phase-3-virtual-dom--basic-reconciliation-)
+    - [Phase 4: Prop Diffing & Efficient Children Reconciliation ✅](#phase-4-prop-diffing--efficient-children-reconciliation-)
+    - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook)
+    - [Phase 6: Event Handling ✅](#phase-6-event-handling)
+    - [Phase 7: Effects with useEffect ✅](#phase-7-effects-with-useeffect-)
+    - [Phase 8: Context API ✅](#phase-8-context-api-)
+    - [Phase 9: Portals and Fragments 🎯](#phase-9-portals-and-fragments)
+    - [Phase 10: JSX Support 🎯](#phase-10-jsx-support)
+    - [Phase 11: Essential Hooks (useRef & useReducer) 🎯](#phase-11-essential-hooks-useref--usereducer)
+    - [🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality](#🎉-alpha-release-v010-complete-core-react-like-functionality)
+  - [🚀 **STABLE RELEASE TRACK** (Phases 12-20)](#🚀-stable-release-track-phases-12-20)
+    - [Phase 12: Performance Optimization Suite](#phase-12-performance-optimization-suite)
+    - [Phase 13: Error Boundaries & Resilience](#phase-13-error-boundaries--resilience)
+    - [Phase 14: Async Features & Suspense](#phase-14-async-features--suspense)
+    - [Phase 15: Concurrent Features (Advanced)](#phase-15-concurrent-features-advanced)
+    - [Phase 16: Developer Experience](#phase-16-developer-experience)
+    - [Phase 17: Server-Side Rendering](#phase-17-server-side-rendering)
+    - [Phase 18: Advanced Component Patterns](#phase-18-advanced-component-patterns)
+    - [Phase 19: Testing & Quality Assurance](#phase-19-testing--quality-assurance)
+    - [Phase 20: Production Optimizations](#phase-20-production-optimizations)
+    - [🎯 **STABLE RELEASE v1.0.0** - Production-Ready React Alternative](#🎯-stable-release-v100-production-ready-react-alternative)
 - [API Reference](#api-reference)
 - [Testing](#testing)
 - [Code Quality](#code-quality)
@@ -46,7 +60,7 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ## Current Status
 
-🎯 **Current Phase**: 8 ✅ **COMPLETE**
+🆕 **Current Phase**: Alpha Release Track - Phase 8 ✅ **COMPLETE**
 
 **Latest Achievements**:
 
@@ -56,7 +70,16 @@ Each phase includes clear specifications, working implementations, and extensive
 - ✅ **Complete Hook System**: useState, useEffect, useContext with proper lifecycle management
 - ✅ **Advanced Context Management**: Provider components, nested contexts, and value propagation
 
-**Overall Progress**: 8/10 phases complete (80% of planned features)
+**Alpha Release Progress**: 8/11 phases complete (73% toward alpha)
+
+**Next Milestones**:
+
+- 🎯 **Phase 9**: Portals and Fragments (2-3 weeks)
+- 🎯 **Phase 10**: JSX Support (2-3 weeks)
+- 🎯 **Phase 11**: Essential Hooks - useRef & useReducer (1-2 weeks)
+- 🎉 **Alpha Release v0.1.0**: Target in 4-6 weeks
+
+**Post-Alpha Roadmap**: 12 additional phases planned for stable v1.0.0 release with advanced features including concurrent rendering, SSR, dev tools, and production optimizations.
 
 ---
 
@@ -201,7 +224,9 @@ mini-react/
 
 ## Development Phases
 
-### Phase 1: Element Creation & Basic Rendering ✅
+### 🚀 **ALPHA RELEASE TRACK** (Phases 1-11)
+
+#### Phase 1: Element Creation & Basic Rendering ✅
 
 **Features:**
 
@@ -212,7 +237,7 @@ mini-react/
 
 ---
 
-### Phase 2: Functional Components ✅
+#### Phase 2: Functional Components ✅
 
 **Features:**
 
@@ -223,7 +248,7 @@ mini-react/
 
 ---
 
-### Phase 3: Virtual DOM & Basic Reconciliation ✅
+#### Phase 3: Virtual DOM & Basic Reconciliation ✅
 
 **Features:**
 
@@ -234,7 +259,7 @@ mini-react/
 
 ---
 
-### Phase 4: Prop Diffing & Efficient Children Reconciliation ✅
+#### Phase 4: Prop Diffing & Efficient Children Reconciliation ✅
 
 **Features:**
 
@@ -245,7 +270,7 @@ mini-react/
 
 ---
 
-### Phase 5: State with useState Hook ✅
+#### Phase 5: State with useState Hook ✅
 
 **Features:**
 
@@ -259,7 +284,7 @@ mini-react/
 
 ---
 
-### Phase 6: Event Handling ✅
+#### Phase 6: Event Handling ✅
 
 **Features:**
 
@@ -272,7 +297,7 @@ mini-react/
 
 ---
 
-### Phase 7: Effects with useEffect ✅
+#### Phase 7: Effects with useEffect ✅
 
 **Features:**
 
@@ -282,7 +307,7 @@ mini-react/
 
 ---
 
-### Phase 8: Context API ✅
+#### Phase 8: Context API ✅
 
 **Features:**
 
@@ -296,16 +321,18 @@ mini-react/
 
 ---
 
-### Phase 9: Portals and Fragments
+#### Phase 9: Portals and Fragments 🎯
 
 **Features (Planned):**
 
 - Support for rendering children into a different part of the DOM (portals)
 - Support for fragments (multiple children without extra DOM nodes)
+- Portal lifecycle management and cleanup
+- Fragment reconciliation optimization
 
 ---
 
-### Phase 10: JSX Support
+#### Phase 10: JSX Support 🎯
 
 **Features (Planned):**
 
@@ -316,6 +343,195 @@ mini-react/
 - Build tool configuration (TypeScript/Babel integration)
 - Development mode enhancements with source maps and debugging
 - Backward compatibility with existing `createElement` API
+
+---
+
+#### Phase 11: Essential Hooks (useRef & useReducer) 🎯
+
+**Features (Planned):**
+
+- **useRef**: DOM references and mutable values that persist across renders
+- **useReducer**: Complex state management with dispatch patterns
+- Ref forwarding for component composition
+- Reducer pattern integration with reconciliation
+- Performance optimizations for ref updates
+
+---
+
+### 🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality
+
+**Target Features for Alpha:**
+
+- ✅ Full Virtual DOM with reconciliation
+- ✅ Complete hook system (useState, useEffect, useContext, useRef, useReducer)
+- ✅ Event handling and lifecycle management
+- ✅ JSX support with build tool integration
+- ✅ Portals and fragments
+- ✅ Production-ready for basic applications
+
+---
+
+### 🚀 **STABLE RELEASE TRACK** (Phases 12-20)
+
+#### Phase 12: Performance Optimization Suite
+
+**Features (Planned):**
+
+- **React.memo equivalent** - Component memoization with shallow comparison
+- **Batched updates** - Multiple state updates in a single render cycle
+- **useMemo** - Expensive computation memoization
+- **useCallback** - Function memoization for performance optimization
+- **Performance profiler** - Component render time analysis and optimization insights
+
+---
+
+#### Phase 13: Error Boundaries & Resilience
+
+**Features (Planned):**
+
+- **Error boundaries** - Catch and handle component errors gracefully
+- **Error recovery** - Retry mechanisms and fallback UI
+- **Development warnings** - Helpful error messages and debugging info
+- **Error logging** - Structured error reporting and analytics
+- **Graceful degradation** - Fallback rendering for failed components
+
+---
+
+#### Phase 14: Async Features & Suspense
+
+**Features (Planned):**
+
+- **Suspense** - Declarative loading states for async components
+- **Lazy loading** - Dynamic component imports with code splitting
+- **Resource preloading** - Intelligent data fetching coordination
+- **Async component boundaries** - Error handling for async operations
+- **Loading state management** - Coordinated loading indicators
+
+---
+
+#### Phase 15: Concurrent Features
+
+**Features (Planned):**
+
+- **Fiber-like architecture** - Incremental rendering with interruption support
+- **Time slicing** - Breaking work into chunks to avoid blocking the main thread
+- **Priority-based scheduling** - High/low priority updates (similar to React's concurrent features)
+- **Concurrent rendering** - Non-blocking updates
+- **Transitions** - Mark updates as non-urgent
+- **Background updates** - Lower priority rendering for better UX
+
+---
+
+#### Phase 16: Developer Experience
+
+**Features (Planned):**
+
+- **DevTools integration** - Browser extension for component inspection
+- **Hot module replacement** - Live editing without losing state
+- **Source maps** - Better debugging with original source locations
+- **Component profiler** - Performance analysis and optimization suggestions
+- **Debug mode** - Enhanced development warnings and error messages
+
+---
+
+#### Phase 17: Server-Side Rendering
+
+**Features (Planned):**
+
+- **SSR support** - Render components to HTML strings
+- **Hydration** - Attach event listeners to server-rendered HTML
+- **Streaming SSR** - Server-side rendering with partial hydration
+- **Isomorphic components** - Components that work on both client and server
+- **SEO optimization** - Meta tag management and structured data
+
+---
+
+#### Phase 18: Advanced Component Patterns
+
+**Features (Planned):**
+
+- **Higher-Order Components (HOCs)** - Component composition patterns
+- **Render props** - Function-as-children pattern
+- **Compound components** - Components that work together (like `<Select>` + `<Option>`)
+- **Component inheritance** - Class-based component support
+- **Advanced prop patterns** - Prop drilling solutions and advanced prop handling
+
+---
+
+#### Phase 19: Testing & Quality Assurance
+
+**Features (Planned):**
+
+- **Testing utilities** - Component testing helpers and utilities
+- **Test renderer** - Headless rendering for unit tests
+- **Snapshot testing** - Component output verification
+- **Performance testing** - Automated performance regression detection
+- **Accessibility testing** - Built-in a11y validation and warnings
+
+---
+
+#### Phase 20: Production Optimizations
+
+**Features (Planned):**
+
+- **Bundle optimization** - Tree shaking and dead code elimination
+- **Runtime optimizations** - Memory usage optimization and garbage collection
+- **Production builds** - Minified and optimized production bundles
+- **CDN support** - Easy integration with content delivery networks
+- **Analytics integration** - Performance monitoring and usage analytics
+
+---
+
+### 🎯 **STABLE RELEASE v1.0.0** - Production-Ready React Alternative
+
+**Target Features for Stable:**
+
+- 🎯 Complete React feature parity
+- 🎯 Advanced performance optimizations
+- 🎯 Full developer tooling ecosystem
+- 🎯 Server-side rendering capabilities
+- 🎯 Robust error handling and monitoring
+- 🎯 Comprehensive testing and quality assurance tools
+
+---
+
+## Release Timeline
+
+### **Immediate Focus**
+
+- 🎯 **Phase 9**: Portals and Fragments
+- 🎯 **Phase 10**: JSX Support
+- 🎯 **Phase 11**: Essential Hooks (useRef & useReducer)
+
+### **Alpha Release**
+
+- 🎉 **v0.1.0-alpha** - Core functionality complete
+- 📦 NPM package publication
+- 📚 Basic documentation and examples
+- 🧪 Community testing and feedback
+
+### **Stable Release**
+
+- 🎯 **v1.0.0** - Production-ready with advanced features
+- 📖 Comprehensive documentation
+- 🌍 Full ecosystem support
+
+---
+
+## Why This Approach?
+
+### **Alpha Benefits:**
+
+- **Fast time-to-market** - Core React functionality in weeks, not months
+- **Incremental development** - Build confidence before advanced features
+- **Practical validation** - Test reconciliation and hook systems under real load
+
+### **Stable Benefits:**
+
+- **Feature completeness** - All modern React capabilities
+- **Performance leadership** - Advanced optimizations beyond React
+- **Developer experience** - Best-in-class tooling and debugging
+- **Production readiness** - Robust error handling and monitoring
 
 ---
 
@@ -466,7 +682,7 @@ const Layout: FunctionalComponent<{ title: string }> = ({
 
 ## Testing
 
-**Comprehensive Test Suite: Unit and integration tests across 7 files**
+**Comprehensive Test Suite: Unit and integration tests across 8 files**
 
 ### Test Categories:
 
@@ -474,12 +690,23 @@ const Layout: FunctionalComponent<{ title: string }> = ({
 - **Integration Tests**: Full rendering pipeline testing
 - **Reconciliation Tests**: Virtual DOM diffing and updates
 - **Event Tests**: Event handling, delegation, and synthetic events
-- **Hook Tests**: useState hook functionality and state management
+- **Hook Tests**: useState, useEffect, and useContext functionality
+- **Context Tests**: Full context API with providers and consumers
 - **Performance Tests**: Large lists and memory pressure scenarios
 - **Edge Case Tests**: Error handling and boundary conditions
 
 ### Running Tests:
 
-```
+```bash
+# Run all tests
+bun test
 
+# Run tests in watch mode
+bun test --watch
+
+# Run specific test file
+bun test tests/MiniReact.render.test.ts
+
+# Check code quality
+bunx biome check
 ```
