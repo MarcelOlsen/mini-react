@@ -162,17 +162,22 @@ function createVDOMInstance(
 
 		// Check if this component is a context provider (has contextValues)
 		// and push context BEFORE reconciling children
+		let contextWasPushed = false;
 		if (instance.contextValues && pushContextFunction) {
 			pushContextFunction(instance.contextValues);
+			contextWasPushed = true;
 		}
 
-		const childInstance = childElement
-			? createVDOMInstance(parentDom, childElement)
-			: null;
-
-		// Pop context AFTER reconciling children
-		if (instance.contextValues && popContextFunction) {
-			popContextFunction();
+		let childInstance: VDOMInstance | null = null;
+		try {
+			childInstance = childElement
+				? createVDOMInstance(parentDom, childElement)
+				: null;
+		} finally {
+			// Pop context AFTER reconciling children - ensure this happens even on exceptions
+			if (contextWasPushed && popContextFunction) {
+				popContextFunction();
+			}
 		}
 
 		if (childInstance) {
@@ -226,7 +231,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => {};
+	() => { };
 
 /**
  * Sets the hook context function from MiniReact module
@@ -534,26 +539,31 @@ function updateVDOMInstance(
 
 		// Check if this component is a context provider (has contextValues)
 		// and push context BEFORE reconciling children
+		let contextWasPushed = false;
 		if (instance.contextValues && pushContextFunction) {
 			pushContextFunction(instance.contextValues);
+			contextWasPushed = true;
 		}
 
-		const newChildInstance = reconcile(
-			parentNode,
-			childElement,
-			oldChildInstance,
-		);
-
-		// Pop context AFTER reconciling children
-		if (instance.contextValues && popContextFunction) {
-			popContextFunction();
+		let childInstance: VDOMInstance | null = null;
+		try {
+			childInstance = reconcile(
+				parentNode,
+				childElement,
+				oldChildInstance,
+			);
+		} finally {
+			// Pop context AFTER reconciling children - ensure this happens even on exceptions
+			if (contextWasPushed && popContextFunction) {
+				popContextFunction();
+			}
 		}
 
 		// Update the existing instance in-place instead of creating a new one
 		// This preserves the event system mappings and other references
 		instance.element = newElement;
-		instance.dom = newChildInstance?.dom || null;
-		instance.childInstances = newChildInstance ? [newChildInstance] : [];
+		instance.dom = childInstance?.dom || null;
+		instance.childInstances = childInstance ? [childInstance] : [];
 
 		// hooks are already preserved on the instance
 
