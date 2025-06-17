@@ -156,10 +156,12 @@ function createVDOMInstance(
 		// Set hook context before calling component
 		setCurrentRenderInstance(instance);
 
-		const childElement = (type as FunctionalComponent)(props);
-
-		setCurrentRenderInstance(null); // Clear context after call
-
+		let childElement: AnyMiniReactElement | null;
+		try {
+		  childElement = (type as FunctionalComponent)(props);
+		} finally {
+		  setCurrentRenderInstance(null); // always reset
+		}
 		// Check if this component is a context provider (has contextValues)
 		// and push context BEFORE reconciling children
 		let contextWasPushed = false;
