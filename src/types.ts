@@ -91,11 +91,20 @@ export interface EffectHook {
 	hasRun: boolean;
 }
 
+export interface ContextHook<T = unknown> {
+	type: "context";
+	context: MiniReactContext<T>;
+	value: T;
+}
+
 /**
  * Union type for hooks stored in component instances.
- * Note: The generic parameter T only applies to StateHook, EffectHook ignores it.
+ * Note: The generic parameter T only applies to StateHook and ContextHook, EffectHook ignores it.
  */
-export type StateOrEffectHook<T = unknown> = StateHook<T> | EffectHook;
+export type StateOrEffectHook<T = unknown> =
+	| StateHook<T>
+	| EffectHook
+	| ContextHook<T>;
 
 export type UseStateHook<T> = [
 	T,
@@ -119,6 +128,21 @@ export interface VDOMInstance {
 	element: AnyMiniReactElement;
 	dom: Node | null;
 	childInstances: VDOMInstance[];
+	parent?: VDOMInstance;
 	hooks?: StateOrEffectHook<unknown>[];
 	hookCursor?: number;
+	contextValues?: Map<symbol, unknown>; // For context providers
 }
+
+// ***************** //
+// Context API Types //
+// ***************** //
+
+export interface MiniReactContext<T = unknown> {
+	_currentValue: T;
+	_defaultValue: T;
+	_contextId: symbol;
+	Provider: FunctionalComponent<{ value: T; children?: AnyMiniReactElement[] }>;
+}
+
+export type UseContextHook = <T>(context: MiniReactContext<T>) => T;

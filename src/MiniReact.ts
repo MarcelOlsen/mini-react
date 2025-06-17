@@ -3,13 +3,20 @@
 /* ****************** */
 
 import { eventSystem } from "./eventSystem";
-import { reconcile, setHookContext, setScheduleEffect } from "./reconciler";
+import {
+	reconcile,
+	setContextHooks,
+	setHookContext,
+	setScheduleEffect,
+} from "./reconciler";
 import {
 	type AnyMiniReactElement,
 	type DependencyList,
 	type EffectCallback,
 	type EffectHook,
 	type ElementType,
+	type FunctionalComponent,
+	type MiniReactContext,
 	type StateHook,
 	type StateOrEffectHook,
 	TEXT_ELEMENT,
@@ -19,6 +26,7 @@ import {
 
 // Export event types for external use
 export type { SyntheticEvent } from "./eventSystem";
+export type { MiniReactContext } from "./types";
 
 /* ******** */
 /* Globals  */
@@ -31,6 +39,9 @@ const rootElements = new Map<HTMLElement, AnyMiniReactElement | null>();
 
 // Hook state management
 let currentRenderInstance: VDOMInstance | null = null;
+
+// Context system - Track context providers in the render tree
+const contextStack: Map<symbol, unknown>[] = [];
 
 // Effect queue management
 const effectQueue: (() => void)[] = [];
@@ -47,6 +58,16 @@ setHookContext((instance: VDOMInstance | null) => {
 
 // Set the scheduleEffect function in the reconciler so it can schedule cleanup
 setScheduleEffect(scheduleEffect);
+
+// Set the context hooks in the reconciler
+setContextHooks(
+	(contextValues: Map<symbol, unknown>) => {
+		contextStack.push(contextValues);
+	},
+	() => {
+		contextStack.pop();
+	},
+);
 
 /* *********** */
 /* Public APIs */
@@ -274,12 +295,88 @@ export function useEffect(
 }
 
 /**
+ * createContext function - Creates a new context object with default value
+ * @param defaultValue The default value for the context
+ * @returns A context object with Provider component
+ */
+export function createContext<T>(defaultValue: T): MiniReactContext<T> {
+	const contextId = Symbol("MiniReactContext");
+
+	// Create the final context object that will be returned
+	const context: MiniReactContext<T> = {
+		_currentValue: defaultValue,
+		_defaultValue: defaultValue,
+		_contextId: contextId,
+	} as MiniReactContext<T>;
+
+	const Provider: FunctionalComponent<{
+		value: T;
+		children?: AnyMiniReactElement[];
+	}> = ({ value, children }) => {
+		// Update the context's current value to keep it in sync
+		context._currentValue = value;
+
+		// Store context value in the current instance so reconciler can manage context stack
+		if (currentRenderInstance) {
+			if (!currentRenderInstance.contextValues) {
+				currentRenderInstance.contextValues = new Map();
+			}
+			currentRenderInstance.contextValues.set(contextId, value);
+		}
+
+		// Render children
+		let result: AnyMiniReactElement | null = null;
+		if (!children || children.length === 0) {
+			result = null;
+		} else if (children.length === 1) {
+			result = children[0];
+		} else {
+			result = createElement(
+				"div",
+				{ "data-context-provider": true },
+				...children,
+			);
+		}
+
+		return result;
+	};
+
+	// Set the Provider function on the context object
+	context.Provider = Provider;
+
+	return context;
+}
+
+/**
+ * useContext hook implementation
+ * @param context The context object created by createContext
+ * @returns The current context value
+ */
+export function useContext<T>(context: MiniReactContext<T>): T {
+	if (!currentRenderInstance) {
+		throw new Error("useContext must be called inside a functional component");
+	}
+
+	// Check the global context stack for active context values
+	for (let i = contextStack.length - 1; i >= 0; i--) {
+		const contextMap = contextStack[i];
+		if (contextMap.has(context._contextId)) {
+			const value = contextMap.get(context._contextId) as T;
+			return value;
+		}
+	}
+
+	// Return default value if no provider found
+	return context._defaultValue;
+}
+
+/**
  * Finds the root container for a given VDOM instance
  * @param instance The VDOM instance
  * @returns The root container element or null
  */
 function findRootContainer(instance: VDOMInstance): HTMLElement | null {
-	for (const [container, rootInstance] of rootInstances.entries()) {
+	for (const [container, rootInstance] of rootInstances) {
 		if (rootInstance && isInstanceInTree(instance, rootInstance)) {
 			return container;
 		}
@@ -301,13 +398,9 @@ function isInstanceInTree(
 		return true;
 	}
 
-	for (const child of rootInstance.childInstances) {
-		if (isInstanceInTree(targetInstance, child)) {
-			return true;
-		}
-	}
-
-	return false;
+	return rootInstance.childInstances.some((child) =>
+		isInstanceInTree(targetInstance, child),
+	);
 }
 
 /**

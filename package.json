@@ -7,8 +7,12 @@
 		"@types/bun": "latest"
 	},
 	"scripts": {
-		"lint": "biome check .",
-		"format": "biome format --write ."
+		"lint": "biome lint .",
+		"format": "biome format .",
+		"check": "biome check .",
+		"lint:write": "biome lint --write .",
+		"format:write": "biome format --write .",
+		"check:write": "biome check --write ."
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"
