@@ -1,5 +1,13 @@
 import { beforeEach, afterEach, describe, expect, test } from "bun:test";
-import { createElement, render, useState, useEffect, createPortal } from "../src/MiniReact";
+import {
+    createElement,
+    render,
+    useState,
+    useEffect,
+    createPortal,
+    createContext,
+    useContext,
+} from "../src/MiniReact";
 
 describe("MiniReact Portal Tests", () => {
     let container: HTMLElement;
@@ -22,7 +30,11 @@ describe("MiniReact Portal Tests", () => {
 
     describe("Basic Portal Functionality", () => {
         test("should render portal content to target container", () => {
-            const portalContent = createElement("div", { id: "portal-content" }, "Portal Content");
+            const portalContent = createElement(
+                "div",
+                { id: "portal-content" },
+                "Portal Content",
+            );
             const portal = createPortal(portalContent, portalTarget);
 
             const app = createElement(
@@ -35,10 +47,14 @@ describe("MiniReact Portal Tests", () => {
             render(app, container);
 
             // Main content should be in main container
-            expect(container.innerHTML).toBe("<div><div>Main Content</div></div>");
+            expect(container.innerHTML).toBe(
+                "<div><div>Main Content</div></div>",
+            );
 
             // Portal content should be in portal target
-            expect(portalTarget.innerHTML).toBe('<div id="portal-content">Portal Content</div>');
+            expect(portalTarget.innerHTML).toBe(
+                '<div id="portal-content">Portal Content</div>',
+            );
         });
 
         test("should render multiple elements through portal", () => {
@@ -52,7 +68,9 @@ describe("MiniReact Portal Tests", () => {
 
             render(portal, container);
 
-            expect(portalTarget.innerHTML).toBe("<span>First</span><span>Second</span>");
+            expect(portalTarget.innerHTML).toBe(
+                "<span>First</span><span>Second</span>",
+            );
             expect(container.innerHTML).toBe("");
         });
 
@@ -73,65 +91,97 @@ describe("MiniReact Portal Tests", () => {
                 );
             }
 
-            const portal = createPortal(createElement(NestedComponent, null), portalTarget);
+            const portal = createPortal(
+                createElement(NestedComponent, null),
+                portalTarget,
+            );
 
             render(portal, container);
 
-            expect(portalTarget.innerHTML).toBe('<div class="nested"><span>Nested Content</span></div>');
+            expect(portalTarget.innerHTML).toBe(
+                '<div class="nested"><span>Nested Content</span></div>',
+            );
         });
     });
 
     describe("Portal Updates and State Management", () => {
         test("should update portal content when state changes", () => {
-            function PortalComponent() {
+            const PortalComponent = () => {
                 const [count, setCount] = useState(0);
 
                 return createElement(
                     "div",
                     null,
-                    createElement("button", {
-                        onClick: () => setCount(count + 1),
-                    }, "Increment"),
+                    createElement(
+                        "button",
+                        {
+                            onClick: () => setCount(count + 1),
+                        },
+                        "Increment",
+                    ),
                     createPortal(
-                        createElement("div", { id: "counter" }, `Count: ${count}`),
+                        createElement(
+                            "div",
+                            { id: "counter" },
+                            `Count: ${count}`,
+                        ),
                         portalTarget,
                     ),
                 );
-            }
+            };
 
             render(createElement(PortalComponent, null), container);
 
-            expect(portalTarget.innerHTML).toBe('<div id="counter">Count: 0</div>');
+            expect(portalTarget.innerHTML).toBe(
+                '<div id="counter">Count: 0</div>',
+            );
 
             const button = container.querySelector("button");
             button?.click();
 
-            expect(portalTarget.innerHTML).toBe('<div id="counter">Count: 1</div>');
+            expect(portalTarget.innerHTML).toBe(
+                '<div id="counter">Count: 1</div>',
+            );
         });
 
         test("should handle conditional portal rendering", () => {
-            function ConditionalPortal({ showPortal }: { showPortal: boolean }) {
+            const ConditionalPortal = ({
+                showPortal,
+            }: {
+                showPortal: boolean;
+            }) => {
                 return createElement(
                     "div",
                     null,
                     createElement("div", null, "Main Content"),
-                    showPortal ? createPortal(
-                        createElement("div", null, "Portal Content"),
-                        portalTarget,
-                    ) : null,
+                    showPortal
+                        ? createPortal(
+                              createElement("div", null, "Portal Content"),
+                              portalTarget,
+                          )
+                        : null,
                 );
-            }
+            };
 
             // Initially show portal
-            render(createElement(ConditionalPortal, { showPortal: true }), container);
+            render(
+                createElement(ConditionalPortal, { showPortal: true }),
+                container,
+            );
             expect(portalTarget.innerHTML).toBe("<div>Portal Content</div>");
 
             // Hide portal
-            render(createElement(ConditionalPortal, { showPortal: false }), container);
+            render(
+                createElement(ConditionalPortal, { showPortal: false }),
+                container,
+            );
             expect(portalTarget.innerHTML).toBe("");
 
             // Show portal again
-            render(createElement(ConditionalPortal, { showPortal: true }), container);
+            render(
+                createElement(ConditionalPortal, { showPortal: true }),
+                container,
+            );
             expect(portalTarget.innerHTML).toBe("<div>Portal Content</div>");
         });
 
@@ -139,23 +189,35 @@ describe("MiniReact Portal Tests", () => {
             const alternateTarget = document.createElement("div");
             document.body.appendChild(alternateTarget);
 
-            function DynamicPortal({ useAlternate }: { useAlternate: boolean }) {
+            const DynamicPortal = ({
+                useAlternate,
+            }: {
+                useAlternate: boolean;
+            }) => {
                 const target = useAlternate ? alternateTarget : portalTarget;
                 return createPortal(
                     createElement("div", null, "Dynamic Content"),
                     target,
                 );
-            }
+            };
 
             // Initially render to portalTarget
-            render(createElement(DynamicPortal, { useAlternate: false }), container);
+            render(
+                createElement(DynamicPortal, { useAlternate: false }),
+                container,
+            );
             expect(portalTarget.innerHTML).toBe("<div>Dynamic Content</div>");
             expect(alternateTarget.innerHTML).toBe("");
 
             // Switch to alternateTarget
-            render(createElement(DynamicPortal, { useAlternate: true }), container);
+            render(
+                createElement(DynamicPortal, { useAlternate: true }),
+                container,
+            );
             expect(portalTarget.innerHTML).toBe("");
-            expect(alternateTarget.innerHTML).toBe("<div>Dynamic Content</div>");
+            expect(alternateTarget.innerHTML).toBe(
+                "<div>Dynamic Content</div>",
+            );
 
             document.body.removeChild(alternateTarget);
         });
@@ -169,14 +231,22 @@ describe("MiniReact Portal Tests", () => {
             const app = createElement(
                 "div",
                 null,
-                createPortal(createElement("div", null, "Portal 1"), portalTarget),
-                createPortal(createElement("div", null, "Portal 2"), portalTarget),
+                createPortal(
+                    createElement("div", null, "Portal 1"),
+                    portalTarget,
+                ),
+                createPortal(
+                    createElement("div", null, "Portal 2"),
+                    portalTarget,
+                ),
                 createPortal(createElement("div", null, "Portal 3"), target2),
             );
 
             render(app, container);
 
-            expect(portalTarget.innerHTML).toBe("<div>Portal 1</div><div>Portal 2</div>");
+            expect(portalTarget.innerHTML).toBe(
+                "<div>Portal 1</div><div>Portal 2</div>",
+            );
             expect(target2.innerHTML).toBe("<div>Portal 3</div>");
 
             document.body.removeChild(target2);
@@ -229,8 +299,12 @@ describe("MiniReact Portal Tests", () => {
 
             render(outerPortal, container);
 
-            expect(portalTarget.innerHTML).toBe('<div id="outer"><span>Outer Content</span></div>');
-            expect(innerTarget.innerHTML).toBe('<div id="inner">Inner Portal</div>');
+            expect(portalTarget.innerHTML).toBe(
+                '<div id="outer"><span>Outer Content</span></div>',
+            );
+            expect(innerTarget.innerHTML).toBe(
+                '<div id="inner">Inner Portal</div>',
+            );
 
             document.body.removeChild(innerTarget);
         });
@@ -240,7 +314,7 @@ describe("MiniReact Portal Tests", () => {
         test("should bubble events through React tree, not DOM tree", () => {
             const events: string[] = [];
 
-            function ParentComponent() {
+            const ParentComponent = () => {
                 return createElement(
                     "div",
                     {
@@ -258,7 +332,7 @@ describe("MiniReact Portal Tests", () => {
                         portalTarget,
                     ),
                 );
-            }
+            };
 
             render(createElement(ParentComponent, null), container);
 
@@ -272,7 +346,7 @@ describe("MiniReact Portal Tests", () => {
         test("should handle event prevention in portals", () => {
             const events: string[] = [];
 
-            function App() {
+            const App = () => {
                 return createElement(
                     "div",
                     {
@@ -292,7 +366,7 @@ describe("MiniReact Portal Tests", () => {
                         portalTarget,
                     ),
                 );
-            }
+            };
 
             render(createElement(App, null), container);
 
@@ -306,20 +380,15 @@ describe("MiniReact Portal Tests", () => {
 
     describe("Context Propagation", () => {
         test("should propagate context through portals", () => {
-            // This test will need Context implementation
-            // For now, we'll create a placeholder test structure
-            function ContextProvider({ children }: { children: unknown }) {
-                // Would use React.createContext and Provider
-                return children;
-            }
+            const TestContext = createContext("default-value");
 
-            function ContextConsumer() {
-                // Would use useContext hook
-                return createElement("div", null, "Context Value");
-            }
+            const ContextConsumer = () => {
+                const value = useContext(TestContext);
+                return createElement("div", null, value);
+            };
 
             const app = createElement(
-                ContextProvider,
+                TestContext.Provider,
                 { value: "test-value" },
                 createElement("div", null, "Main Content"),
                 createPortal(
@@ -331,48 +400,59 @@ describe("MiniReact Portal Tests", () => {
             render(app, container);
 
             // Context should work through portal
-            expect(portalTarget.innerHTML).toBe("<div>Context Value</div>");
+            expect(portalTarget.innerHTML).toBe("<div>test-value</div>");
         });
     });
 
     describe("Lifecycle and Effects", () => {
-        test("should call effects in portal components", () => {
+        test("should call effects in portal components", async () => {
             const effects: string[] = [];
 
-            function PortalComponent() {
+            const PortalComponent = () => {
                 useEffect(() => {
                     effects.push("mount");
                     return () => effects.push("unmount");
                 }, []);
 
                 return createElement("div", null, "Portal Effect Component");
-            }
+            };
 
             // Mount
             render(
-                createPortal(createElement(PortalComponent, null), portalTarget),
+                createPortal(
+                    createElement(PortalComponent, null),
+                    portalTarget,
+                ),
                 container,
             );
+
+            // Wait for effects to flush
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(effects).toEqual(["mount"]);
 
             // Unmount
             render(createElement("div", null, "Empty"), container);
 
+            // Wait for effects to flush
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
             expect(effects).toEqual(["mount", "unmount"]);
         });
 
         test("should clean up portal content on unmount", () => {
-            function PortalApp({ showPortal }: { showPortal: boolean }) {
+            const PortalApp = ({ showPortal }: { showPortal: boolean }) => {
                 return createElement(
                     "div",
                     null,
-                    showPortal ? createPortal(
-                        createElement("div", null, "Portal Content"),
-                        portalTarget,
-                    ) : null,
+                    showPortal
+                        ? createPortal(
+                              createElement("div", null, "Portal Content"),
+                              portalTarget,
+                          )
+                        : null,
                 );
-            }
+            };
 
             // Mount with portal
             render(createElement(PortalApp, { showPortal: true }), container);
@@ -470,7 +550,7 @@ describe("MiniReact Portal Tests", () => {
         test("should efficiently update large portal content", () => {
             function LargePortalList({ count }: { count: number }) {
                 const items = Array.from({ length: count }, (_, i) =>
-                    createElement("div", { key: i }, `Item ${i}`)
+                    createElement("div", { key: i }, `Item ${i}`),
                 );
 
                 return createPortal(
@@ -493,4 +573,4 @@ describe("MiniReact Portal Tests", () => {
             expect(portalTarget.firstElementChild?.children).toHaveLength(500);
         });
     });
-}); 
+});
