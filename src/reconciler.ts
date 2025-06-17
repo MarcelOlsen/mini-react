@@ -158,9 +158,9 @@ function createVDOMInstance(
 
 		let childElement: AnyMiniReactElement | null;
 		try {
-		  childElement = (type as FunctionalComponent)(props);
+			childElement = (type as FunctionalComponent)(props);
 		} finally {
-		  setCurrentRenderInstance(null); // always reset
+			setCurrentRenderInstance(null); // always reset
 		}
 		// Check if this component is a context provider (has contextValues)
 		// and push context BEFORE reconciling children
