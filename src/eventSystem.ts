@@ -254,6 +254,9 @@ class EventSystem {
 	/** Cached bound handler function to ensure same reference for add/remove event listeners */
 	private boundHandleDelegatedEvent: (event: Event) => void;
 
+	/** Set of portal containers that need event delegation */
+	private portalContainers = new Set<Element>();
+
 	constructor() {
 		// Cache the bound handler function once to ensure consistent reference
 		this.boundHandleDelegatedEvent = this.handleDelegatedEvent.bind(this);
@@ -276,6 +279,27 @@ class EventSystem {
 			this.cleanup();
 		}
 		this.rootContainer = container;
+	}
+
+	/**
+	 * Adds event delegation to a container (for portals)
+	 * This allows portal containers to delegate events to the main event system
+	 *
+	 * @param container - The container to add event delegation to
+	 */
+	addEventDelegation(container: Element): void {
+		// Track this portal container
+		this.portalContainers.add(container);
+
+		// Add event listeners to this container for all registered events
+		for (const eventName of this.registeredEvents) {
+			const eventOptions = this.getEventOptions(eventName);
+			container.addEventListener(
+				eventName,
+				this.boundHandleDelegatedEvent,
+				eventOptions,
+			);
+		}
 	}
 
 	/**
@@ -324,14 +348,26 @@ class EventSystem {
 	 * @private
 	 */
 	private ensureEventListener(nativeEventName: NativeEventName): void {
-		if (!this.registeredEvents.has(nativeEventName) && this.rootContainer) {
+		if (!this.registeredEvents.has(nativeEventName)) {
 			const eventOptions = this.getEventOptions(nativeEventName);
 
-			this.rootContainer.addEventListener(
-				nativeEventName,
-				this.boundHandleDelegatedEvent,
-				eventOptions,
-			);
+			// Add to root container
+			if (this.rootContainer) {
+				this.rootContainer.addEventListener(
+					nativeEventName,
+					this.boundHandleDelegatedEvent,
+					eventOptions,
+				);
+			}
+
+			// Add to all portal containers
+			for (const portalContainer of this.portalContainers) {
+				portalContainer.addEventListener(
+					nativeEventName,
+					this.boundHandleDelegatedEvent,
+					eventOptions,
+				);
+			}
 
 			this.registeredEvents.add(nativeEventName);
 		}
@@ -405,7 +441,8 @@ class EventSystem {
 		let currentNode: Node | null = target;
 
 		// Walk up the DOM tree and collect VDOM instances
-		while (currentNode && this.rootContainer?.contains(currentNode)) {
+		// For portals, the target might not be contained in the main root container
+		while (currentNode) {
 			const instance = this.nodeToInstance.get(currentNode);
 			if (instance) {
 				path.unshift(instance); // Add to beginning for capture order
@@ -426,14 +463,24 @@ class EventSystem {
 					break; // Exit DOM traversal since we're now in React tree
 				}
 			}
+
+			// Continue up the DOM tree
 			currentNode = currentNode.parentNode;
+
+			// If we've left the main container and don't have an instance, 
+			// but we haven't found a portal parent yet, continue searching
+			// This handles the case where portal children are in different containers
+			if (!this.rootContainer?.contains(currentNode) && !instance) {
+				// If we're outside the main container and have no instance, stop
+				break;
+			}
 		}
 
 		return path;
 	}
 
 	/**
-	 * Finds if a given instance is a child of a portal by walking up the React tree.
+	 * Finds if a given instance is a child of a portal by walking up the MiniReact tree.
 	 * Returns the portal instance if found, null otherwise.
 	 *
 	 * @param instance - The VDOM instance to check

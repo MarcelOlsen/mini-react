@@ -150,6 +150,11 @@ export function render(
 	} else {
 		rootInstances.set(containerNode, newInstance);
 	}
+
+	// Flush any scheduled effects after render
+	if (effectQueue.length > 0) {
+		queueMicrotask(flushEffects);
+	}
 }
 
 /**
@@ -208,7 +213,13 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 			if (container) {
 				// Use the original root element for re-render instead of stale element from instance
 				const rootElement = rootElements.get(container) || null;
-				render(rootElement, container);
+				if (rootElement) {
+					render(rootElement, container);
+				} else {
+					console.warn("No root element found for container, skipping re-render");
+				}
+			} else {
+				console.warn("No root container found for hook instance, skipping re-render");
 			}
 		}
 	};
@@ -379,11 +390,47 @@ export function useContext<T>(context: MiniReactContext<T>): T {
  * @returns The root container element or null
  */
 function findRootContainer(instance: VDOMInstance): HTMLElement | null {
+	// Strategy 1: Walk up the parent chain and validate rootContainer references
+	let current: VDOMInstance | undefined = instance;
+	let depth = 0;
+	while (current) {
+		if (current.rootContainer) {
+			// Verify this rootContainer is actually a real root by checking our rootInstances map
+			for (const [container, rootInstance] of rootInstances) {
+				if (container === current.rootContainer && rootInstance) {
+					return container;
+				}
+			}
+		}
+		current = current.parent;
+		depth++;
+		if (depth > 10) {
+			console.warn("Parent chain depth exceeded 10, breaking to avoid infinite loop");
+			break;
+		}
+	}
+
+	// Strategy 2: Search through all root instances to find the one containing this instance
 	for (const [container, rootInstance] of rootInstances) {
 		if (rootInstance && isInstanceInTree(instance, rootInstance)) {
 			return container;
 		}
 	}
+
+	// Strategy 3: If not found in main trees, check if this instance is part of a portal tree
+	current = instance;
+	while (current) {
+		if (current.element.type === PORTAL) {
+			// Found a portal parent - now find which root tree contains this portal
+			for (const [container, rootInstance] of rootInstances) {
+				if (rootInstance && isInstanceInTree(current, rootInstance)) {
+					return container;
+				}
+			}
+		}
+		current = current.parent;
+	}
+
 	return null;
 }
 
