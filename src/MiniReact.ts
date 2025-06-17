@@ -181,7 +181,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => { }, // Will be set below
+			setState: () => {}, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);

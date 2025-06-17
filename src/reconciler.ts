@@ -231,7 +231,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => { };
+	() => {};
 
 /**
  * Sets the hook context function from MiniReact module
@@ -547,11 +547,7 @@ function updateVDOMInstance(
 
 		let childInstance: VDOMInstance | null = null;
 		try {
-			childInstance = reconcile(
-				parentNode,
-				childElement,
-				oldChildInstance,
-			);
+			childInstance = reconcile(parentNode, childElement, oldChildInstance);
 		} finally {
 			// Pop context AFTER reconciling children - ensure this happens even on exceptions
 			if (contextWasPushed && popContextFunction) {
