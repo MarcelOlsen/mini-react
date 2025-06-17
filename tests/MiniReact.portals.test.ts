@@ -1,13 +1,5 @@
 import { beforeEach, afterEach, describe, expect, test } from "bun:test";
-import { createElement, render, useState, useEffect } from "../src/MiniReact";
-
-// TODO: Import createPortal once implemented
-// import { createPortal } from "../src/MiniReact";
-
-// Temporary placeholder for createPortal until implemented
-function createPortal(_children: unknown, _target: HTMLElement): unknown {
-    throw new Error("createPortal not yet implemented");
-}
+import { createElement, render, useState, useEffect, createPortal } from "../src/MiniReact";
 
 describe("MiniReact Portal Tests", () => {
     let container: HTMLElement;

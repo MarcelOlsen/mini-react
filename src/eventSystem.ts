@@ -3,6 +3,7 @@
 /* ************ */
 
 import type { VDOMInstance } from "./types";
+import { PORTAL } from "./types";
 
 /**
  * Mapping of MiniReact event names to their corresponding native DOM event names.
@@ -391,12 +392,12 @@ class EventSystem {
 	}
 
 	/**
-	 * Builds the event path from the target element up to the root container.
-	 * This path is used to determine which elements should receive the event
-	 * during capture and bubble phases.
+	 * Builds the event path for a given target node, respecting React tree structure.
+	 * For regular elements, follows DOM hierarchy.
+	 * For portal children, follows React component hierarchy instead.
 	 *
 	 * @param target - The DOM node where the event originated
-	 * @returns Array of VDOM instances from root to target (capture order)
+	 * @returns Array of VDOM instances in the event path (capture order)
 	 * @private
 	 */
 	private getEventPath(target: Node): VDOMInstance[] {
@@ -408,11 +409,46 @@ class EventSystem {
 			const instance = this.nodeToInstance.get(currentNode);
 			if (instance) {
 				path.unshift(instance); // Add to beginning for capture order
+
+				// Check if this instance is a child of a portal
+				// If so, we need to continue up the React tree, not DOM tree
+				const portalParent = this.findPortalParent(instance);
+				if (portalParent) {
+					// Add portal parent to path and continue up React tree
+					path.unshift(portalParent);
+
+					// Now continue up the React parent chain instead of DOM
+					let reactParent = portalParent.parent;
+					while (reactParent) {
+						path.unshift(reactParent);
+						reactParent = reactParent.parent;
+					}
+					break; // Exit DOM traversal since we're now in React tree
+				}
 			}
 			currentNode = currentNode.parentNode;
 		}
 
 		return path;
+	}
+
+	/**
+	 * Finds if a given instance is a child of a portal by walking up the React tree.
+	 * Returns the portal instance if found, null otherwise.
+	 *
+	 * @param instance - The VDOM instance to check
+	 * @returns The portal instance if this is a portal child, null otherwise
+	 * @private
+	 */
+	private findPortalParent(instance: VDOMInstance): VDOMInstance | null {
+		let current = instance.parent;
+		while (current) {
+			if (current.element.type === PORTAL) {
+				return current;
+			}
+			current = current.parent;
+		}
+		return null;
 	}
 
 	/**

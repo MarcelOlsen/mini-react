@@ -4,8 +4,9 @@ import type {
 	AnyMiniReactElement,
 	FunctionalComponent,
 	VDOMInstance,
+	PortalElement,
 } from "./types";
-import { FRAGMENT } from "./types";
+import { FRAGMENT, PORTAL } from "./types";
 
 // Import scheduleEffect to properly schedule cleanup
 let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
@@ -119,9 +120,14 @@ export function reconcile(
 			}
 		}
 
-		// Handle DOM cleanup - fragments need special handling
+		// Handle DOM cleanup - fragments and portals need special handling
 		if (oldInstance.element.type === FRAGMENT) {
 			// For fragments, recursively clean up all children
+			for (const childInstance of oldInstance.childInstances) {
+				reconcile(null, null, childInstance);
+			}
+		} else if (oldInstance.element.type === PORTAL) {
+			// For portals, recursively clean up all children (they render to different containers)
 			for (const childInstance of oldInstance.childInstances) {
 				reconcile(null, null, childInstance);
 			}
@@ -154,6 +160,32 @@ function createVDOMInstance(
 	element: AnyMiniReactElement,
 ): VDOMInstance {
 	const { type, props } = element;
+
+	// Handle portals
+	if (type === PORTAL) {
+		const portalElement = element as PortalElement;
+		const targetContainer = portalElement.props.targetContainer;
+
+		// Initialize event system for portal target if it's not already initialized
+		eventSystem.initialize(targetContainer);
+
+		const instance: VDOMInstance = {
+			element,
+			dom: null, // Portals don't have their own DOM node in the parent tree
+			childInstances: [],
+			rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
+		};
+
+		// Render children to the target container instead of the parent
+		instance.childInstances = reconcileChildren(
+			targetContainer,
+			[],
+			portalElement.props.children,
+			instance,
+		);
+
+		return instance;
+	}
 
 	// Handle fragments
 	if (type === FRAGMENT) {
@@ -555,33 +587,50 @@ function updateVDOMInstance(
 ): VDOMInstance {
 	const { type, props } = newElement;
 
-	// Handle fragments - update children directly
-	if (type === FRAGMENT) {
-		// Update the element reference
-		instance.element = newElement;
+	// Handle portals
+	if (type === PORTAL) {
+		const portalElement = newElement as PortalElement;
+		const targetContainer = portalElement.props.targetContainer;
 
-		// Find the parent DOM node to reconcile children into
+		// For portal updates, we need to check if the target container changed
+		const oldPortalElement = instance.element as PortalElement;
+		const oldTargetContainer = oldPortalElement.props.targetContainer;
+
+		// If target container changed, clean up old container first
+		if (oldTargetContainer !== targetContainer) {
+			// Clean up old portal children
+			for (const childInstance of instance.childInstances) {
+				reconcile(null, null, childInstance);
+			}
+			instance.childInstances = [];
+		}
+
+		// Update portal children in the (possibly new) target container
+		instance.element = newElement;
+		instance.childInstances = reconcileChildren(
+			targetContainer,
+			instance.childInstances,
+			portalElement.props.children,
+			instance,
+		);
+
+		return instance;
+	}
+
+	// Handle fragments
+	if (type === FRAGMENT) {
+		// Find parent DOM node for fragments
 		let parentNode: Node | null = null;
 
-		// Strategy 1: Check if parent instance has DOM
-		if (instance.parent?.dom) {
-			parentNode = instance.parent.dom;
-		}
-		// Strategy 2: Check if any existing child has a parent DOM
-		else if (instance.childInstances[0]?.dom?.parentNode) {
-			parentNode = instance.childInstances[0].dom.parentNode;
-		}
-		// Strategy 3: Check other children for parent DOM
-		else {
-			for (const child of instance.childInstances) {
-				if (child.dom?.parentNode) {
-					parentNode = child.dom.parentNode;
-					break;
-				}
+		// Strategy 1: Check if any current child has a DOM parent
+		for (const childInstance of instance.childInstances) {
+			if (childInstance.dom?.parentNode) {
+				parentNode = childInstance.dom.parentNode;
+				break;
 			}
 		}
 
-		// Strategy 4: Walk up parent tree to find DOM node
+		// Strategy 2: Walk up parent tree to find DOM node
 		if (!parentNode) {
 			let currentParent = instance.parent;
 			while (currentParent && !parentNode) {

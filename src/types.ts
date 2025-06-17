@@ -4,7 +4,7 @@
 
 import type { SyntheticEvent } from "./eventSystem";
 
-export type AnyMiniReactElement = MiniReactElement | InternalTextElement;
+export type AnyMiniReactElement = MiniReactElement | InternalTextElement | PortalElement;
 
 export type FunctionalComponent<P = Record<string, unknown>> = (
 	props: P & { children?: AnyMiniReactElement[] },
@@ -14,7 +14,8 @@ export type ElementType =
 	| string
 	| FunctionalComponent<Record<string, unknown>>
 	| ((...args: never[]) => AnyMiniReactElement | null)
-	| typeof FRAGMENT;
+	| typeof FRAGMENT
+	| typeof PORTAL;
 
 // Event handler types for common events
 export interface EventHandlers {
@@ -74,6 +75,7 @@ export interface InternalTextElement {
 
 export const TEXT_ELEMENT = "TEXT_ELEMENT";
 export const FRAGMENT = Symbol("react.fragment");
+export const PORTAL = Symbol("react.portal");
 
 // ********** //
 // Hook Types //
@@ -149,3 +151,11 @@ export interface MiniReactContext<T = unknown> {
 }
 
 export type UseContextHook = <T>(context: MiniReactContext<T>) => T;
+
+export interface PortalElement {
+	type: typeof PORTAL;
+	props: {
+		children: AnyMiniReactElement[];
+		targetContainer: HTMLElement;
+	};
+}
