@@ -5,6 +5,7 @@ import type {
 	FunctionalComponent,
 	VDOMInstance,
 } from "./types";
+import { FRAGMENT } from "./types";
 
 // Import scheduleEffect to properly schedule cleanup
 let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
@@ -118,11 +119,22 @@ export function reconcile(
 			}
 		}
 
-		if (oldInstance.dom && newInstance.dom) {
-			// Unregister old instance and register new one
+		// Handle DOM cleanup - fragments need special handling
+		if (oldInstance.element.type === FRAGMENT) {
+			// For fragments, recursively clean up all children
+			for (const childInstance of oldInstance.childInstances) {
+				reconcile(null, null, childInstance);
+			}
+		} else if (oldInstance.dom && newInstance.dom) {
+			// For regular elements, replace the DOM node
 			eventSystem.unregisterInstance(oldInstance);
 			replaceDomNode(oldInstance.dom, newInstance.dom);
+		} else if (oldInstance.dom) {
+			// If old instance had DOM but new doesn't, just remove old
+			eventSystem.unregisterInstance(oldInstance);
+			removeDomNode(oldInstance.dom);
 		}
+
 		return newInstance;
 	}
 
@@ -143,6 +155,27 @@ function createVDOMInstance(
 ): VDOMInstance {
 	const { type, props } = element;
 
+	// Handle fragments
+	if (type === FRAGMENT) {
+		const instance: VDOMInstance = {
+			element,
+			dom: null, // Fragments don't have their own DOM node
+			childInstances: [],
+			rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
+		};
+
+		// Use reconcileChildren to handle fragment children properly
+		// This will ensure correct ordering through reorderDomNodes
+		instance.childInstances = reconcileChildren(
+			parentDom,
+			[],
+			props.children,
+			instance,
+		);
+
+		return instance;
+	}
+
 	// Handle functional components
 	if (typeof type === "function") {
 		// Create the instance
@@ -151,6 +184,7 @@ function createVDOMInstance(
 			dom: null,
 			childInstances: [],
 			hooks: [], // Initialize hooks array
+			rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
 		};
 
 		// Set hook context before calling component
@@ -204,6 +238,7 @@ function createVDOMInstance(
 		element,
 		dom: domNode,
 		childInstances: [],
+		rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
 	};
 
 	// Register with event system for host elements
@@ -217,7 +252,17 @@ function createVDOMInstance(
 		const childInstance = createVDOMInstance(domNode, child);
 		childInstance.parent = instance; // Set parent reference
 		childInstances.push(childInstance);
-		if (childInstance.dom) {
+
+		// Handle DOM insertion based on child type
+		if (childInstance.element.type === FRAGMENT) {
+			// For fragments, append all their DOM children
+			for (const fragChild of childInstance.childInstances) {
+				if (fragChild.dom) {
+					domNode.appendChild(fragChild.dom);
+				}
+			}
+		} else if (childInstance.dom) {
+			// For regular elements, append the DOM node
 			domNode.appendChild(childInstance.dom);
 		}
 	}
@@ -233,7 +278,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => {};
+	() => { };
 
 /**
  * Sets the hook context function from MiniReact module
@@ -310,6 +355,10 @@ function diffProps(
  * @param value The attribute value
  */
 function setAttribute(domElement: Element, key: string, value: unknown): void {
+	if (key === "key") {
+		// Keys are used internally for reconciliation and should not be set as DOM attributes
+		return;
+	}
 	if (key === "className") {
 		domElement.setAttribute("class", String(value));
 	} else if (key.startsWith("on") && typeof value === "function") {
@@ -415,6 +464,10 @@ function reconcileChildren(
 		if (newChildInstance) {
 			// Set parent reference for the new child instance
 			newChildInstance.parent = parentInstance;
+			// Inherit rootContainer if child doesn't have one
+			if (!newChildInstance.rootContainer && parentInstance?.rootContainer) {
+				newChildInstance.rootContainer = parentInstance.rootContainer;
+			}
 			newChildInstances.push(newChildInstance);
 		}
 	}
@@ -463,16 +516,29 @@ function reorderDomNodes(
 	parentDom: Node,
 	childInstances: VDOMInstance[],
 ): void {
-	let currentDomChild = parentDom.firstChild;
+	// Collect all DOM nodes that should be in this parent, in order
+	const targetDomNodes: Node[] = [];
 
-	for (const childInstance of childInstances) {
-		if (childInstance.dom) {
-			// If this DOM node is not in the correct position, move it
-			if (currentDomChild !== childInstance.dom) {
-				parentDom.insertBefore(childInstance.dom, currentDomChild);
+	function collectDomNodes(instances: VDOMInstance[]): void {
+		for (const instance of instances) {
+			if (instance.dom && instance.dom.parentNode === parentDom) {
+				targetDomNodes.push(instance.dom);
+			} else if (instance.element.type === FRAGMENT) {
+				// For fragments, collect their children's DOM nodes
+				collectDomNodes(instance.childInstances);
 			}
-			currentDomChild = childInstance.dom.nextSibling;
 		}
+	}
+
+	collectDomNodes(childInstances);
+
+	// Now reorder the DOM nodes to match the target order
+	let currentDomChild = parentDom.firstChild;
+	for (const targetNode of targetDomNodes) {
+		if (currentDomChild !== targetNode) {
+			parentDom.insertBefore(targetNode, currentDomChild);
+		}
+		currentDomChild = targetNode.nextSibling;
 	}
 }
 
@@ -489,6 +555,71 @@ function updateVDOMInstance(
 ): VDOMInstance {
 	const { type, props } = newElement;
 
+	// Handle fragments - update children directly
+	if (type === FRAGMENT) {
+		// Update the element reference
+		instance.element = newElement;
+
+		// Find the parent DOM node to reconcile children into
+		let parentNode: Node | null = null;
+
+		// Strategy 1: Check if parent instance has DOM
+		if (instance.parent?.dom) {
+			parentNode = instance.parent.dom;
+		}
+		// Strategy 2: Check if any existing child has a parent DOM
+		else if (instance.childInstances[0]?.dom?.parentNode) {
+			parentNode = instance.childInstances[0].dom.parentNode;
+		}
+		// Strategy 3: Check other children for parent DOM
+		else {
+			for (const child of instance.childInstances) {
+				if (child.dom?.parentNode) {
+					parentNode = child.dom.parentNode;
+					break;
+				}
+			}
+		}
+
+		// Strategy 4: Walk up parent tree to find DOM node
+		if (!parentNode) {
+			let currentParent = instance.parent;
+			while (currentParent && !parentNode) {
+				if (currentParent.dom) {
+					parentNode = currentParent.dom;
+					break;
+				}
+				// For fragments, check if any child has a DOM node we can use
+				if (currentParent.element.type === FRAGMENT) {
+					for (const childInstance of currentParent.childInstances) {
+						if (childInstance.dom?.parentNode) {
+							parentNode = childInstance.dom.parentNode;
+							break;
+						}
+					}
+					if (parentNode) break;
+				}
+				currentParent = currentParent.parent;
+			}
+		}
+
+		if (!parentNode) {
+			throw new Error(
+				"Unable to find parent node for fragment reconciliation",
+			);
+		}
+
+		// Reconcile fragment children directly with parent DOM
+		instance.childInstances = reconcileChildren(
+			parentNode,
+			instance.childInstances,
+			props.children,
+			instance,
+		);
+
+		return instance;
+	}
+
 	// Handle functional components - re-execute and reconcile output
 	if (typeof type === "function") {
 		// Set hook context before calling component
@@ -502,10 +633,72 @@ function updateVDOMInstance(
 
 		// Find the correct parent node to reconcile in
 		let parentNode: Node | null = null;
+
+		// Strategy 1: Check if old child has a parent DOM node
 		if (oldChildInstance?.dom?.parentNode) {
 			parentNode = oldChildInstance.dom.parentNode;
-		} else if (instance.dom?.parentNode) {
+		}
+		// Strategy 2: Check if this instance has a DOM parent
+		else if (instance.dom?.parentNode) {
 			parentNode = instance.dom.parentNode;
+		}
+		// Strategy 3: Walk up the parent tree to find a DOM node
+		else {
+			let currentParent = instance.parent;
+			while (currentParent && !parentNode) {
+				if (currentParent.dom) {
+					parentNode = currentParent.dom;
+					break;
+				}
+				// For fragments, check if any child has a DOM node we can use
+				if (currentParent.element.type === FRAGMENT) {
+					for (const childInstance of currentParent.childInstances) {
+						if (childInstance.dom?.parentNode) {
+							parentNode = childInstance.dom.parentNode;
+							break;
+						}
+					}
+					if (parentNode) break;
+				}
+				currentParent = currentParent.parent;
+			}
+		}
+
+		// Strategy 4: Check siblings for DOM parents
+		if (!parentNode && instance.parent) {
+			for (const sibling of instance.parent.childInstances) {
+				if (sibling !== instance && sibling.dom?.parentNode) {
+					parentNode = sibling.dom.parentNode;
+					break;
+				}
+			}
+		}
+
+		// Strategy 5: If still no parent, try to find root container
+		if (!parentNode) {
+			// Walk up to find the root container by checking if this instance is a root
+			let currentInstance: VDOMInstance | undefined = instance;
+			while (currentInstance?.parent) {
+				currentInstance = currentInstance.parent;
+			}
+			// Check if any child of root has a DOM node
+			if (currentInstance?.childInstances) {
+				for (const child of currentInstance.childInstances) {
+					if (child.dom?.parentNode) {
+						parentNode = child.dom.parentNode;
+						break;
+					}
+				}
+			}
+			// If we found a root instance, check if it has a rootContainer
+			if (!parentNode && currentInstance?.rootContainer) {
+				parentNode = currentInstance.rootContainer;
+			}
+		}
+
+		// Strategy 6: Use instance's own rootContainer as last resort
+		if (!parentNode && instance.rootContainer) {
+			parentNode = instance.rootContainer;
 		}
 
 		if (!parentNode) {
