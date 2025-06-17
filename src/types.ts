@@ -13,7 +13,8 @@ export type FunctionalComponent<P = Record<string, unknown>> = (
 export type ElementType =
 	| string
 	| FunctionalComponent<Record<string, unknown>>
-	| ((...args: never[]) => AnyMiniReactElement | null);
+	| ((...args: never[]) => AnyMiniReactElement | null)
+	| typeof FRAGMENT;
 
 // Event handler types for common events
 export interface EventHandlers {
@@ -58,7 +59,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-		EventHandlers & { children: AnyMiniReactElement[] };
+	EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {
@@ -72,6 +73,7 @@ export interface InternalTextElement {
 }
 
 export const TEXT_ELEMENT = "TEXT_ELEMENT";
+export const FRAGMENT = Symbol("react.fragment");
 
 // ********** //
 // Hook Types //
@@ -132,6 +134,7 @@ export interface VDOMInstance {
 	hooks?: StateOrEffectHook<unknown>[];
 	hookCursor?: number;
 	contextValues?: Map<symbol, unknown>; // For context providers
+	rootContainer?: HTMLElement; // Track root container for root-level instances
 }
 
 // ***************** //

@@ -22,6 +22,7 @@ import {
 	TEXT_ELEMENT,
 	type UseStateHook,
 	type VDOMInstance,
+	FRAGMENT,
 } from "./types";
 
 // Export event types for external use
@@ -181,7 +182,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => {}, // Will be set below
+			setState: () => { }, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -433,6 +434,11 @@ function flushEffects(): void {
 		isFlushingEffects = false;
 	}
 }
+
+/**
+ * Fragment component - renders children without creating a wrapper DOM node
+ */
+export const Fragment: typeof FRAGMENT = FRAGMENT;
 
 /* ******* */
 /* Exports */
