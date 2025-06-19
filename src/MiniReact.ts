@@ -15,16 +15,16 @@ import {
 	type EffectCallback,
 	type EffectHook,
 	type ElementType,
+	FRAGMENT,
 	type FunctionalComponent,
 	type MiniReactContext,
+	PORTAL,
+	type PortalElement,
 	type StateHook,
 	type StateOrEffectHook,
 	TEXT_ELEMENT,
 	type UseStateHook,
 	type VDOMInstance,
-	FRAGMENT,
-	PORTAL,
-	type PortalElement,
 } from "./types";
 
 // Export event types for external use
@@ -189,7 +189,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => { }, // Will be set below
+			setState: () => {}, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -216,10 +216,14 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 				if (rootElement) {
 					render(rootElement, container);
 				} else {
-					console.warn("No root element found for container, skipping re-render");
+					console.warn(
+						"No root element found for container, skipping re-render",
+					);
 				}
 			} else {
-				console.warn("No root container found for hook instance, skipping re-render");
+				console.warn(
+					"No root container found for hook instance, skipping re-render",
+				);
 			}
 		}
 	};
@@ -405,7 +409,9 @@ function findRootContainer(instance: VDOMInstance): HTMLElement | null {
 		current = current.parent;
 		depth++;
 		if (depth > 10) {
-			console.warn("Parent chain depth exceeded 10, breaking to avoid infinite loop");
+			console.warn(
+				"Parent chain depth exceeded 10, breaking to avoid infinite loop",
+			);
 			break;
 		}
 	}
@@ -496,7 +502,13 @@ export const Fragment: typeof FRAGMENT = FRAGMENT;
  * @returns A portal element
  */
 export function createPortal(
-	children: AnyMiniReactElement | AnyMiniReactElement[] | string | number | null | undefined,
+	children:
+		| AnyMiniReactElement
+		| AnyMiniReactElement[]
+		| string
+		| number
+		| null
+		| undefined,
 	targetContainer: HTMLElement,
 ): PortalElement {
 	if (!targetContainer) {

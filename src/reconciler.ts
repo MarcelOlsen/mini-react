@@ -3,8 +3,8 @@ import { eventSystem } from "./eventSystem";
 import type {
 	AnyMiniReactElement,
 	FunctionalComponent,
-	VDOMInstance,
 	PortalElement,
+	VDOMInstance,
 } from "./types";
 import { FRAGMENT, PORTAL } from "./types";
 
@@ -100,9 +100,7 @@ export function reconcile(
 	// Case 2: Element creation - newElement exists but oldInstance is null
 	if (newElement !== null && oldInstance === null) {
 		if (!parentDom) {
-			throw new Error(
-				"Parent DOM node is required for element creation",
-			);
+			throw new Error("Parent DOM node is required for element creation");
 		}
 		return createVDOMInstance(parentDom, newElement);
 	}
@@ -164,7 +162,10 @@ export function reconcile(
 			const oldTargetContainer = oldPortalElement.props.targetContainer;
 
 			for (const childInstance of oldInstance.childInstances) {
-				if (childInstance.dom && oldTargetContainer.contains(childInstance.dom)) {
+				if (
+					childInstance.dom &&
+					oldTargetContainer.contains(childInstance.dom)
+				) {
 					reconcile(null, null, childInstance);
 				}
 			}
@@ -210,7 +211,10 @@ function createVDOMInstance(
 			element,
 			dom: null, // Portals don't have their own DOM node in the parent tree
 			childInstances: [],
-			rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
+			rootContainer:
+				parentDom.nodeType === Node.ELEMENT_NODE
+					? (parentDom as HTMLElement)
+					: undefined,
 		};
 
 		// Render children directly to the target container
@@ -223,7 +227,10 @@ function createVDOMInstance(
 		);
 
 		// Ensure all portal children have the correct rootContainer for state management
-		function propagateRootContainer(instances: VDOMInstance[], rootContainer: HTMLElement | undefined) {
+		function propagateRootContainer(
+			instances: VDOMInstance[],
+			rootContainer: HTMLElement | undefined,
+		) {
 			for (const childInstance of instances) {
 				if (!childInstance.rootContainer && rootContainer) {
 					childInstance.rootContainer = rootContainer;
@@ -242,7 +249,10 @@ function createVDOMInstance(
 			element,
 			dom: null, // Fragments don't have their own DOM node
 			childInstances: [],
-			rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
+			rootContainer:
+				parentDom.nodeType === Node.ELEMENT_NODE
+					? (parentDom as HTMLElement)
+					: undefined,
 		};
 
 		// Use reconcileChildren to handle fragment children properly
@@ -347,7 +357,10 @@ function createVDOMInstance(
 		element,
 		dom: domNode,
 		childInstances: [],
-		rootContainer: parentDom.nodeType === Node.ELEMENT_NODE ? parentDom as HTMLElement : undefined,
+		rootContainer:
+			parentDom.nodeType === Node.ELEMENT_NODE
+				? (parentDom as HTMLElement)
+				: undefined,
 	};
 
 	// Register with event system for host elements
@@ -387,7 +400,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => { };
+	() => {};
 
 /**
  * Sets the hook context function from MiniReact module
@@ -578,7 +591,10 @@ function reconcileChildren(
 				newChildInstance.rootContainer = parentInstance.rootContainer;
 			}
 			// Special case: if parent is a portal, ensure children inherit the portal's root container
-			if (parentInstance?.element.type === PORTAL && parentInstance.rootContainer) {
+			if (
+				parentInstance?.element.type === PORTAL &&
+				parentInstance.rootContainer
+			) {
 				newChildInstance.rootContainer = parentInstance.rootContainer;
 			}
 			newChildInstances.push(newChildInstance);
@@ -760,9 +776,7 @@ function updateVDOMInstance(
 		}
 
 		if (!parentNode) {
-			throw new Error(
-				"Unable to find parent node for fragment reconciliation",
-			);
+			throw new Error("Unable to find parent node for fragment reconciliation");
 		}
 
 		// Reconcile fragment children directly with parent DOM

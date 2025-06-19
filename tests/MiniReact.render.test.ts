@@ -1281,15 +1281,27 @@ describe("MiniReact.render", () => {
 				createElement(
 					"div",
 					{ key: "wrapper-1", "data-wrapper": "1" },
-					createElement("span", { key: "nested-A", "data-nested": "A" }, "Nested A"),
+					createElement(
+						"span",
+						{ key: "nested-A", "data-nested": "A" },
+						"Nested A",
+					),
 					"Inner text",
-					createElement("span", { key: "nested-B", "data-nested": "B" }, "Nested B"),
+					createElement(
+						"span",
+						{ key: "nested-B", "data-nested": "B" },
+						"Nested B",
+					),
 				),
 				42,
 				createElement(
 					"div",
 					{ key: "wrapper-2", "data-wrapper": "2" },
-					createElement("p", { key: "nested-C", "data-nested": "C" }, "Nested C"),
+					createElement(
+						"p",
+						{ key: "nested-C", "data-nested": "C" },
+						"Nested C",
+					),
 				),
 				"Text after",
 			);
@@ -1297,8 +1309,12 @@ describe("MiniReact.render", () => {
 			render(element1, container);
 
 			const parent = container.querySelector("#nested-mixed") as HTMLElement;
-			const wrapper1 = parent.querySelector('[data-wrapper="1"]') as HTMLElement;
-			const nestedA = wrapper1.querySelector('[data-nested="A"]') as HTMLElement;
+			const wrapper1 = parent.querySelector(
+				'[data-wrapper="1"]',
+			) as HTMLElement;
+			const nestedA = wrapper1.querySelector(
+				'[data-nested="A"]',
+			) as HTMLElement;
 
 			// Rearrange and modify nested structure
 			const element2 = createElement(
@@ -1308,15 +1324,31 @@ describe("MiniReact.render", () => {
 				createElement(
 					"div",
 					{ key: "wrapper-2", "data-wrapper": "2" }, // Reorder wrappers
-					createElement("p", { key: "nested-C", "data-nested": "C" }, "Updated Nested C"),
-					createElement("span", { key: "nested-D", "data-nested": "D" }, "New Nested D"),
+					createElement(
+						"p",
+						{ key: "nested-C", "data-nested": "C" },
+						"Updated Nested C",
+					),
+					createElement(
+						"span",
+						{ key: "nested-D", "data-nested": "D" },
+						"New Nested D",
+					),
 				),
 				100, // Changed number
 				createElement(
 					"div",
 					{ key: "wrapper-1", "data-wrapper": "1" },
-					createElement("span", { key: "nested-B", "data-nested": "B" }, "Updated Nested B"),
-					createElement("span", { key: "nested-A", "data-nested": "A" }, "Updated Nested A"),
+					createElement(
+						"span",
+						{ key: "nested-B", "data-nested": "B" },
+						"Updated Nested B",
+					),
+					createElement(
+						"span",
+						{ key: "nested-A", "data-nested": "A" },
+						"Updated Nested A",
+					),
 					// Removed inner text, reordered nested elements
 				),
 			);
@@ -1340,7 +1372,7 @@ describe("MiniReact.render", () => {
 
 			// Verify order of wrapper elements changed
 			const wrapperDataValues = Array.from(
-				updatedParent.querySelectorAll('[data-wrapper]'),
+				updatedParent.querySelectorAll("[data-wrapper]"),
 			).map((el) => el.getAttribute("data-wrapper"));
 			expect(wrapperDataValues).toEqual(["2", "1"]);
 		});

@@ -4,7 +4,10 @@
 
 import type { SyntheticEvent } from "./eventSystem";
 
-export type AnyMiniReactElement = MiniReactElement | InternalTextElement | PortalElement;
+export type AnyMiniReactElement =
+	| MiniReactElement
+	| InternalTextElement
+	| PortalElement;
 
 export type FunctionalComponent<P = Record<string, unknown>> = (
 	props: P & { children?: AnyMiniReactElement[] },
@@ -60,7 +63,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-	EventHandlers & { children: AnyMiniReactElement[] };
+		EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {

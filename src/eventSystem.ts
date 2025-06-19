@@ -467,7 +467,7 @@ class EventSystem {
 			// Continue up the DOM tree
 			currentNode = currentNode.parentNode;
 
-			// If we've left the main container and don't have an instance, 
+			// If we've left the main container and don't have an instance,
 			// but we haven't found a portal parent yet, continue searching
 			// This handles the case where portal children are in different containers
 			if (!this.rootContainer?.contains(currentNode) && !instance) {
