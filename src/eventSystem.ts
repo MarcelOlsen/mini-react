@@ -3,7 +3,6 @@
 /* ************ */
 
 import type { VDOMInstance } from "./types";
-import { PORTAL } from "./types";
 
 /**
  * Mapping of MiniReact event names to their corresponding native DOM event names.
@@ -254,9 +253,6 @@ class EventSystem {
 	/** Cached bound handler function to ensure same reference for add/remove event listeners */
 	private boundHandleDelegatedEvent: (event: Event) => void;
 
-	/** Set of portal containers that need event delegation */
-	private portalContainers = new Set<Element>();
-
 	constructor() {
 		// Cache the bound handler function once to ensure consistent reference
 		this.boundHandleDelegatedEvent = this.handleDelegatedEvent.bind(this);
@@ -279,27 +275,6 @@ class EventSystem {
 			this.cleanup();
 		}
 		this.rootContainer = container;
-	}
-
-	/**
-	 * Adds event delegation to a container (for portals)
-	 * This allows portal containers to delegate events to the main event system
-	 *
-	 * @param container - The container to add event delegation to
-	 */
-	addEventDelegation(container: Element): void {
-		// Track this portal container
-		this.portalContainers.add(container);
-
-		// Add event listeners to this container for all registered events
-		for (const eventName of this.registeredEvents) {
-			const eventOptions = this.getEventOptions(eventName);
-			container.addEventListener(
-				eventName,
-				this.boundHandleDelegatedEvent,
-				eventOptions,
-			);
-		}
 	}
 
 	/**
@@ -348,26 +323,14 @@ class EventSystem {
 	 * @private
 	 */
 	private ensureEventListener(nativeEventName: NativeEventName): void {
-		if (!this.registeredEvents.has(nativeEventName)) {
+		if (!this.registeredEvents.has(nativeEventName) && this.rootContainer) {
 			const eventOptions = this.getEventOptions(nativeEventName);
 
-			// Add to root container
-			if (this.rootContainer) {
-				this.rootContainer.addEventListener(
-					nativeEventName,
-					this.boundHandleDelegatedEvent,
-					eventOptions,
-				);
-			}
-
-			// Add to all portal containers
-			for (const portalContainer of this.portalContainers) {
-				portalContainer.addEventListener(
-					nativeEventName,
-					this.boundHandleDelegatedEvent,
-					eventOptions,
-				);
-			}
+			this.rootContainer.addEventListener(
+				nativeEventName,
+				this.boundHandleDelegatedEvent,
+				eventOptions,
+			);
 
 			this.registeredEvents.add(nativeEventName);
 		}
@@ -428,12 +391,12 @@ class EventSystem {
 	}
 
 	/**
-	 * Builds the event path for a given target node, respecting React tree structure.
-	 * For regular elements, follows DOM hierarchy.
-	 * For portal children, follows React component hierarchy instead.
+	 * Builds the event path from the target element up to the root container.
+	 * This path is used to determine which elements should receive the event
+	 * during capture and bubble phases.
 	 *
 	 * @param target - The DOM node where the event originated
-	 * @returns Array of VDOM instances in the event path (capture order)
+	 * @returns Array of VDOM instances from root to target (capture order)
 	 * @private
 	 */
 	private getEventPath(target: Node): VDOMInstance[] {
@@ -441,61 +404,15 @@ class EventSystem {
 		let currentNode: Node | null = target;
 
 		// Walk up the DOM tree and collect VDOM instances
-		// For portals, the target might not be contained in the main root container
-		while (currentNode) {
+		while (currentNode && this.rootContainer?.contains(currentNode)) {
 			const instance = this.nodeToInstance.get(currentNode);
 			if (instance) {
 				path.unshift(instance); // Add to beginning for capture order
-
-				// Check if this instance is a child of a portal
-				// If so, we need to continue up the React tree, not DOM tree
-				const portalParent = this.findPortalParent(instance);
-				if (portalParent) {
-					// Add portal parent to path and continue up React tree
-					path.unshift(portalParent);
-
-					// Now continue up the React parent chain instead of DOM
-					let reactParent = portalParent.parent;
-					while (reactParent) {
-						path.unshift(reactParent);
-						reactParent = reactParent.parent;
-					}
-					break; // Exit DOM traversal since we're now in React tree
-				}
 			}
-
-			// Continue up the DOM tree
 			currentNode = currentNode.parentNode;
-
-			// If we've left the main container and don't have an instance,
-			// but we haven't found a portal parent yet, continue searching
-			// This handles the case where portal children are in different containers
-			if (!this.rootContainer?.contains(currentNode) && !instance) {
-				// If we're outside the main container and have no instance, stop
-				break;
-			}
 		}
 
 		return path;
-	}
-
-	/**
-	 * Finds if a given instance is a child of a portal by walking up the MiniReact tree.
-	 * Returns the portal instance if found, null otherwise.
-	 *
-	 * @param instance - The VDOM instance to check
-	 * @returns The portal instance if this is a portal child, null otherwise
-	 * @private
-	 */
-	private findPortalParent(instance: VDOMInstance): VDOMInstance | null {
-		let current = instance.parent;
-		while (current) {
-			if (current.element.type === PORTAL) {
-				return current;
-			}
-			current = current.parent;
-		}
-		return null;
 	}
 
 	/**
