@@ -676,6 +676,7 @@ const greeting = createElement(Greeting, { name: "World" });
 
 ### render
 
+<<<<<<< HEAD
 ```typescript
 function render(
   element: AnyMiniReactElement | null | undefined,
@@ -695,6 +696,54 @@ Renders a virtual DOM element into a real DOM container with efficient reconcili
 ```typescript
 const app = createElement("div", null, "Hello World");
 render(app, document.getElementById("root")!);
+=======
+````
+
+Renders a virtual DOM element into a real DOM container with efficient reconciliation.
+
+**Parameters:**
+
+- `element`: Virtual DOM element to render (null clears container)
+- `container`: Target DOM element
+
+**Example:**
+
+```typescript
+const app = createElement("div", null, "Hello World");
+render(app, document.getElementById("root")!);
+````
+
+### Functional Components
+
+```typescript
+type FunctionalComponent<P = Record<string, unknown>> = (
+  props: P & { children?: AnyMiniReactElement[] }
+) => AnyMiniReactElement | null;
+```
+
+Components are functions that take props and return virtual DOM elements. The type is generic, allowing for strongly typed props with destructuring. **Now supports inferred component types just like React!**
+
+**Examples:**
+
+```typescript
+// ✅ Inferred component (React-style) - RECOMMENDED
+const Component = ({ id }: { id: string }) => {
+  return createElement("div", { id }, "Hello World");
+};
+
+// ✅ Inferred with optional props
+const Greeting = ({
+  name = "Anonymous",
+  age,
+}: {
+  name?: string;
+  age?: number;
+}) => {
+  return createElement(
+    "p",
+    null,
+    age ? `${name} is ${age} years old`
+>>>>>>> f2a7618 (📚 chore: update readme roadmap progress)
 ```
 
 ### Functional Components
