@@ -21,7 +21,7 @@ export function createDomNode(element: AnyMiniReactElement): Node {
 	const domNode = document.createElement(type as string);
 	// biome-ignore lint/complexity/noForEach: forEach is appropriate here as we need to iterate over object entries with side effects (setting DOM attributes), not transforming to a new array
 	Object.entries(props).forEach(([key, value]) => {
-		if (key === "children" || key === "key") return;
+		if (key === "children") return;
 
 		if (key === "className") {
 			domNode.setAttribute("class", String(value));
