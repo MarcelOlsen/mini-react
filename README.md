@@ -21,7 +21,7 @@ A learning project to build a simplified React-like library from scratch, with a
     - [Phase 6: Event Handling ✅](#phase-6-event-handling)
     - [Phase 7: Effects with useEffect ✅](#phase-7-effects-with-useeffect-)
     - [Phase 8: Context API ✅](#phase-8-context-api-)
-    - [Phase 9: Portals and Fragments 🎯](#phase-9-portals-and-fragments)
+    - [Phase 9: Portals and Fragments ✅](#phase-9-portals-and-fragments)
     - [Phase 10: JSX Support 🎯](#phase-10-jsx-support)
     - [Phase 11: Essential Hooks (useRef & useReducer) 🎯](#phase-11-essential-hooks-useref--usereducer)
     - [🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality](#🎉-alpha-release-v010-complete-core-react-like-functionality)
@@ -60,24 +60,24 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ## Current Status
 
-🆕 **Current Phase**: Alpha Release Track - Phase 8 ✅ **COMPLETE**
+🆕 **Current Phase**: Alpha Release Track - Phase 9 ✅ **COMPLETE**
 
 **Latest Achievements**:
 
-- ✅ **Phase 8 Complete**: Context API with createContext and useContext
-- ✅ **158 Tests Passing**: Comprehensive test suite covering all functionality
+- ✅ **Phase 9 Complete**: Portals and Fragments - Advanced rendering capabilities
+- ✅ **208 Tests Passing**: Comprehensive test suite covering all functionality including portals and fragments
 - ✅ **Zero Linter Issues**: Clean codebase with consistent formatting
-- ✅ **Complete Hook System**: useState, useEffect, useContext with proper lifecycle management
-- ✅ **Advanced Context Management**: Provider components, nested contexts, and value propagation
+- ✅ **Complete Portal System**: createPortal with target DOM container rendering, event bubbling through React tree, context propagation, and lifecycle management
+- ✅ **Fragment Support**: React.Fragment equivalent for rendering multiple children without wrapper elements
+- ✅ **Advanced Rendering Features**: Portal cleanup, nested portals, conditional portal rendering, and fragment reconciliation optimization
 
-**Alpha Release Progress**: 8/11 phases complete (73% toward alpha)
+**Alpha Release Progress**: 9/11 phases complete (82% toward alpha)
 
 **Next Milestones**:
 
-- 🎯 **Phase 9**: Portals and Fragments (2-3 weeks)
 - 🎯 **Phase 10**: JSX Support (2-3 weeks)
 - 🎯 **Phase 11**: Essential Hooks - useRef & useReducer (1-2 weeks)
-- 🎉 **Alpha Release v0.1.0**: Target in 4-6 weeks
+- 🎉 **Alpha Release v0.1.0**: Target in 3-4 weeks
 
 **Post-Alpha Roadmap**: 12 additional phases planned for stable v1.0.0 release with advanced features including concurrent rendering, SSR, dev tools, and production optimizations.
 
@@ -164,6 +164,107 @@ bun test tests/MiniReact.render.test.ts
 bunx biome check
 ```
 
+### Advanced Usage Examples
+
+#### Portal Usage
+
+```typescript
+import { createElement, render, createPortal, useState } from "./src/MiniReact";
+
+// Create a portal target in your HTML
+// <div id="modal-root"></div>
+
+const Modal = ({
+  children,
+  onClose,
+}: {
+  children: any;
+  onClose: () => void;
+}) => {
+  const modalRoot = document.getElementById("modal-root")!;
+
+  return createPortal(
+    createElement(
+      "div",
+      {
+        className: "modal-overlay",
+        onClick: onClose,
+      },
+      createElement(
+        "div",
+        {
+          className: "modal-content",
+          onClick: (e: Event) => e.stopPropagation(),
+        },
+        children
+      )
+    ),
+    modalRoot
+  );
+};
+
+const App = () => {
+  const [showModal, setShowModal] = useState(false);
+
+  return createElement(
+    "div",
+    null,
+    createElement(
+      "button",
+      { onClick: () => setShowModal(true) },
+      "Open Modal"
+    ),
+    showModal
+      ? createElement(
+          Modal,
+          { onClose: () => setShowModal(false) },
+          createElement("h2", null, "Modal Content"),
+          createElement("p", null, "This renders in a different DOM tree!")
+        )
+      : null
+  );
+};
+```
+
+#### Fragment Usage
+
+```typescript
+import { createElement, render, Fragment } from "./src/MiniReact";
+
+const ListItems = ({ items }: { items: string[] }) => {
+  return createElement(
+    Fragment,
+    null,
+    ...items.map((item, index) => createElement("li", { key: index }, item))
+  );
+};
+
+const App = () => {
+  return createElement(
+    "div",
+    null,
+    createElement("h1", null, "My List"),
+    createElement(
+      "ul",
+      null,
+      createElement(ListItems, {
+        items: ["Item 1", "Item 2", "Item 3"],
+      })
+    )
+  );
+};
+
+// Renders as:
+// <div>
+//   <h1>My List</h1>
+//   <ul>
+//     <li>Item 1</li>
+//     <li>Item 2</li>
+//     <li>Item 3</li>
+//   </ul>
+// </div>
+```
+
 ---
 
 ## Features
@@ -183,6 +284,8 @@ bunx biome check
 - **🎪 Event Handling**: Complete event system with delegation, synthetic events, and bubbling/capture
 - **⚡ Effects System**: useEffect hook with dependencies, cleanup, and scheduling
 - **🌐 Context API**: createContext and useContext hooks with provider/consumer pattern
+- **🌉 Portals**: createPortal for rendering content to different DOM containers with React tree event bubbling
+- **📦 Fragments**: React.Fragment equivalent for rendering multiple children without wrapper DOM nodes
 
 ### 🎨 Advanced Capabilities
 
@@ -192,6 +295,9 @@ bunx biome check
 - **Performance Optimized**: Key-based reconciliation for efficient list operations
 - **Memory Efficient**: Proper cleanup and DOM node reuse
 - **Edge Case Handling**: Robust error handling and boundary conditions
+- **Portal Event System**: Events bubble through React component tree, not DOM tree
+- **Portal Context Propagation**: Context values work seamlessly across portal boundaries
+- **Fragment Reconciliation**: Efficient updates for fragment children without wrapper elements
 
 ---
 
@@ -212,7 +318,11 @@ mini-react/
 │   ├── MiniReact.renderFC.test.ts           # Functional component rendering
 │   ├── MiniReact.reconciler.test.ts         # Core reconciliation
 │   ├── MiniReact.events.test.ts             # Event handling tests
-│   └── MiniReact.useState.test.ts           # useState hook tests
+│   ├── MiniReact.useState.test.ts           # useState hook tests
+│   ├── MiniReact.useEffect.test.ts          # useEffect hook tests
+│   ├── MiniReact.context.test.ts            # Context API tests
+│   ├── MiniReact.portals.test.ts            # Portal functionality tests
+│   └── MiniReact.fragments.test.ts          # Fragment functionality tests
 ├── bunfig.toml                # Bun configuration
 ├── biome.json                 # Biome linter/formatter config
 ├── tsconfig.json              # TypeScript configuration
@@ -321,14 +431,20 @@ mini-react/
 
 ---
 
-#### Phase 9: Portals and Fragments 🎯
+#### Phase 9: Portals and Fragments ✅
 
-**Features (Planned):**
+**Features:**
 
-- Support for rendering children into a different part of the DOM (portals)
-- Support for fragments (multiple children without extra DOM nodes)
-- Portal lifecycle management and cleanup
-- Fragment reconciliation optimization
+- ✅ **createPortal API**: Render children into different DOM containers outside the component tree
+- ✅ **Portal Event Bubbling**: Events bubble through React component tree, not DOM hierarchy
+- ✅ **Portal Context Propagation**: Context values work seamlessly across portal boundaries
+- ✅ **Portal Lifecycle Management**: Proper cleanup and unmounting of portal content
+- ✅ **Fragment Support**: React.Fragment equivalent for rendering multiple children without wrapper elements
+- ✅ **Fragment Reconciliation**: Efficient diffing and updates for fragment children
+- ✅ **Nested Portals**: Support for portals within portals with proper DOM targeting
+- ✅ **Conditional Portal Rendering**: Dynamic portal creation and destruction
+- ✅ **Portal Target Validation**: Graceful error handling for invalid portal targets
+- ✅ **Performance Optimized**: Efficient portal content updates and large list handling
 
 ---
 
@@ -363,11 +479,12 @@ mini-react/
 **Target Features for Alpha:**
 
 - ✅ Full Virtual DOM with reconciliation
-- ✅ Complete hook system (useState, useEffect, useContext, useRef, useReducer)
+- ✅ Complete hook system (useState, useEffect, useContext)
 - ✅ Event handling and lifecycle management
-- ✅ JSX support with build tool integration
 - ✅ Portals and fragments
-- ✅ Production-ready for basic applications
+- 🎯 JSX support with build tool integration
+- 🎯 Essential hooks (useRef, useReducer)
+- 🎯 Production-ready for basic applications
 
 ---
 
@@ -499,7 +616,6 @@ mini-react/
 
 ### **Immediate Focus**
 
-- 🎯 **Phase 9**: Portals and Fragments
 - 🎯 **Phase 10**: JSX Support
 - 🎯 **Phase 11**: Essential Hooks (useRef & useReducer)
 
@@ -617,96 +733,5 @@ const Greeting = ({
   return createElement(
     "p",
     null,
-    age ? `${name} is ${age} years old` : `Hello, ${name}!`
-  );
-};
-
-// ✅ Inferred with complex props
-const UserCard = ({
-  user,
-  onAction,
-}: {
-  user: { name: string; id: number };
-  onAction: (id: number) => void;
-}) => {
-  return createElement(
-    "div",
-    {
-      onclick: () => onAction(user.id),
-    },
-    `User: ${user.name}`
-  );
-};
-
-// ✅ Inferred with no props
-const SimpleComponent = () => {
-  return createElement("span", null, "Simple component");
-};
-
-// Usage - no explicit typing needed!
-const app = createElement(
-  "div",
-  null,
-  createElement(Component, { id: "my-component" }),
-  createElement(Greeting, { name: "Alice", age: 30 }),
-  createElement(UserCard, {
-    user: { name: "Bob", id: 123 },
-    onAction: (id) => console.log(`Action for ${id}`),
-  }),
-  createElement(SimpleComponent, null)
-);
-
-// Legacy explicit typing (still supported for backward compatibility)
-const TypedButton: FunctionalComponent<{
-  text: string;
-  onClick: () => void;
-}> = ({ text, onClick }) => {
-  return createElement("button", { onclick: onClick }, text);
-};
-
-// With children
-const Layout: FunctionalComponent<{ title: string }> = ({
-  title,
-  children,
-}) => {
-  return createElement(
-    "div",
-    null,
-    createElement("h1", null, title),
-    createElement("div", { className: "content" }, ...(children || []))
-  );
-};
-```
-
----
-
-## Testing
-
-**Comprehensive Test Suite: Unit and integration tests across 8 files**
-
-### Test Categories:
-
-- **Unit Tests**: Individual function testing (createElement, render)
-- **Integration Tests**: Full rendering pipeline testing
-- **Reconciliation Tests**: Virtual DOM diffing and updates
-- **Event Tests**: Event handling, delegation, and synthetic events
-- **Hook Tests**: useState, useEffect, and useContext functionality
-- **Context Tests**: Full context API with providers and consumers
-- **Performance Tests**: Large lists and memory pressure scenarios
-- **Edge Case Tests**: Error handling and boundary conditions
-
-### Running Tests:
-
-```bash
-# Run all tests
-bun test
-
-# Run tests in watch mode
-bun test --watch
-
-# Run specific test file
-bun test tests/MiniReact.render.test.ts
-
-# Check code quality
-bunx biome check
+    age ? `${name} is ${age} years old`
 ```
