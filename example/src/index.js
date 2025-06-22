@@ -5,9 +5,9 @@ import App from "./App";
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
-  render(<App />, rootElement);
+	render(<App />, rootElement);
 } else {
-  console.error(
-    'Root element not found! Make sure you have a div with id="root" in your HTML.'
-  );
+	console.error(
+		'Root element not found! Make sure you have a div with id="root" in your HTML.',
+	);
 }

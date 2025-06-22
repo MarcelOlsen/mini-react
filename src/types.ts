@@ -74,7 +74,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-	EventHandlers & { children: AnyMiniReactElement[] };
+		EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {

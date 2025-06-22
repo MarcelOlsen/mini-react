@@ -1,117 +1,122 @@
-import { useState, useEffect, createContext, useContext } from 'mini-react';
-import Counter from './Counter';
-import TodoList from './TodoList';
-import Modal from './Modal';
+import { createContext, useContext, useEffect, useState } from "mini-react";
+import Counter from "./Counter";
+import Modal from "./Modal";
+import TodoList from "./TodoList";
 
 // Create a theme context
-const ThemeContext = createContext('light');
+const ThemeContext = createContext("light");
 
 function ThemedButton({ children, onClick }) {
-  const theme = useContext(ThemeContext);
-  return (
-    <button type="button" className={`btn-${theme}`} onClick={onClick}>
-      {children}
-    </button>
-  );
+	const theme = useContext(ThemeContext);
+	return (
+		<button type="button" className={`btn-${theme}`} onClick={onClick}>
+			{children}
+		</button>
+	);
 }
 
 function App() {
-  const [theme, setTheme] = useState('light');
-  const [showModal, setShowModal] = useState(false);
-  const [message, setMessage] = useState('Welcome to MiniReact!');
+	const [theme, setTheme] = useState("light");
+	const [showModal, setShowModal] = useState(false);
+	const [message, setMessage] = useState("Welcome to MiniReact!");
 
-  // Demo useEffect
-  useEffect(() => {
-    console.log('App mounted with theme:', theme);
-    
-    return () => {
-      console.log('App effect cleanup');
-    };
-  }, [theme]);
+	// Demo useEffect
+	useEffect(() => {
+		console.log("App mounted with theme:", theme);
 
-  const toggleTheme = () => {
-    setTheme(current => current === 'light' ? 'dark' : 'light');
-  };
+		return () => {
+			console.log("App effect cleanup");
+		};
+	}, [theme]);
 
-  return (
-    <ThemeContext.Provider value={theme}>
-      <div className="app">
-        <header>
-          <h1>🚀 MiniReact JSX Demo</h1>
-          <p>{message}</p>
-        </header>
+	const toggleTheme = () => {
+		setTheme((current) => (current === "light" ? "dark" : "light"));
+	};
 
-        {/* Theme toggle with context */}
-        <section>
-          <h2>Theme System (Context API)</h2>
-          <p>Current theme: <strong>{theme}</strong></p>
-          <ThemedButton onClick={toggleTheme}>
-            Switch to {theme === 'light' ? 'Dark' : 'Light'} Theme
-          </ThemedButton>
-        </section>
+	return (
+		<ThemeContext.Provider value={theme}>
+			<div className="app">
+				<header>
+					<h1>🚀 MiniReact JSX Demo</h1>
+					<p>{message}</p>
+				</header>
 
-        {/* Counter component */}
-        <section>
-          <h2>Counter (useState Hook)</h2>
-          <Counter />
-        </section>
+				{/* Theme toggle with context */}
+				<section>
+					<h2>Theme System (Context API)</h2>
+					<p>
+						Current theme: <strong>{theme}</strong>
+					</p>
+					<ThemedButton onClick={toggleTheme}>
+						Switch to {theme === "light" ? "Dark" : "Light"} Theme
+					</ThemedButton>
+				</section>
 
-        {/* Conditional rendering */}
-        <section>
-          <h2>Conditional Rendering & Fragments</h2>
-          {theme === 'dark' ? (
-            <>
-              <p>🌙 Dark theme is enabled!</p>
-              <p>Multiple elements in a fragment</p>
-            </>
-          ) : (
-            <p>☀️ Light theme is active</p>
-          )}
-        </section>
+				{/* Counter component */}
+				<section>
+					<h2>Counter (useState Hook)</h2>
+					<Counter />
+				</section>
 
-        {/* Todo list with dynamic rendering */}
-        <section>
-          <h2>Todo List (Dynamic Lists & Keys)</h2>
-          <TodoList />
-        </section>
+				{/* Conditional rendering */}
+				<section>
+					<h2>Conditional Rendering & Fragments</h2>
+					{theme === "dark" ? (
+						<>
+							<p>🌙 Dark theme is enabled!</p>
+							<p>Multiple elements in a fragment</p>
+						</>
+					) : (
+						<p>☀️ Light theme is active</p>
+					)}
+				</section>
 
-        {/* Portal example */}
-        <section>
-          <h2>Modal (Portal Example)</h2>
-          <button type="button" onClick={() => setShowModal(true)}>
-            Open Modal
-          </button>
-          
-          <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-            <h3>Portal Modal</h3>
-            <p>This modal is rendered using a portal!</p>
-            <p>It appears outside the normal DOM hierarchy.</p>
-            <button type="button" onClick={() => setShowModal(false)}>Close</button>
-          </Modal>
-        </section>
+				{/* Todo list with dynamic rendering */}
+				<section>
+					<h2>Todo List (Dynamic Lists & Keys)</h2>
+					<TodoList />
+				</section>
 
-        {/* Event handling example */}
-        <section>
-          <h2>Event Handling</h2>
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Update the message..."
-          />
-          <p>You typed: {message}</p>
-        </section>
+				{/* Portal example */}
+				<section>
+					<h2>Modal (Portal Example)</h2>
+					<button type="button" onClick={() => setShowModal(true)}>
+						Open Modal
+					</button>
 
-        <footer>
-          <p>
-            <em>
-              Built with MiniReact - A minimal React implementation with full JSX support!
-            </em>
-          </p>
-        </footer>
-      </div>
-    </ThemeContext.Provider>
-  );
+					<Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+						<h3>Portal Modal</h3>
+						<p>This modal is rendered using a portal!</p>
+						<p>It appears outside the normal DOM hierarchy.</p>
+						<button type="button" onClick={() => setShowModal(false)}>
+							Close
+						</button>
+					</Modal>
+				</section>
+
+				{/* Event handling example */}
+				<section>
+					<h2>Event Handling</h2>
+					<input
+						type="text"
+						value={message}
+						onChange={(e) => setMessage(e.target.value)}
+						placeholder="Update the message..."
+					/>
+					<p>You typed: {message}</p>
+				</section>
+
+				<footer>
+					<p>
+						<em>
+							Built with MiniReact - A minimal React implementation with full
+							JSX support!
+						</em>
+					</p>
+				</footer>
+			</div>
+		</ThemeContext.Provider>
+	);
 }
 
-export default App; 
+export default App;
