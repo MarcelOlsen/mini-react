@@ -111,6 +111,14 @@ export function reconcile(
 
 	// Both should exist at this point - but handle edge cases gracefully
 	if (!newElement || !oldInstance) {
+		// Add detailed logging for debugging
+		console.warn("Reconcile called with suspicious null values:", {
+			newElement: newElement,
+			oldInstance: oldInstance,
+			parentDom: parentDom,
+			stack: new Error().stack
+		});
+
 		// If we have newElement but no oldInstance, treat as creation
 		if (newElement && !oldInstance) {
 			if (!parentDom) {
@@ -122,8 +130,14 @@ export function reconcile(
 		if (!newElement && oldInstance) {
 			return reconcile(parentDom, null, oldInstance);
 		}
-		// If both are null, something went wrong
-		throw new Error("Unexpected null values in reconciliation");
+		// If both are null, check if this is a valid cleanup scenario
+		if (!newElement && !oldInstance) {
+			// This could be a valid case during cleanup - just return null
+			console.warn("Both newElement and oldInstance are null - returning null");
+			return null;
+		}
+		// If we reach here, something unexpected happened
+		throw new Error(`Unexpected reconciliation state: newElement=${newElement}, oldInstance=${oldInstance}`);
 	}
 
 	// Case 3: Type change - recreate everything
@@ -565,6 +579,9 @@ function reconcileChildren(
 	newChildElements: AnyMiniReactElement[],
 	parentInstance?: VDOMInstance,
 ): VDOMInstance[] {
+	// Filter out null/undefined elements early and handle them separately
+	const filteredNewChildElements = newChildElements.filter(child => child !== null && child !== undefined);
+
 	// Separate keyed and unkeyed children
 	const oldKeyed = new Map<string, VDOMInstance>();
 	const oldUnkeyed: VDOMInstance[] = [];
@@ -573,16 +590,18 @@ function reconcileChildren(
 
 	// Categorize old children by key
 	for (const oldChild of oldChildInstances) {
-		const key = getElementKey(oldChild.element);
-		if (key !== null) {
-			oldKeyed.set(key, oldChild);
-		} else {
-			oldUnkeyed.push(oldChild);
+		if (oldChild) { // Add null check for safety
+			const key = getElementKey(oldChild.element);
+			if (key !== null) {
+				oldKeyed.set(key, oldChild);
+			} else {
+				oldUnkeyed.push(oldChild);
+			}
 		}
 	}
 
-	// Categorize new children by key
-	for (const newChild of newChildElements) {
+	// Categorize new children by key - only process filtered elements
+	for (const newChild of filteredNewChildElements) {
 		const key = getElementKey(newChild);
 		if (key !== null) {
 			newKeyed.set(key, newChild);
@@ -594,9 +613,15 @@ function reconcileChildren(
 	const newChildInstances: VDOMInstance[] = [];
 	let unkeyedIndex = 0;
 
-	// Process new children in order
-	for (let i = 0; i < newChildElements.length; i++) {
-		const newChild = newChildElements[i];
+	// Process new children in order - only process filtered elements
+	for (let i = 0; i < filteredNewChildElements.length; i++) {
+		const newChild = filteredNewChildElements[i];
+
+		// Skip null/undefined elements (already filtered but add extra safety)
+		if (newChild === null || newChild === undefined) {
+			continue;
+		}
+
 		const key = getElementKey(newChild);
 		let newChildInstance: VDOMInstance | null = null;
 
@@ -688,10 +713,21 @@ function reconcileChildren(
  * @returns The key string or null
  */
 function getElementKey(element: AnyMiniReactElement): string | null {
+	// Handle null/undefined elements
+	if (element === null || element === undefined) {
+		return null;
+	}
+
+	// Handle primitive values (string, number, boolean)
+	if (typeof element === "string" || typeof element === "number" || typeof element === "boolean") {
+		return null; // Primitives don't have keys
+	}
+
 	// Type guard to ensure we have an element object
 	if (!element || typeof element !== "object" || !("props" in element)) {
 		return null;
 	}
+
 	const key = (element.props as Record<string, unknown>).key;
 	return key !== undefined && key !== null ? String(key) : null;
 }
