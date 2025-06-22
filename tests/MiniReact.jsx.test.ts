@@ -86,13 +86,25 @@ describe("JSX Runtime Functions", () => {
     test("jsx() handles text children in props", () => {
         const element = jsx("div", { children: "Hello World" });
 
-        expect(element.props.children).toBe("Hello World");
+        expect(element.props.children).toEqual([{
+            type: "TEXT_ELEMENT",
+            props: {
+                nodeValue: "Hello World",
+                children: [],
+            },
+        }]);
     });
 
     test("jsx() handles number children in props", () => {
         const element = jsx("div", { children: 42 });
 
-        expect(element.props.children).toBe(42);
+        expect(element.props.children).toEqual([{
+            type: "TEXT_ELEMENT",
+            props: {
+                nodeValue: 42,
+                children: [],
+            },
+        }]);
     });
 });
 

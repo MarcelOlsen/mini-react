@@ -400,7 +400,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => {};
+	() => { };
 
 /**
  * Sets the hook context function from MiniReact module
@@ -439,34 +439,33 @@ function diffProps(
 	oldProps: Record<string, unknown>,
 	newProps: Record<string, unknown>,
 ): void {
-	// Create sets of old and new prop keys (excluding children)
+	// Helper function to check if a prop is an event handler
+	const isEventHandler = (key: string): boolean => key.startsWith("on") && key.length > 2;
+
+	// Create sets of old and new prop keys (excluding children and event handlers)
 	const oldKeys = new Set(
-		Object.keys(oldProps).filter((key) => key !== "children"),
+		Object.keys(oldProps).filter((key) => key !== "children" && !isEventHandler(key)),
 	);
 	const newKeys = new Set(
-		Object.keys(newProps).filter((key) => key !== "children"),
+		Object.keys(newProps).filter((key) => key !== "children" && !isEventHandler(key)),
 	);
 
-	// Remove attributes that are no longer present
+	// Remove props that are no longer present
 	for (const key of oldKeys) {
 		if (!newKeys.has(key)) {
-			removeAttribute(domElement, key);
+			domElement.removeAttribute(key === "className" ? "class" : key);
 		}
 	}
 
-	// Add or update attributes
+	// Update props that have changed or are new
 	for (const key of newKeys) {
 		const oldValue = oldProps[key];
 		const newValue = newProps[key];
 
-		// Only update if the value has actually changed
 		if (oldValue !== newValue) {
 			setAttribute(domElement, key, newValue);
 		}
 	}
-
-	// Check if this element has event handlers that need delegation
-	eventSystem.hasEventHandlers(newProps);
 }
 
 /**
@@ -489,30 +488,15 @@ function setAttribute(domElement: Element, key: string, value: unknown): void {
 	} else if (typeof value === "boolean") {
 		// Handle boolean attributes specially
 		if (value) {
-			domElement.setAttribute(key, "");
+			domElement.setAttribute(key, ""); // Set to empty string for boolean attributes
 		} else {
 			// Remove the attribute when boolean value is false
 			domElement.removeAttribute(key);
 		}
 	} else if (value !== undefined && value !== null) {
-		// Handle all other non-null, non-undefined values
 		domElement.setAttribute(key, String(value));
-	} else {
-		// Remove attribute for null/undefined values
-		domElement.removeAttribute(key);
-	}
-}
-
-/**
- * Removes an attribute from a DOM element with proper handling for special cases
- *
- * @param domElement The DOM element
- * @param key The attribute key
- */
-function removeAttribute(domElement: Element, key: string): void {
-	if (key === "className") {
-		domElement.removeAttribute("class");
-	} else {
+	} else if (value === null || value === undefined) {
+		// Remove the attribute when value is null/undefined
 		domElement.removeAttribute(key);
 	}
 }
