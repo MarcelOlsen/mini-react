@@ -7,6 +7,17 @@ import type { SyntheticEvent } from "./eventSystem";
 export type AnyMiniReactElement =
 	| MiniReactElement
 	| InternalTextElement
+	| PortalElement
+	| string
+	| number
+	| boolean
+	| null
+	| undefined;
+
+// Type for JSX function return values (excludes primitives)
+export type JSXElementType =
+	| MiniReactElement
+	| InternalTextElement
 	| PortalElement;
 
 export type FunctionalComponent<P = Record<string, unknown>> = (
@@ -63,7 +74,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-		EventHandlers & { children: AnyMiniReactElement[] };
+	EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {
@@ -132,7 +143,7 @@ export type UseEffectHook = (
 // ******************* //
 
 export interface VDOMInstance {
-	element: AnyMiniReactElement;
+	element: JSXElementType;
 	dom: Node | null;
 	childInstances: VDOMInstance[];
 	parent?: VDOMInstance;
