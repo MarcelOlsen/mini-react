@@ -12,9 +12,28 @@ module.exports = {
     rules: [
       {
         test: /\.jsx?$/,
-        exclude: /node_modules/,
+        exclude: /node_modules\/(?!mini-react)/,
         use: {
           loader: "babel-loader",
+        },
+      },
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules\/(?!mini-react)/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: [
+              ["@babel/preset-typescript", { allowDeclareFields: true }],
+              [
+                "@babel/preset-react",
+                {
+                  runtime: "automatic",
+                  importSource: "mini-react",
+                },
+              ],
+            ],
+          },
         },
       },
     ],
@@ -35,7 +54,7 @@ module.exports = {
     historyApiFallback: true,
   },
   resolve: {
-    extensions: [".js", ".jsx"],
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
   mode: process.env.NODE_ENV === "production" ? "production" : "development",
   devtool:
