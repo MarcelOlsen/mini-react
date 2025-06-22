@@ -464,15 +464,15 @@ function diffProps(
 	const isEventHandler = (key: string): boolean =>
 		key.startsWith("on") && key.length > 2;
 
-	// Create sets of old and new prop keys (excluding children and event handlers)
+	// Create sets of old and new prop keys (excluding children, key, and event handlers)
 	const oldKeys = new Set(
 		Object.keys(oldProps).filter(
-			(key) => key !== "children" && !isEventHandler(key),
+			(key) => key !== "children" && key !== "key" && !isEventHandler(key),
 		),
 	);
 	const newKeys = new Set(
 		Object.keys(newProps).filter(
-			(key) => key !== "children" && !isEventHandler(key),
+			(key) => key !== "children" && key !== "key" && !isEventHandler(key),
 		),
 	);
 
