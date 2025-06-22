@@ -6,7 +6,7 @@ import type {
 	PortalElement,
 	VDOMInstance,
 } from "./types";
-import { FRAGMENT, PORTAL } from "./types";
+import { FRAGMENT, PORTAL, TEXT_ELEMENT } from "./types";
 
 // Import scheduleEffect to properly schedule cleanup
 let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
@@ -197,6 +197,23 @@ function createVDOMInstance(
 	parentDom: Node,
 	element: AnyMiniReactElement,
 ): VDOMInstance {
+	// Handle primitives by converting them to text elements
+	if (typeof element === "string" || typeof element === "number" || typeof element === "boolean") {
+		const textElement = {
+			type: TEXT_ELEMENT,
+			props: {
+				nodeValue: element,
+				children: [],
+			},
+		};
+		return createVDOMInstance(parentDom, textElement);
+	}
+
+	// Handle null/undefined elements
+	if (element === null || element === undefined) {
+		throw new Error("Cannot create VDOM instance for null or undefined element");
+	}
+
 	// Type guard to ensure we have an element object, not a primitive
 	if (
 		!element ||
