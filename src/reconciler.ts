@@ -410,7 +410,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => { };
+	() => {};
 
 /**
  * Sets the hook context function from MiniReact module
