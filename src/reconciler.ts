@@ -3,8 +3,10 @@ import { eventSystem } from "./eventSystem";
 import type {
 	AnyMiniReactElement,
 	FunctionalComponent,
+	PortalElement,
 	VDOMInstance,
 } from "./types";
+import { FRAGMENT, PORTAL } from "./types";
 
 // Import scheduleEffect to properly schedule cleanup
 let scheduleEffectFunction: ((effectFn: () => void) => void) | null = null;
@@ -46,9 +48,26 @@ export function reconcile(
 	oldInstance: VDOMInstance | null,
 ): VDOMInstance | null {
 	// Case 1: Element removal - newElement is null but oldInstance exists
-	if (newElement == null) {
-		if (oldInstance) {
-			// Schedule cleanup for all effects before removing (maintain async timing)
+	if (newElement === null && oldInstance !== null) {
+		// Handle removal based on element type
+		if (oldInstance.element.type === PORTAL) {
+			// For portals, clean up children from their target container
+			const portalElement = oldInstance.element as PortalElement;
+			const targetContainer = portalElement.props.targetContainer;
+
+			// Clean up all portal children from target container
+			for (const childInstance of oldInstance.childInstances) {
+				if (childInstance.dom && targetContainer.contains(childInstance.dom)) {
+					reconcile(null, null, childInstance);
+				}
+			}
+		} else if (oldInstance.element.type === FRAGMENT) {
+			// For fragments, recursively clean up all children
+			for (const childInstance of oldInstance.childInstances) {
+				reconcile(null, null, childInstance);
+			}
+		} else {
+			// For regular elements, clean up hooks and remove from DOM
 			if (oldInstance.hooks && scheduleEffectFunction) {
 				for (const hook of oldInstance.hooks) {
 					if (hook.type === "effect" && hook.cleanup) {
@@ -57,37 +76,50 @@ export function reconcile(
 							try {
 								cleanup();
 							} catch (error) {
-								console.error(
-									"Error in useEffect cleanup during unmount:",
-									error,
-								);
+								console.error("Error in useEffect cleanup:", error);
 							}
 						});
 					}
 				}
 			}
 
-			// Recursively clean up child instances - no parent DOM needed for cleanup
-			for (const childInstance of oldInstance.childInstances) {
-				reconcile(null, null, childInstance);
-			}
-
-			// Only handle DOM cleanup if instance has a DOM node
 			if (oldInstance.dom) {
-				// Unregister from event system before removing
 				eventSystem.unregisterInstance(oldInstance);
 				removeDomNode(oldInstance.dom);
 			}
 		}
+
+		// Clean up child instances
+		for (const childInstance of oldInstance.childInstances) {
+			reconcile(null, null, childInstance);
+		}
+
 		return null;
 	}
 
-	// Case 2: Initial render - oldInstance is null
-	if (oldInstance == null) {
+	// Case 2: Element creation - newElement exists but oldInstance is null
+	if (newElement !== null && oldInstance === null) {
 		if (!parentDom) {
-			throw new Error("Parent DOM node is required for initial render");
+			throw new Error("Parent DOM node is required for element creation");
 		}
 		return createVDOMInstance(parentDom, newElement);
+	}
+
+	// Both should exist at this point - but handle edge cases gracefully
+	if (!newElement || !oldInstance) {
+		// If we have newElement but no oldInstance, treat as creation
+		if (newElement && !oldInstance) {
+			if (!parentDom) {
+				throw new Error("Parent DOM node is required for element creation");
+			}
+			return createVDOMInstance(parentDom, newElement);
+		}
+		// If we have oldInstance but no newElement, treat as removal
+		if (!newElement && oldInstance) {
+			return reconcile(parentDom, null, oldInstance);
+		}
+		// If both are null, something went wrong
+		throw new Error("Unexpected null values in reconciliation");
 	}
 
 	// Case 3: Type change - recreate everything
@@ -118,11 +150,35 @@ export function reconcile(
 			}
 		}
 
-		if (oldInstance.dom && newInstance.dom) {
-			// Unregister old instance and register new one
+		// Handle DOM cleanup - fragments and portals need special handling
+		if (oldInstance.element.type === FRAGMENT) {
+			// For fragments, recursively clean up all children
+			for (const childInstance of oldInstance.childInstances) {
+				reconcile(null, null, childInstance);
+			}
+		} else if (oldInstance.element.type === PORTAL) {
+			// For portals, clean up children from their target container
+			const oldPortalElement = oldInstance.element as PortalElement;
+			const oldTargetContainer = oldPortalElement.props.targetContainer;
+
+			for (const childInstance of oldInstance.childInstances) {
+				if (
+					childInstance.dom &&
+					oldTargetContainer.contains(childInstance.dom)
+				) {
+					reconcile(null, null, childInstance);
+				}
+			}
+		} else if (oldInstance.dom && newInstance.dom) {
+			// For regular elements, replace the DOM node
 			eventSystem.unregisterInstance(oldInstance);
 			replaceDomNode(oldInstance.dom, newInstance.dom);
+		} else if (oldInstance.dom) {
+			// If old instance had DOM but new doesn't, just remove old
+			eventSystem.unregisterInstance(oldInstance);
+			removeDomNode(oldInstance.dom);
 		}
+
 		return newInstance;
 	}
 
@@ -143,14 +199,107 @@ function createVDOMInstance(
 ): VDOMInstance {
 	const { type, props } = element;
 
+	// Handle portals
+	if (type === PORTAL) {
+		const portalElement = element as PortalElement;
+		const targetContainer = portalElement.props.targetContainer;
+
+		// Add event delegation to portal target so events bubble through React tree
+		eventSystem.addEventDelegation(targetContainer);
+
+		const instance: VDOMInstance = {
+			element,
+			dom: null, // Portals don't have their own DOM node in the parent tree
+			childInstances: [],
+			rootContainer:
+				parentDom.nodeType === Node.ELEMENT_NODE
+					? (parentDom as HTMLElement)
+					: undefined,
+		};
+
+		// Render children directly to the target container
+		// Portal children should inherit context from their logical parent, not DOM parent
+		instance.childInstances = reconcileChildren(
+			targetContainer,
+			[],
+			portalElement.props.children,
+			instance,
+		);
+
+		// Ensure all portal children have the correct rootContainer for state management
+		function propagateRootContainer(
+			instances: VDOMInstance[],
+			rootContainer: HTMLElement | undefined,
+		) {
+			for (const childInstance of instances) {
+				if (!childInstance.rootContainer && rootContainer) {
+					childInstance.rootContainer = rootContainer;
+				}
+				propagateRootContainer(childInstance.childInstances, rootContainer);
+			}
+		}
+		propagateRootContainer(instance.childInstances, instance.rootContainer);
+
+		return instance;
+	}
+
+	// Handle fragments
+	if (type === FRAGMENT) {
+		const instance: VDOMInstance = {
+			element,
+			dom: null, // Fragments don't have their own DOM node
+			childInstances: [],
+			rootContainer:
+				parentDom.nodeType === Node.ELEMENT_NODE
+					? (parentDom as HTMLElement)
+					: undefined,
+		};
+
+		// Use reconcileChildren to handle fragment children properly
+		// This will ensure correct ordering through reorderDomNodes
+		instance.childInstances = reconcileChildren(
+			parentDom,
+			[],
+			props.children,
+			instance,
+		);
+
+		return instance;
+	}
+
 	// Handle functional components
 	if (typeof type === "function") {
+		// Determine rootContainer - prefer the actual root container over immediate DOM parent
+		let rootContainer: HTMLElement | undefined;
+		if (parentDom.nodeType === Node.ELEMENT_NODE) {
+			const parentElement = parentDom as HTMLElement;
+			// If parentDom is the main app container, use it
+			if (parentElement === document.body) {
+				rootContainer = parentElement;
+			} else {
+				// Otherwise, try to find the root container by looking for a container with an ID or walking up
+				let current: HTMLElement | null = parentElement;
+				while (current && current !== document.body) {
+					if (current.id) {
+						rootContainer = current;
+						break;
+					}
+					current = current.parentElement;
+				}
+				// Fallback to the immediate parent if we can't find a better root
+				if (!rootContainer) {
+					rootContainer = parentElement;
+				}
+			}
+		}
+
 		// Create the instance
 		const instance: VDOMInstance = {
 			element,
 			dom: null,
 			childInstances: [],
 			hooks: [], // Initialize hooks array
+			rootContainer,
 		};
 
 		// Set hook context before calling component
@@ -184,6 +333,10 @@ function createVDOMInstance(
 
 		if (childInstance) {
 			childInstance.parent = instance; // Set parent reference for functional component child
+			// Ensure child inherits the same rootContainer
+			if (!childInstance.rootContainer && instance.rootContainer) {
+				childInstance.rootContainer = instance.rootContainer;
+			}
 		}
 
 		instance.dom = childInstance?.dom || null;
@@ -204,6 +357,10 @@ function createVDOMInstance(
 		element,
 		dom: domNode,
 		childInstances: [],
+		rootContainer:
+			parentDom.nodeType === Node.ELEMENT_NODE
+				? (parentDom as HTMLElement)
+				: undefined,
 	};
 
 	// Register with event system for host elements
@@ -217,7 +374,17 @@ function createVDOMInstance(
 		const childInstance = createVDOMInstance(domNode, child);
 		childInstance.parent = instance; // Set parent reference
 		childInstances.push(childInstance);
-		if (childInstance.dom) {
+
+		// Handle DOM insertion based on child type
+		if (childInstance.element.type === FRAGMENT) {
+			// For fragments, append all their DOM children
+			for (const fragChild of childInstance.childInstances) {
+				if (fragChild.dom) {
+					domNode.appendChild(fragChild.dom);
+				}
+			}
+		} else if (childInstance.dom) {
+			// For regular elements, append the DOM node
 			domNode.appendChild(childInstance.dom);
 		}
 	}
@@ -310,6 +477,10 @@ function diffProps(
  * @param value The attribute value
  */
 function setAttribute(domElement: Element, key: string, value: unknown): void {
+	if (key === "key") {
+		// Keys are used internally for reconciliation and should not be set as DOM attributes
+		return;
+	}
 	if (key === "className") {
 		domElement.setAttribute("class", String(value));
 	} else if (key.startsWith("on") && typeof value === "function") {
@@ -415,29 +586,64 @@ function reconcileChildren(
 		if (newChildInstance) {
 			// Set parent reference for the new child instance
 			newChildInstance.parent = parentInstance;
+			// Inherit rootContainer if child doesn't have one
+			if (!newChildInstance.rootContainer && parentInstance?.rootContainer) {
+				newChildInstance.rootContainer = parentInstance.rootContainer;
+			}
+			// Special case: if parent is a portal, ensure children inherit the portal's root container
+			if (
+				parentInstance?.element.type === PORTAL &&
+				parentInstance.rootContainer
+			) {
+				newChildInstance.rootContainer = parentInstance.rootContainer;
+			}
 			newChildInstances.push(newChildInstance);
 		}
 	}
 
 	// Remove any remaining old keyed children that weren't reused
 	for (const [, oldChild] of oldKeyed) {
-		if (oldChild.dom) {
-			eventSystem.unregisterInstance(oldChild);
-			removeDomNode(oldChild.dom);
+		// Clean up based on element type
+		if (oldChild.element.type === PORTAL) {
+			// For portals, clean up from their target container
+			const portalElement = oldChild.element as PortalElement;
+			const targetContainer = portalElement.props.targetContainer;
+
+			for (const childInstance of oldChild.childInstances) {
+				if (childInstance.dom && targetContainer.contains(childInstance.dom)) {
+					reconcile(null, null, childInstance);
+				}
+			}
+		} else {
+			// For regular elements and fragments
+			reconcile(null, null, oldChild);
 		}
 	}
 
 	// Remove any remaining old unkeyed children that weren't reused
 	for (let i = unkeyedIndex; i < oldUnkeyed.length; i++) {
 		const oldChild = oldUnkeyed[i];
-		if (oldChild.dom) {
-			eventSystem.unregisterInstance(oldChild);
-			removeDomNode(oldChild.dom);
+		// Clean up based on element type
+		if (oldChild.element.type === PORTAL) {
+			// For portals, clean up from their target container
+			const portalElement = oldChild.element as PortalElement;
+			const targetContainer = portalElement.props.targetContainer;
+
+			for (const childInstance of oldChild.childInstances) {
+				if (childInstance.dom && targetContainer.contains(childInstance.dom)) {
+					reconcile(null, null, childInstance);
+				}
+			}
+		} else {
+			// For regular elements and fragments
+			reconcile(null, null, oldChild);
 		}
 	}
 
-	// Ensure DOM nodes are in correct order
-	reorderDomNodes(parentDom, newChildInstances);
+	// Ensure DOM nodes are in correct order (only for non-portal parent containers)
+	if (parentInstance?.element.type !== PORTAL) {
+		reorderDomNodes(parentDom, newChildInstances);
+	}
 
 	return newChildInstances;
 }
@@ -463,16 +669,31 @@ function reorderDomNodes(
 	parentDom: Node,
 	childInstances: VDOMInstance[],
 ): void {
-	let currentDomChild = parentDom.firstChild;
+	// Collect all DOM nodes that should be in this parent, in order
+	const targetDomNodes: Node[] = [];
 
-	for (const childInstance of childInstances) {
-		if (childInstance.dom) {
-			// If this DOM node is not in the correct position, move it
-			if (currentDomChild !== childInstance.dom) {
-				parentDom.insertBefore(childInstance.dom, currentDomChild);
+	function collectDomNodes(instances: VDOMInstance[]): void {
+		for (const instance of instances) {
+			if (instance.element.type === PORTAL) {
+				// Skip portal instances - their children render to different containers
+			} else if (instance.dom && instance.dom.parentNode === parentDom) {
+				targetDomNodes.push(instance.dom);
+			} else if (instance.element.type === FRAGMENT) {
+				// For fragments, collect their children's DOM nodes
+				collectDomNodes(instance.childInstances);
 			}
-			currentDomChild = childInstance.dom.nextSibling;
 		}
+	}
+
+	collectDomNodes(childInstances);
+
+	// Now reorder the DOM nodes to match the target order
+	let currentDomChild = parentDom.firstChild;
+	for (const targetNode of targetDomNodes) {
+		if (currentDomChild !== targetNode) {
+			parentDom.insertBefore(targetNode, currentDomChild);
+		}
+		currentDomChild = targetNode.nextSibling;
 	}
 }
 
@@ -489,6 +710,86 @@ function updateVDOMInstance(
 ): VDOMInstance {
 	const { type, props } = newElement;
 
+	// Handle portals
+	if (type === PORTAL) {
+		const portalElement = newElement as PortalElement;
+		const targetContainer = portalElement.props.targetContainer;
+
+		// For portal updates, we need to check if the target container changed
+		const oldPortalElement = instance.element as PortalElement;
+		const oldTargetContainer = oldPortalElement.props.targetContainer;
+
+		// If target container changed, clean up old container first
+		if (oldTargetContainer !== targetContainer) {
+			// Clean up old portal children from old container
+			for (const childInstance of instance.childInstances) {
+				reconcile(null, null, childInstance);
+			}
+			instance.childInstances = [];
+		}
+
+		// Update portal children in the (possibly new) target container
+		instance.element = newElement;
+		instance.childInstances = reconcileChildren(
+			targetContainer,
+			instance.childInstances,
+			portalElement.props.children,
+			instance,
+		);
+
+		return instance;
+	}
+
+	// Handle fragments
+	if (type === FRAGMENT) {
+		// Find parent DOM node for fragments
+		let parentNode: Node | null = null;
+
+		// Strategy 1: Check if any current child has a DOM parent
+		for (const childInstance of instance.childInstances) {
+			if (childInstance.dom?.parentNode) {
+				parentNode = childInstance.dom.parentNode;
+				break;
+			}
+		}
+
+		// Strategy 2: Walk up parent tree to find DOM node
+		if (!parentNode) {
+			let currentParent = instance.parent;
+			while (currentParent && !parentNode) {
+				if (currentParent.dom) {
+					parentNode = currentParent.dom;
+					break;
+				}
+				// For fragments, check if any child has a DOM node we can use
+				if (currentParent.element.type === FRAGMENT) {
+					for (const childInstance of currentParent.childInstances) {
+						if (childInstance.dom?.parentNode) {
+							parentNode = childInstance.dom.parentNode;
+							break;
+						}
+					}
+					if (parentNode) break;
+				}
+				currentParent = currentParent.parent;
+			}
+		}
+
+		if (!parentNode) {
+			throw new Error("Unable to find parent node for fragment reconciliation");
+		}
+
+		// Reconcile fragment children directly with parent DOM
+		instance.childInstances = reconcileChildren(
+			parentNode,
+			instance.childInstances,
+			props.children,
+			instance,
+		);
+
+		return instance;
+	}
+
 	// Handle functional components - re-execute and reconcile output
 	if (typeof type === "function") {
 		// Set hook context before calling component
@@ -502,10 +803,72 @@ function updateVDOMInstance(
 
 		// Find the correct parent node to reconcile in
 		let parentNode: Node | null = null;
+
+		// Strategy 1: Check if old child has a parent DOM node
 		if (oldChildInstance?.dom?.parentNode) {
 			parentNode = oldChildInstance.dom.parentNode;
-		} else if (instance.dom?.parentNode) {
+		}
+		// Strategy 2: Check if this instance has a DOM parent
+		else if (instance.dom?.parentNode) {
 			parentNode = instance.dom.parentNode;
+		}
+		// Strategy 3: Walk up the parent tree to find a DOM node
+		else {
+			let currentParent = instance.parent;
+			while (currentParent && !parentNode) {
+				if (currentParent.dom) {
+					parentNode = currentParent.dom;
+					break;
+				}
+				// For fragments, check if any child has a DOM node we can use
+				if (currentParent.element.type === FRAGMENT) {
+					for (const childInstance of currentParent.childInstances) {
+						if (childInstance.dom?.parentNode) {
+							parentNode = childInstance.dom.parentNode;
+							break;
+						}
+					}
+					if (parentNode) break;
+				}
+				currentParent = currentParent.parent;
+			}
+		}
+
+		// Strategy 4: Check siblings for DOM parents
+		if (!parentNode && instance.parent) {
+			for (const sibling of instance.parent.childInstances) {
+				if (sibling !== instance && sibling.dom?.parentNode) {
+					parentNode = sibling.dom.parentNode;
+					break;
+				}
+			}
+		}
+
+		// Strategy 5: If still no parent, try to find root container
+		if (!parentNode) {
+			// Walk up to find the root container by checking if this instance is a root
+			let currentInstance: VDOMInstance | undefined = instance;
+			while (currentInstance?.parent) {
+				currentInstance = currentInstance.parent;
+			}
+			// Check if any child of root has a DOM node
+			if (currentInstance?.childInstances) {
+				for (const child of currentInstance.childInstances) {
+					if (child.dom?.parentNode) {
+						parentNode = child.dom.parentNode;
+						break;
+					}
+				}
+			}
+			// If we found a root instance, check if it has a rootContainer
+			if (!parentNode && currentInstance?.rootContainer) {
+				parentNode = currentInstance.rootContainer;
+			}
+		}
+
+		// Strategy 6: Use instance's own rootContainer as last resort
+		if (!parentNode && instance.rootContainer) {
+			parentNode = instance.rootContainer;
 		}
 
 		if (!parentNode) {
