@@ -5,32 +5,61 @@ import { type AnyMiniReactElement, TEXT_ELEMENT } from "./types";
 /* ******************** */
 
 /**
- * Creates a DOM node from a MiniReact element (without children processing)
- *
- * @param element The element to create a DOM node for
+ * Checks if a prop name is an event handler
+ * @param propName The prop name to check
+ * @returns True if it's an event handler, false otherwise
+ */
+function isEventHandler(propName: string): boolean {
+	return propName.startsWith("on") && propName.length > 2;
+}
+
+/**
+ * Sets a single attribute on a DOM element, handling special cases
+ * @param element The DOM element
+ * @param key The attribute name
+ * @param value The attribute value
+ */
+function setAttribute(element: Element, key: string, value: unknown): void {
+	if (key === "className") {
+		element.setAttribute("class", String(value));
+	} else if (key === "style" && typeof value === "string") {
+		element.setAttribute("style", value);
+	} else if (typeof value === "boolean") {
+		// For boolean attributes, only set if true, remove if false
+		if (value) {
+			element.setAttribute(key, ""); // Set to empty string for boolean attributes
+		} else {
+			element.removeAttribute(key);
+		}
+	} else if (value !== undefined && value !== null) {
+		element.setAttribute(key, String(value));
+	}
+}
+
+/**
+ * Creates a DOM node from a VDOM element
+ * @param element The VDOM element to convert
  * @returns The created DOM node
  */
-export function createDomNode(element: AnyMiniReactElement): Node {
-	const { type, props } = element;
-
-	if (type === TEXT_ELEMENT) {
-		return document.createTextNode(String(props.nodeValue));
+export function createDomNode(element: AnyMiniReactElement): Element | Text {
+	// Handle text elements (TEXT_ELEMENT)
+	if (element.type === TEXT_ELEMENT) {
+		return document.createTextNode(String(element.props.nodeValue));
 	}
 
-	// Host element
-	const domNode = document.createElement(type as string);
-	// biome-ignore lint/complexity/noForEach: forEach is appropriate here as we need to iterate over object entries with side effects (setting DOM attributes), not transforming to a new array
-	Object.entries(props).forEach(([key, value]) => {
-		if (key === "children" || key === "key") return;
+	// Create host element
+	const domElement = document.createElement(element.type as string);
 
-		if (key === "className") {
-			domNode.setAttribute("class", String(value));
-		} else if (value !== undefined && value !== null) {
-			domNode.setAttribute(key, String(value));
+	// Set attributes (props), but skip event handlers and children
+	if (element.props) {
+		for (const [key, value] of Object.entries(element.props)) {
+			if (key !== "children" && !isEventHandler(key)) {
+				setAttribute(domElement, key, value);
+			}
 		}
-	});
+	}
 
-	return domNode;
+	return domElement;
 }
 
 /**
