@@ -1,21 +1,46 @@
 {
-	"name": "mini-react",
-	"module": "index.ts",
-	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
-		"@happy-dom/global-registrator": "^17.5.6",
-		"@types/bun": "latest"
-	},
-	"scripts": {
-		"lint": "biome lint .",
-		"format": "biome format .",
-		"check": "biome check .",
-		"lint:write": "biome lint --write .",
-		"format:write": "biome format --write .",
-		"check:write": "biome check --write ."
-	},
-	"peerDependencies": {
-		"typescript": "^5.0.0"
-	},
-	"type": "module"
+  "name": "mini-react",
+  "version": "1.0.0",
+  "description": "A minimal React implementation with JSX support",
+  "main": "index.ts",
+  "module": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.ts"
+    },
+    "./jsx-runtime": {
+      "import": "./src/jsx-runtime.ts",
+      "require": "./src/jsx-runtime.ts"
+    },
+    "./jsx-dev-runtime": {
+      "import": "./src/jsx-dev-runtime.ts",
+      "require": "./src/jsx-dev-runtime.ts"
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@happy-dom/global-registrator": "^17.5.6",
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "lint": "biome lint .",
+    "format": "biome format .",
+    "check": "biome check .",
+    "lint:write": "biome lint --write .",
+    "format:write": "biome format --write .",
+    "check:write": "biome check --write ."
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "type": "module",
+  "keywords": [
+    "react",
+    "jsx",
+    "virtual-dom",
+    "ui-library"
+  ],
+  "author": "Marcel Olsen",
+  "license": "MIT"
 }
