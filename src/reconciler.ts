@@ -57,14 +57,16 @@ export function reconcile(
 
 			// Clean up all portal children from target container
 			for (const childInstance of oldInstance.childInstances) {
-				if (childInstance.dom && targetContainer.contains(childInstance.dom)) {
+				if (childInstance?.dom && targetContainer.contains(childInstance.dom)) {
 					reconcile(null, null, childInstance);
 				}
 			}
 		} else if (oldInstance.element.type === FRAGMENT) {
 			// For fragments, recursively clean up all children
 			for (const childInstance of oldInstance.childInstances) {
-				reconcile(null, null, childInstance);
+				if (childInstance) {
+					reconcile(null, null, childInstance);
+				}
 			}
 		} else {
 			// For regular elements, clean up hooks and remove from DOM
@@ -91,7 +93,9 @@ export function reconcile(
 
 		// Clean up child instances
 		for (const childInstance of oldInstance.childInstances) {
-			reconcile(null, null, childInstance);
+			if (childInstance) {
+				reconcile(null, null, childInstance);
+			}
 		}
 
 		return null;
@@ -154,7 +158,9 @@ export function reconcile(
 		if (oldInstance.element.type === FRAGMENT) {
 			// For fragments, recursively clean up all children
 			for (const childInstance of oldInstance.childInstances) {
-				reconcile(null, null, childInstance);
+				if (childInstance) {
+					reconcile(null, null, childInstance);
+				}
 			}
 		} else if (oldInstance.element.type === PORTAL) {
 			// For portals, clean up children from their target container
@@ -163,7 +169,7 @@ export function reconcile(
 
 			for (const childInstance of oldInstance.childInstances) {
 				if (
-					childInstance.dom &&
+					childInstance?.dom &&
 					oldTargetContainer.contains(childInstance.dom)
 				) {
 					reconcile(null, null, childInstance);
@@ -637,12 +643,12 @@ function reconcileChildren(
 			const targetContainer = portalElement.props.targetContainer;
 
 			for (const childInstance of oldChild.childInstances) {
-				if (childInstance.dom && targetContainer.contains(childInstance.dom)) {
+				if (childInstance?.dom && targetContainer.contains(childInstance.dom)) {
 					reconcile(null, null, childInstance);
 				}
 			}
-		} else {
-			// For regular elements and fragments
+		} else if (oldChild) {
+			// For regular elements and fragments - add null check
 			reconcile(null, null, oldChild);
 		}
 	}
@@ -651,18 +657,18 @@ function reconcileChildren(
 	for (let i = unkeyedIndex; i < oldUnkeyed.length; i++) {
 		const oldChild = oldUnkeyed[i];
 		// Clean up based on element type
-		if (oldChild.element.type === PORTAL) {
+		if (oldChild?.element.type === PORTAL) {
 			// For portals, clean up from their target container
 			const portalElement = oldChild.element as PortalElement;
 			const targetContainer = portalElement.props.targetContainer;
 
 			for (const childInstance of oldChild.childInstances) {
-				if (childInstance.dom && targetContainer.contains(childInstance.dom)) {
+				if (childInstance?.dom && targetContainer.contains(childInstance.dom)) {
 					reconcile(null, null, childInstance);
 				}
 			}
-		} else {
-			// For regular elements and fragments
+		} else if (oldChild) {
+			// For regular elements and fragments - add null check
 			reconcile(null, null, oldChild);
 		}
 	}
@@ -764,7 +770,9 @@ function updateVDOMInstance(
 		if (oldTargetContainer !== targetContainer) {
 			// Clean up old portal children from old container
 			for (const childInstance of instance.childInstances) {
-				reconcile(null, null, childInstance);
+				if (childInstance) {
+					reconcile(null, null, childInstance);
+				}
 			}
 			instance.childInstances = [];
 		}
