@@ -197,6 +197,16 @@ function createVDOMInstance(
 	parentDom: Node,
 	element: AnyMiniReactElement,
 ): VDOMInstance {
+	// Type guard to ensure we have an element object, not a primitive
+	if (
+		!element ||
+		typeof element !== "object" ||
+		!("type" in element) ||
+		!("props" in element)
+	) {
+		throw new Error("createVDOMInstance expects an element object");
+	}
+
 	const { type, props } = element;
 
 	// Handle portals
@@ -423,6 +433,17 @@ function isSameElementType(
 	oldElement: AnyMiniReactElement,
 	newElement: AnyMiniReactElement,
 ): boolean {
+	// Type guards to ensure we have element objects
+	if (
+		!oldElement ||
+		typeof oldElement !== "object" ||
+		!("type" in oldElement) ||
+		!newElement ||
+		typeof newElement !== "object" ||
+		!("type" in newElement)
+	) {
+		return false;
+	}
 	return oldElement.type === newElement.type;
 }
 
@@ -440,14 +461,19 @@ function diffProps(
 	newProps: Record<string, unknown>,
 ): void {
 	// Helper function to check if a prop is an event handler
-	const isEventHandler = (key: string): boolean => key.startsWith("on") && key.length > 2;
+	const isEventHandler = (key: string): boolean =>
+		key.startsWith("on") && key.length > 2;
 
 	// Create sets of old and new prop keys (excluding children and event handlers)
 	const oldKeys = new Set(
-		Object.keys(oldProps).filter((key) => key !== "children" && !isEventHandler(key)),
+		Object.keys(oldProps).filter(
+			(key) => key !== "children" && !isEventHandler(key),
+		),
 	);
 	const newKeys = new Set(
-		Object.keys(newProps).filter((key) => key !== "children" && !isEventHandler(key)),
+		Object.keys(newProps).filter(
+			(key) => key !== "children" && !isEventHandler(key),
+		),
 	);
 
 	// Remove props that are no longer present
@@ -639,6 +665,10 @@ function reconcileChildren(
  * @returns The key string or null
  */
 function getElementKey(element: AnyMiniReactElement): string | null {
+	// Type guard to ensure we have an element object
+	if (!element || typeof element !== "object" || !("props" in element)) {
+		return null;
+	}
 	const key = (element.props as Record<string, unknown>).key;
 	return key !== undefined && key !== null ? String(key) : null;
 }
@@ -692,6 +722,16 @@ function updateVDOMInstance(
 	instance: VDOMInstance,
 	newElement: AnyMiniReactElement,
 ): VDOMInstance {
+	// Type guard to ensure we have an element object
+	if (
+		!newElement ||
+		typeof newElement !== "object" ||
+		!("type" in newElement) ||
+		!("props" in newElement)
+	) {
+		throw new Error("updateVDOMInstance expects an element object");
+	}
+
 	const { type, props } = newElement;
 
 	// Handle portals
