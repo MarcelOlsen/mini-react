@@ -116,7 +116,7 @@ export function reconcile(
 			newElement: newElement,
 			oldInstance: oldInstance,
 			parentDom: parentDom,
-			stack: new Error().stack
+			stack: new Error().stack,
 		});
 
 		// If we have newElement but no oldInstance, treat as creation
@@ -137,7 +137,9 @@ export function reconcile(
 			return null;
 		}
 		// If we reach here, something unexpected happened
-		throw new Error(`Unexpected reconciliation state: newElement=${newElement}, oldInstance=${oldInstance}`);
+		throw new Error(
+			`Unexpected reconciliation state: newElement=${newElement}, oldInstance=${oldInstance}`,
+		);
 	}
 
 	// Case 3: Type change - recreate everything
@@ -218,7 +220,11 @@ function createVDOMInstance(
 	element: AnyMiniReactElement,
 ): VDOMInstance {
 	// Handle primitives by converting them to text elements
-	if (typeof element === "string" || typeof element === "number" || typeof element === "boolean") {
+	if (
+		typeof element === "string" ||
+		typeof element === "number" ||
+		typeof element === "boolean"
+	) {
 		const textElement = {
 			type: TEXT_ELEMENT,
 			props: {
@@ -231,7 +237,9 @@ function createVDOMInstance(
 
 	// Handle null/undefined elements
 	if (element === null || element === undefined) {
-		throw new Error("Cannot create VDOM instance for null or undefined element");
+		throw new Error(
+			"Cannot create VDOM instance for null or undefined element",
+		);
 	}
 
 	// Type guard to ensure we have an element object, not a primitive
@@ -447,7 +455,7 @@ function createVDOMInstance(
 
 // Hook context function - will be set by MiniReact module
 let setCurrentRenderInstance: (instance: VDOMInstance | null) => void =
-	() => { };
+	() => {};
 
 /**
  * Sets the hook context function from MiniReact module
@@ -580,7 +588,9 @@ function reconcileChildren(
 	parentInstance?: VDOMInstance,
 ): VDOMInstance[] {
 	// Filter out null/undefined elements early and handle them separately
-	const filteredNewChildElements = newChildElements.filter(child => child !== null && child !== undefined);
+	const filteredNewChildElements = newChildElements.filter(
+		(child) => child !== null && child !== undefined,
+	);
 
 	// Separate keyed and unkeyed children
 	const oldKeyed = new Map<string, VDOMInstance>();
@@ -590,7 +600,8 @@ function reconcileChildren(
 
 	// Categorize old children by key
 	for (const oldChild of oldChildInstances) {
-		if (oldChild) { // Add null check for safety
+		if (oldChild) {
+			// Add null check for safety
 			const key = getElementKey(oldChild.element);
 			if (key !== null) {
 				oldKeyed.set(key, oldChild);
@@ -719,7 +730,11 @@ function getElementKey(element: AnyMiniReactElement): string | null {
 	}
 
 	// Handle primitive values (string, number, boolean)
-	if (typeof element === "string" || typeof element === "number" || typeof element === "boolean") {
+	if (
+		typeof element === "string" ||
+		typeof element === "number" ||
+		typeof element === "boolean"
+	) {
 		return null; // Primitives don't have keys
 	}
 

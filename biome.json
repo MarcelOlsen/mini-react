@@ -3,11 +3,18 @@
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
-		"useIgnoreFile": false
+		"useIgnoreFile": true
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": []
+		"ignore": [
+			"**/dist/**",
+			"**/build/**",
+			"**/bundle.js",
+			"**/*.bundle.js",
+			"**/node_modules/**",
+			"**/.git/**"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -23,6 +30,9 @@
 			"correctness": {
 				"noUnusedImports": "error",
 				"noUnusedVariables": "error"
+			},
+			"security": {
+				"noGlobalEval": "warn"
 			}
 		}
 	},

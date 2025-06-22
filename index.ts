@@ -1,13 +1,13 @@
 // Core functionality
 export {
-    createElement,
-    render,
-    useState,
-    useEffect,
-    useContext,
-    createContext,
-    createPortal,
-    Fragment
+	createElement,
+	render,
+	useState,
+	useEffect,
+	useContext,
+	createContext,
+	createPortal,
+	Fragment,
 } from "./src/MiniReact";
 
 // JSX Runtime exports for automatic JSX transform
