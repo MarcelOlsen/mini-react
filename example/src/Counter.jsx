@@ -57,23 +57,23 @@ function Counter() {
       </div>
 
       {/* Conditional rendering based on count */}
-      {count > 10 && (
+      {count > 10 ? (
         <p style={{ color: 'orange', marginTop: '10px' }}>
           🔥 You're on fire! Count is above 10!
         </p>
-      )}
+      ) : null}
       
-      {count < 0 && (
+      {count < 0 ? (
         <p style={{ color: 'red', marginTop: '10px' }}>
           📉 Negative territory!
         </p>
-      )}
+      ) : null}
       
-      {count === 0 && (
+      {count === 0 ? (
         <p style={{ color: 'blue', marginTop: '10px' }}>
           🎯 Back to zero!
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
