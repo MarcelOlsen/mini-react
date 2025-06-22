@@ -493,7 +493,7 @@ function flushEffects(): void {
 /**
  * Fragment component - renders children without creating a wrapper DOM node
  */
-export const Fragment = FRAGMENT;
+export const Fragment: typeof FRAGMENT = FRAGMENT;
 
 /**
  * Creates a portal element that renders its children into a different DOM container
