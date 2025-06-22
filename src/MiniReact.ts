@@ -17,6 +17,7 @@ import {
 	type ElementType,
 	FRAGMENT,
 	type FunctionalComponent,
+	type JSXElementType,
 	type MiniReactContext,
 	PORTAL,
 	type PortalElement,
@@ -88,7 +89,7 @@ export function createElement(
 	type: ElementType,
 	props: Record<string, unknown> | null,
 	...children: (AnyMiniReactElement | string | number | null | undefined)[]
-): AnyMiniReactElement {
+): JSXElementType {
 	const normalizedChildren = children
 		.flat()
 		.filter((child) => child !== null && child !== undefined) // Filter out null/undefined
@@ -189,7 +190,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => { }, // Will be set below
+			setState: () => {}, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -426,7 +427,12 @@ function findRootContainer(instance: VDOMInstance): HTMLElement | null {
 	// Strategy 3: If not found in main trees, check if this instance is part of a portal tree
 	current = instance;
 	while (current) {
-		if (current.element.type === PORTAL) {
+		if (
+			current.element &&
+			typeof current.element === "object" &&
+			"type" in current.element &&
+			current.element.type === PORTAL
+		) {
 			// Found a portal parent - now find which root tree contains this portal
 			for (const [container, rootInstance] of rootInstances) {
 				if (rootInstance && isInstanceInTree(current, rootInstance)) {
@@ -561,12 +567,12 @@ export interface JSXSource {
 
 export interface JSXDEVProps {
 	children?:
-	| AnyMiniReactElement
-	| AnyMiniReactElement[]
-	| string
-	| number
-	| null
-	| undefined;
+		| AnyMiniReactElement
+		| AnyMiniReactElement[]
+		| string
+		| number
+		| null
+		| undefined;
 	[key: string]: unknown;
 }
 
@@ -578,7 +584,7 @@ export function jsx(
 	type: ElementType,
 	props: JSXDEVProps | null,
 	key?: string | number,
-): AnyMiniReactElement {
+): JSXElementType {
 	const { children, ...restProps } = props || {};
 	const finalProps = { ...restProps };
 
@@ -605,7 +611,7 @@ export function jsxs(
 	type: ElementType,
 	props: JSXDEVProps | null,
 	key?: string | number,
-): AnyMiniReactElement {
+): JSXElementType {
 	// jsxs is identical to jsx in our implementation
 	// The distinction is made by the JSX transformer for optimization hints
 	return jsx(type, props, key);
@@ -622,7 +628,7 @@ export function jsxDEV(
 	_isStaticChildren?: boolean,
 	source?: JSXSource,
 	_self?: unknown,
-): AnyMiniReactElement {
+): JSXElementType {
 	// In development mode, we could add additional debugging information
 	// For now, we'll just delegate to jsx but could extend with:
 	// - Component stack traces
@@ -632,7 +638,7 @@ export function jsxDEV(
 	const element = jsx(type, props, key);
 
 	// Store development metadata if needed (for future dev tools support)
-	if (source && typeof element === 'object' && element !== null) {
+	if (source && typeof element === "object" && element !== null) {
 		(element as unknown as Record<string, unknown>).__source = source;
 	}
 

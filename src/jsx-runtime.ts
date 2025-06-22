@@ -6,4 +6,4 @@
 export { jsx, jsxs, Fragment } from "./MiniReact";
 
 // Export development version
-export { jsxDEV } from "./MiniReact"; 
+export { jsxDEV } from "./MiniReact";
