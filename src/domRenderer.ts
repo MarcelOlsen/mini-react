@@ -1,4 +1,4 @@
-import { type AnyMiniReactElement, TEXT_ELEMENT } from "./types";
+import { type JSXElementType, TEXT_ELEMENT } from "./types";
 
 /* ******************** */
 /* DOM Renderer Utility */
@@ -41,7 +41,7 @@ function setAttribute(element: Element, key: string, value: unknown): void {
  * @param element The VDOM element to convert
  * @returns The created DOM node
  */
-export function createDomNode(element: AnyMiniReactElement): Element | Text {
+export function createDomNode(element: JSXElementType): Element | Text {
 	// Handle text elements (TEXT_ELEMENT)
 	if (element.type === TEXT_ELEMENT) {
 		return document.createTextNode(String(element.props.nodeValue));
@@ -50,10 +50,10 @@ export function createDomNode(element: AnyMiniReactElement): Element | Text {
 	// Create host element
 	const domElement = document.createElement(element.type as string);
 
-	// Set attributes (props), but skip event handlers and children
+	// Set attributes (props), but skip event handlers, children, and key
 	if (element.props) {
 		for (const [key, value] of Object.entries(element.props)) {
-			if (key !== "children" && !isEventHandler(key)) {
+			if (key !== "children" && key !== "key" && !isEventHandler(key)) {
 				setAttribute(domElement, key, value);
 			}
 		}
