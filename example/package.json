@@ -1,0 +1,31 @@
+{
+  "name": "mini-react-jsx-example",
+  "version": "1.0.0",
+  "description": "Example project demonstrating JSX with MiniReact",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "start": "webpack serve --mode development --open"
+  },
+  "dependencies": {
+    "mini-react": "file:../"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/preset-react": "^7.22.0",
+    "babel-loader": "^9.1.0",
+    "html-webpack-plugin": "^5.5.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^4.15.0"
+  },
+  "keywords": [
+    "react",
+    "jsx",
+    "mini-react",
+    "virtual-dom"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
