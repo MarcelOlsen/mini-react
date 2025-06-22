@@ -189,7 +189,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => {}, // Will be set below
+			setState: () => { }, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -493,7 +493,7 @@ function flushEffects(): void {
 /**
  * Fragment component - renders children without creating a wrapper DOM node
  */
-export const Fragment: typeof FRAGMENT = FRAGMENT;
+export const Fragment = FRAGMENT;
 
 /**
  * Creates a portal element that renders its children into a different DOM container
@@ -548,3 +548,93 @@ export function createPortal(
 
 // Export types for external use
 export type { FunctionalComponent } from "./types";
+
+/* ***************** */
+/* JSX Runtime API   */
+/* ***************** */
+
+export interface JSXSource {
+	fileName?: string;
+	lineNumber?: number;
+	columnNumber?: number;
+}
+
+export interface JSXDEVProps {
+	children?:
+	| AnyMiniReactElement
+	| AnyMiniReactElement[]
+	| string
+	| number
+	| null
+	| undefined;
+	[key: string]: unknown;
+}
+
+/**
+ * JSX runtime function for elements with no children or single child
+ * Used by modern JSX transformation
+ */
+export function jsx(
+	type: ElementType,
+	props: JSXDEVProps | null,
+	key?: string | number,
+): AnyMiniReactElement {
+	const { children, ...restProps } = props || {};
+	const finalProps = { ...restProps };
+
+	if (key !== undefined) {
+		finalProps.key = key;
+	}
+
+	// Handle children
+	if (children !== undefined) {
+		if (Array.isArray(children)) {
+			return createElement(type, finalProps, ...children);
+		}
+		return createElement(type, finalProps, children);
+	}
+
+	return createElement(type, finalProps);
+}
+
+/**
+ * JSX runtime function for elements with multiple static children
+ * Used by modern JSX transformation for performance optimization
+ */
+export function jsxs(
+	type: ElementType,
+	props: JSXDEVProps | null,
+	key?: string | number,
+): AnyMiniReactElement {
+	// jsxs is identical to jsx in our implementation
+	// The distinction is made by the JSX transformer for optimization hints
+	return jsx(type, props, key);
+}
+
+/**
+ * JSX runtime function for development mode with additional debugging info
+ * Used in development builds for better error messages and debugging
+ */
+export function jsxDEV(
+	type: ElementType,
+	props: JSXDEVProps | null,
+	key?: string | number,
+	_isStaticChildren?: boolean,
+	source?: JSXSource,
+	_self?: unknown,
+): AnyMiniReactElement {
+	// In development mode, we could add additional debugging information
+	// For now, we'll just delegate to jsx but could extend with:
+	// - Component stack traces
+	// - Source location tracking
+	// - Runtime prop validation
+
+	const element = jsx(type, props, key);
+
+	// Store development metadata if needed (for future dev tools support)
+	if (source && typeof element === 'object' && element !== null) {
+		(element as unknown as Record<string, unknown>).__source = source;
+	}
+
+	return element;
+}
