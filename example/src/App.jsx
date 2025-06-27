@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState } from "mini-react";
 import Counter from "./Counter";
 import Modal from "./Modal";
 import TodoList from "./TodoList";
+import RefDemo from "./RefDemo";
+import ReducerDemo from "./ReducerDemo";
 
 // Create a theme context
 const ThemeContext = createContext("light");
@@ -39,11 +41,14 @@ function App() {
 				<header>
 					<h1>🚀 MiniReact JSX Demo</h1>
 					<p>{message}</p>
+					<p style={{ fontSize: "0.9em", color: "#666", fontStyle: "italic" }}>
+						Comprehensive demonstration of all MiniReact hooks and features
+					</p>
 				</header>
 
 				{/* Theme toggle with context */}
 				<section>
-					<h2>Theme System (Context API)</h2>
+					<h2>Theme System (useContext Hook)</h2>
 					<p>
 						Current theme: <strong>{theme}</strong>
 					</p>
@@ -54,8 +59,20 @@ function App() {
 
 				{/* Counter component */}
 				<section>
-					<h2>Counter (useState Hook)</h2>
+					<h2>Counter (useState & useEffect Hooks)</h2>
 					<Counter />
+				</section>
+
+				{/* useRef demonstrations */}
+				<section>
+					<h2>useRef Hook Demonstrations</h2>
+					<RefDemo />
+				</section>
+
+				{/* useReducer demonstrations */}
+				<section>
+					<h2>useReducer Hook Demonstrations</h2>
+					<ReducerDemo />
 				</section>
 
 				{/* Conditional rendering */}
@@ -110,7 +127,7 @@ function App() {
 					<p>
 						<em>
 							Built with MiniReact - A minimal React implementation with full
-							JSX support!
+							JSX support including useState, useEffect, useContext, useRef, and useReducer hooks!
 						</em>
 					</p>
 				</footer>
