@@ -21,6 +21,8 @@ import {
 	type MiniReactContext,
 	PORTAL,
 	type PortalElement,
+	type Reducer,
+	type ReducerHook,
 	type StateHook,
 	type StateOrEffectHook,
 	TEXT_ELEMENT,
@@ -190,7 +192,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => {}, // Will be set below
+			setState: () => { }, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -311,6 +313,97 @@ export function useEffect(
 			hook.hasRun = true;
 		});
 	}
+}
+
+/**
+ * useReducer hook implementation
+ * @param reducer The reducer function that takes state and action and returns new state
+ * @param initialArg The initial state or argument for lazy initialization
+ * @param init Optional lazy initialization function
+ * @returns A tuple with current state and dispatch function
+ */
+export function useReducer<State, Action>(
+	reducer: Reducer<State, Action>,
+	initialArg: State,
+): [State, (action: Action) => void];
+export function useReducer<State, Action, Init>(
+	reducer: Reducer<State, Action>,
+	initialArg: Init,
+	init: (arg: Init) => State,
+): [State, (action: Action) => void];
+export function useReducer<State, Action, Init>(
+	reducer: Reducer<State, Action>,
+	initialArg: State | Init,
+	init?: (arg: Init) => State,
+): [State, (action: Action) => void] {
+	if (!currentRenderInstance) {
+		throw new Error("useReducer must be called inside a functional component");
+	}
+
+	// Capture the current instance at hook creation time
+	const hookInstance = currentRenderInstance;
+
+	// Ensure hooks array exists
+	if (!hookInstance.hooks) {
+		hookInstance.hooks = [];
+	}
+
+	const hooks = hookInstance.hooks;
+	const currentHookIndex = hookInstance.hookCursor ?? 0;
+	hookInstance.hookCursor = currentHookIndex + 1;
+
+	// Initialize hook if it doesn't exist
+	if (hooks.length <= currentHookIndex) {
+		// Calculate initial state based on whether init function is provided
+		const initialState = init ? init(initialArg as Init) : (initialArg as State);
+
+		const reducerHook: ReducerHook<State, Action> = {
+			type: "reducer",
+			state: initialState,
+			reducer,
+			dispatch: () => { }, // Will be set below
+		};
+
+		hooks.push(reducerHook as StateOrEffectHook<unknown>);
+	}
+
+	const hook = hooks[currentHookIndex] as ReducerHook<State, Action>;
+
+	// Update reducer in case it changed between renders
+	hook.reducer = reducer;
+
+	// Create dispatch function with closure over hook and container
+	const dispatch = (action: Action) => {
+		const nextState = hook.reducer(hook.state, action);
+
+		// Only update if state actually changed
+		if (nextState !== hook.state) {
+			hook.state = nextState;
+
+			// Find the root container for this instance and trigger re-render
+			const container = findRootContainer(hookInstance);
+			if (container) {
+				// Use the original root element for re-render instead of stale element from instance
+				const rootElement = rootElements.get(container) || null;
+				if (rootElement) {
+					render(rootElement, container);
+				} else {
+					console.warn(
+						"No root element found for container, skipping re-render",
+					);
+				}
+			} else {
+				console.warn(
+					"No root container found for hook instance, skipping re-render",
+				);
+			}
+		}
+	};
+
+	// Update the dispatch function reference
+	hook.dispatch = dispatch;
+
+	return [hook.state, dispatch];
 }
 
 /**
@@ -567,12 +660,12 @@ export interface JSXSource {
 
 export interface JSXDEVProps {
 	children?:
-		| AnyMiniReactElement
-		| AnyMiniReactElement[]
-		| string
-		| number
-		| null
-		| undefined;
+	| AnyMiniReactElement
+	| AnyMiniReactElement[]
+	| string
+	| number
+	| null
+	| undefined;
 	[key: string]: unknown;
 }
 
