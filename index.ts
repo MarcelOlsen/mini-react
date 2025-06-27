@@ -5,6 +5,7 @@ export {
 	useState,
 	useEffect,
 	useReducer,
+	useRef,
 	useContext,
 	createContext,
 	createPortal,
