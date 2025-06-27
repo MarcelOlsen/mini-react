@@ -4,6 +4,7 @@ export {
 	render,
 	useState,
 	useEffect,
+	useReducer,
 	useContext,
 	createContext,
 	createPortal,
