@@ -23,7 +23,7 @@ A learning project to build a simplified React-like library from scratch, with a
     - [Phase 8: Context API ✅](#phase-8-context-api-)
     - [Phase 9: Portals and Fragments ✅](#phase-9-portals-and-fragments)
     - [Phase 10: JSX Support ✅](#phase-10-jsx-support)
-    - [Phase 11: Essential Hooks (useRef & useReducer) 🎯](#phase-11-essential-hooks-useref--usereducer)
+    - [Phase 11: Essential Hooks (useRef & useReducer) ✅](#phase-11-essential-hooks-useref--usereducer)
     - [🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality](#🎉-alpha-release-v010-complete-core-react-like-functionality)
   - [🚀 **STABLE RELEASE TRACK** (Phases 12-20)](#🚀-stable-release-track-phases-12-20)
     - [Phase 12: Performance Optimization Suite](#phase-12-performance-optimization-suite)
@@ -60,24 +60,25 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ## Current Status
 
-🆕 **Current Phase**: Alpha Release Track - Phase 10 ✅ **COMPLETE**
+🆕 **Current Phase**: Alpha Release Track - Phase 11 ✅ **COMPLETE**
 
 **Latest Achievements**:
 
-- ✅ **Phase 10 Complete**: JSX Support - Full JSX syntax support with runtime functions
-- ✅ **236 Tests Passing**: Comprehensive test suite covering all functionality including JSX and advanced reconciliation
+- ✅ **Phase 11 Complete**: Essential Hooks - useRef & useReducer implementation with comprehensive test coverage
+- ✅ **Alpha Release Ready**: All 11 core phases completed - complete React-like functionality achieved
+- ✅ **280+ Tests Passing**: Comprehensive test suite covering all functionality including all hooks and advanced reconciliation
 - ✅ **Zero Linter Issues**: Clean codebase with consistent formatting and biome configuration
-- ✅ **Complete JSX Runtime**: jsx, jsxs, jsxDEV functions with Fragment support and TypeScript integration
-- ✅ **Enhanced Reconciliation**: Bug fixes for null value handling, conditional rendering, and primitive values
-- ✅ **Production-Ready Portal System**: createPortal with target DOM container rendering, event bubbling through React tree, context propagation, and lifecycle management
-- ✅ **Fragment Support**: React.Fragment equivalent for rendering multiple children without wrapper elements
+- ✅ **Complete Hook Ecosystem**: useState, useEffect, useContext, useRef, and useReducer hooks fully implemented
+- ✅ **Production-Ready**: Robust error handling, TypeScript support, and comprehensive edge case coverage
+- ✅ **Package Preparation**: Ready for npm registry publication
 
-**Alpha Release Progress**: 10/11 phases complete (91% toward alpha)
+**Alpha Release Progress**: 11/11 phases complete (100% complete) ✨
 
-**Next Milestones**:
+**Immediate Milestones**:
 
-- 🎯 **Phase 11**: Essential Hooks - useRef & useReducer (1-2 weeks)
-- 🎉 **Alpha Release v0.1.0**: Target in 1-2 weeks
+- 🚀 **npm Package Publication**: Package will be available on npm registry soon
+- 📦 **Alpha Release v0.1.0**: Complete core React-like functionality now available
+- 📚 **Documentation & Examples**: Comprehensive guides and demo applications
 
 **Post-Alpha Roadmap**: 12 additional phases planned for stable v1.0.0 release with advanced features including concurrent rendering, SSR, dev tools, and production optimizations.
 
@@ -93,13 +94,30 @@ Each phase includes clear specifications, working implementations, and extensive
 
 ### Installation
 
+**📦 npm Package (Coming Soon):**
+
 ```bash
-# Clone the repository
+# Will be available soon on npm registry
+npm install mini-react
+# or
+bun add mini-react
+```
+
+**🔧 Development Installation (Current):**
+
+```bash
+# Clone the repository for development/testing
 git clone https://github.com/MarcelOlsen/mini-react.git
 cd mini-react
 
 # Install dependencies
 bun install
+
+# Run tests to verify installation
+bun test
+
+# Build the project
+bun run build
 ```
 
 ### Basic Usage
@@ -326,9 +344,13 @@ const App = () => {
 
 - **🏗️ Virtual DOM**: Efficient virtual DOM implementation with reconciliation algorithm
 - **⚡ Component System**: Functional components with props and children support
-- **🔄 State Management**: useState hook with proper re-rendering and state preservation
+- **🎣 Complete Hook Ecosystem**: All essential React hooks implemented
+  - **useState**: State management with automatic re-rendering
+  - **useEffect**: Side effects with dependency arrays and cleanup
+  - **useContext**: Context API for prop drilling elimination
+  - **useRef**: DOM references and mutable values without re-renders
+  - **useReducer**: Complex state management with reducer patterns
 - **⚡ Event Handling**: Synthetic event system with proper event delegation and cleanup
-- **🔄 Effect System**: useEffect hook with dependency arrays, cleanup functions, and lifecycle management
 - **🌐 Context API**: createContext and useContext hooks with provider/consumer pattern
 - **🌉 Portals**: createPortal for rendering content to different DOM containers with React tree event bubbling
 - **📦 Fragments**: React.Fragment equivalent for rendering multiple children without wrapper DOM nodes
@@ -350,7 +372,7 @@ const App = () => {
 
 ### 📋 Testing & Quality
 
-- **236+ Comprehensive Tests**: Full test coverage for all features and edge cases
+- **280+ Comprehensive Tests**: Full test coverage for all features and edge cases including all hooks
 - **TypeScript Support**: Full type safety with detailed type definitions
 - **Linting & Formatting**: Biome-based code quality and consistent formatting
 - **Error Handling**: Graceful degradation and helpful error messages
@@ -528,22 +550,23 @@ mini-react/
 
 ---
 
-#### Phase 11: Essential Hooks (useRef & useReducer) 🎯
+#### Phase 11: Essential Hooks (useRef & useReducer) ✅
 
-**Features (Planned):**
+**Features:**
 
-- useRef hook for DOM references and mutable values
-- useReducer hook for complex state management
-- Ref forwarding and imperative DOM operations
-- Reducer pattern with actions and state transitions
-- Integration with existing hook system and lifecycle
-- Performance optimizations for complex state updates
+- ✅ useRef hook for DOM references and mutable values without re-renders
+- ✅ useReducer hook for complex state management with reducer patterns
+- ✅ Ref object with mutable .current property that persists across renders
+- ✅ Reducer pattern with actions, state transitions, and dispatch function
+- ✅ Integration with existing hook system and component lifecycle
+- ✅ Comprehensive test coverage for all hook scenarios and edge cases
+- ✅ TypeScript support with proper type inference and safety
 
 ---
 
 ### 🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality
 
-**Target**: 1-2 weeks after Phase 11 completion
+**Status**: ✅ **READY FOR PUBLICATION**
 
 **Alpha Release Features:**
 
@@ -552,8 +575,11 @@ mini-react/
 - ✅ Advanced rendering (Portals, Fragments)
 - ✅ Production-ready reconciliation engine
 - ✅ Comprehensive TypeScript support
-- ✅ 300+ tests with full coverage
+- ✅ 280+ tests with full coverage
 - ✅ Developer-friendly API matching React patterns
+- ✅ npm package ready for publication
+
+**Coming Soon**: Package will be available on npm registry for easy installation and use in projects.
 
 ---
 
@@ -676,7 +702,6 @@ const greeting = createElement(Greeting, { name: "World" });
 
 ### render
 
-<<<<<<< HEAD
 ```typescript
 function render(
   element: AnyMiniReactElement | null | undefined,
@@ -696,22 +721,7 @@ Renders a virtual DOM element into a real DOM container with efficient reconcili
 ```typescript
 const app = createElement("div", null, "Hello World");
 render(app, document.getElementById("root")!);
-=======
-````
-
-Renders a virtual DOM element into a real DOM container with efficient reconciliation.
-
-**Parameters:**
-
-- `element`: Virtual DOM element to render (null clears container)
-- `container`: Target DOM element
-
-**Example:**
-
-```typescript
-const app = createElement("div", null, "Hello World");
-render(app, document.getElementById("root")!);
-````
+```
 
 ### Functional Components
 
@@ -743,23 +753,6 @@ const Greeting = ({
     "p",
     null,
     age ? `${name} is ${age} years old`
->>>>>>> f2a7618 (📚 chore: update readme roadmap progress)
-```
-
-### Functional Components
-
-```typescript
-type FunctionalComponent = (props?: Props) => MiniReactElement | null;
-```
-
-Functions that accept props and return virtual DOM elements.
-
-**Example:**
-
-```typescript
-const Greeting: FunctionalComponent = ({ name }: { name: string }) => {
-  return createElement("h1", null, `Hello, ${name}!`);
-};
 ```
 
 ### useState
@@ -901,6 +894,119 @@ function jsxDEV(
 
 JSX runtime functions for transpiled JSX syntax. These are automatically used by build tools and shouldn't be called directly.
 
+### useRef
+
+```typescript
+function useRef<T>(initialValue: T): MutableRefObject<T>;
+
+interface MutableRefObject<T> {
+  current: T;
+}
+```
+
+Hook for creating mutable references that persist across re-renders without triggering re-renders when changed. Useful for DOM references and storing mutable values.
+
+**Example:**
+
+```typescript
+const InputComponent = () => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const renderCountRef = useRef(0);
+
+  // Track renders without causing re-renders
+  renderCountRef.current += 1;
+
+  const focusInput = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  return createElement(
+    "div",
+    null,
+    createElement("input", { ref: inputRef, type: "text" }),
+    createElement("button", { onClick: focusInput }, "Focus Input"),
+    createElement("p", null, `Render count: ${renderCountRef.current}`)
+  );
+};
+```
+
+### useReducer
+
+```typescript
+function useReducer<State, Action>(
+  reducer: (state: State, action: Action) => State,
+  initialState: State
+): [State, (action: Action) => void];
+
+function useReducer<State, Action, Init>(
+  reducer: (state: State, action: Action) => State,
+  initialArg: Init,
+  init: (arg: Init) => State
+): [State, (action: Action) => void];
+```
+
+Hook for managing complex state with a reducer function. Ideal for state that involves multiple sub-values or complex update logic.
+
+**Example:**
+
+```typescript
+interface CounterState {
+  count: number;
+  step: number;
+}
+
+type CounterAction =
+  | { type: "INCREMENT" }
+  | { type: "DECREMENT" }
+  | { type: "SET_STEP"; payload: number }
+  | { type: "RESET" };
+
+const counterReducer = (
+  state: CounterState,
+  action: CounterAction
+): CounterState => {
+  switch (action.type) {
+    case "INCREMENT":
+      return { ...state, count: state.count + state.step };
+    case "DECREMENT":
+      return { ...state, count: state.count - state.step };
+    case "SET_STEP":
+      return { ...state, step: action.payload };
+    case "RESET":
+      return { count: 0, step: 1 };
+    default:
+      return state;
+  }
+};
+
+const Counter = () => {
+  const [state, dispatch] = useReducer(counterReducer, { count: 0, step: 1 });
+
+  return createElement(
+    "div",
+    null,
+    createElement("h3", null, `Count: ${state.count}`),
+    createElement(
+      "button",
+      { onClick: () => dispatch({ type: "INCREMENT" }) },
+      "+"
+    ),
+    createElement(
+      "button",
+      { onClick: () => dispatch({ type: "DECREMENT" }) },
+      "-"
+    ),
+    createElement(
+      "button",
+      { onClick: () => dispatch({ type: "RESET" }) },
+      "Reset"
+    )
+  );
+};
+```
+
 ---
 
 ## Testing
@@ -940,12 +1046,12 @@ tests/
 
 ### Test Coverage
 
-Current test coverage: **236+ tests** covering:
+Current test coverage: **280+ tests** covering:
 
 - ✅ Element creation and rendering
 - ✅ Functional component composition
 - ✅ Virtual DOM reconciliation algorithms
-- ✅ Hook lifecycle and state management
+- ✅ Hook lifecycle and state management (useState, useEffect, useContext, useRef, useReducer)
 - ✅ Event handling and cleanup
 - ✅ Context propagation and updates
 - ✅ Portal rendering and event bubbling
