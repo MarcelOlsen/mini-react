@@ -74,7 +74,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-	EventHandlers & { children: AnyMiniReactElement[] };
+		EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {
@@ -154,19 +154,29 @@ export type UseEffectHook = (
 
 // Reducer types
 export type Reducer<State, Action> = (state: State, action: Action) => State;
-export type ReducerStateWithoutAction<R> = R extends Reducer<infer S, unknown> ? S : never;
-export type ReducerActionWithoutState<R> = R extends Reducer<unknown, infer A> ? A : never;
+export type ReducerStateWithoutAction<R> = R extends Reducer<infer S, unknown>
+	? S
+	: never;
+export type ReducerActionWithoutState<R> = R extends Reducer<unknown, infer A>
+	? A
+	: never;
 
 export type UseReducerHook = {
 	<R extends Reducer<unknown, unknown>, I>(
 		reducer: R,
 		initializerArg: I,
-		initializer: (arg: I) => ReducerStateWithoutAction<R>
-	): [ReducerStateWithoutAction<R>, (action: ReducerActionWithoutState<R>) => void];
+		initializer: (arg: I) => ReducerStateWithoutAction<R>,
+	): [
+		ReducerStateWithoutAction<R>,
+		(action: ReducerActionWithoutState<R>) => void,
+	];
 	<R extends Reducer<unknown, unknown>>(
 		reducer: R,
-		initialState: ReducerStateWithoutAction<R>
-	): [ReducerStateWithoutAction<R>, (action: ReducerActionWithoutState<R>) => void];
+		initialState: ReducerStateWithoutAction<R>,
+	): [
+		ReducerStateWithoutAction<R>,
+		(action: ReducerActionWithoutState<R>) => void,
+	];
 };
 
 // Ref types
