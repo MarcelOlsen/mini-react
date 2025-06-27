@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "mini-react";
 import Counter from "./Counter";
 import Modal from "./Modal";
-import TodoList from "./TodoList";
-import RefDemo from "./RefDemo";
 import ReducerDemo from "./ReducerDemo";
+import RefDemo from "./RefDemo";
+import TodoList from "./TodoList";
 
 // Create a theme context
 const ThemeContext = createContext("light");
@@ -127,7 +127,8 @@ function App() {
 					<p>
 						<em>
 							Built with MiniReact - A minimal React implementation with full
-							JSX support including useState, useEffect, useContext, useRef, and useReducer hooks!
+							JSX support including useState, useEffect, useContext, useRef, and
+							useReducer hooks!
 						</em>
 					</p>
 				</footer>
