@@ -163,10 +163,103 @@ export default App;
 
 1. **Automatic JSX Runtime**: No need to import JSX functions manually
 2. **Component Composition**: Building complex UIs from simple components
-3. **Hooks Integration**: useState, useEffect work seamlessly with JSX
+3. **Complete Hook Ecosystem**: All MiniReact hooks with comprehensive examples
 4. **Event Handling**: onClick, onChange, etc. work as expected
 5. **Conditional Rendering**: Using JavaScript expressions in JSX
 6. **Lists and Keys**: Rendering dynamic lists with proper reconciliation
+
+### Hook Demonstrations
+
+The example project includes comprehensive demonstrations of all MiniReact hooks:
+
+#### useState & useEffect (Counter.jsx)
+
+- Basic state management with increment/decrement functionality
+- Effect cleanup and dependency arrays
+- Conditional rendering based on state
+
+#### useRef (RefDemo.jsx)
+
+- **DOM References**: Direct access to DOM elements for focus management
+- **Mutable Values**: Persistent values across re-renders without triggering updates
+- **Render Counting**: Tracking component renders without causing infinite loops
+- **Previous Value Storage**: Storing previous state values
+
+```jsx
+// Example: DOM reference and mutable values
+const inputRef = useRef(null);
+const renderCountRef = useRef(0);
+
+// Focus input directly
+const focusInput = () => inputRef.current.focus();
+
+// Track renders without causing re-renders
+useEffect(() => {
+  renderCountRef.current += 1;
+});
+```
+
+#### useReducer (ReducerDemo.jsx)
+
+- **Shopping Cart**: Complex state management with multiple related values
+- **Form Validation**: Coordinated state updates for forms with validation
+- **Action Dispatching**: Structured state updates using reducer patterns
+
+```jsx
+// Example: Shopping cart reducer
+const cartReducer = (state, action) => {
+  switch (action.type) {
+    case "ADD_ITEM":
+    // Complex logic for adding items
+    case "UPDATE_QUANTITY":
+    // Handle quantity updates
+    default:
+      return state;
+  }
+};
+
+const [cartState, cartDispatch] = useReducer(cartReducer, initialState);
+```
+
+#### useContext (App.jsx, ThemedButton)
+
+- **Theme System**: Sharing theme state across components
+- **Provider Pattern**: Wrapping components with context providers
+- **Context Consumption**: Accessing context values in nested components
+
+```jsx
+// Create and provide context
+const ThemeContext = createContext("light");
+
+function App() {
+  return (
+    <ThemeContext.Provider value={theme}>
+      <ThemedButton />
+    </ThemeContext.Provider>
+  );
+}
+
+// Consume context
+function ThemedButton() {
+  const theme = useContext(ThemeContext);
+  return <button className={`btn-${theme}`}>Button</button>;
+}
+```
+
+### Component Examples
+
+#### TodoList.jsx
+
+- Dynamic list rendering with keys
+- Multiple state management patterns
+- Form handling and validation
+- Filtering and conditional rendering
+
+#### Modal.jsx
+
+- Portal usage for rendering outside normal DOM hierarchy
+- Conditional component rendering
+- Event handling and cleanup
 
 ## Running the Example
 
