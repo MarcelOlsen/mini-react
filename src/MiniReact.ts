@@ -19,10 +19,12 @@ import {
 	type FunctionalComponent,
 	type JSXElementType,
 	type MiniReactContext,
+	type MutableRefObject,
 	PORTAL,
 	type PortalElement,
 	type Reducer,
 	type ReducerHook,
+	type RefHook,
 	type StateHook,
 	type StateOrEffectHook,
 	TEXT_ELEMENT,
@@ -404,6 +406,45 @@ export function useReducer<State, Action, Init>(
 	hook.dispatch = dispatch;
 
 	return [hook.state, dispatch];
+}
+
+/**
+ * useRef hook implementation
+ * @param initialValue The initial value to set on the ref object
+ * @returns A mutable ref object with a current property
+ */
+export function useRef<T>(initialValue: T): MutableRefObject<T> {
+	if (!currentRenderInstance) {
+		throw new Error("useRef must be called inside a functional component");
+	}
+
+	// Capture the current instance at hook creation time
+	const hookInstance = currentRenderInstance;
+
+	// Ensure hooks array exists
+	if (!hookInstance.hooks) {
+		hookInstance.hooks = [];
+	}
+
+	const hooks = hookInstance.hooks;
+	const currentHookIndex = hookInstance.hookCursor ?? 0;
+	hookInstance.hookCursor = currentHookIndex + 1;
+
+	// Initialize hook if it doesn't exist
+	if (hooks.length <= currentHookIndex) {
+		const refHook: RefHook<T> = {
+			type: "ref",
+			current: initialValue,
+		};
+
+		hooks.push(refHook as StateOrEffectHook<unknown>);
+	}
+
+	const hook = hooks[currentHookIndex] as RefHook<T>;
+
+	// Return a reference to the hook itself as the mutable ref object
+	// This ensures mutations to .current directly modify the hook's state
+	return hook as MutableRefObject<T>;
 }
 
 /**
