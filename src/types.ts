@@ -74,7 +74,7 @@ export interface EventHandlers {
 export interface MiniReactElement {
 	type: ElementType;
 	props: Record<string, unknown> &
-		EventHandlers & { children: AnyMiniReactElement[] };
+	EventHandlers & { children: AnyMiniReactElement[] };
 }
 
 export interface TextElementProps {
@@ -115,6 +115,13 @@ export interface ContextHook<T = unknown> {
 	value: T;
 }
 
+export interface ReducerHook<State = unknown, Action = unknown> {
+	type: "reducer";
+	state: State;
+	reducer: (state: State, action: Action) => State;
+	dispatch: (action: Action) => void;
+}
+
 /**
  * Union type for hooks stored in component instances.
  * Note: The generic parameter T only applies to StateHook and ContextHook, EffectHook ignores it.
@@ -122,7 +129,8 @@ export interface ContextHook<T = unknown> {
 export type StateOrEffectHook<T = unknown> =
 	| StateHook<T>
 	| EffectHook
-	| ContextHook<T>;
+	| ContextHook<T>
+	| ReducerHook<T, unknown>;
 
 export type UseStateHook<T> = [
 	T,
@@ -137,6 +145,23 @@ export type UseEffectHook = (
 	callback: EffectCallback,
 	dependencies?: DependencyList,
 ) => void;
+
+// Reducer types
+export type Reducer<State, Action> = (state: State, action: Action) => State;
+export type ReducerStateWithoutAction<R> = R extends Reducer<infer S, unknown> ? S : never;
+export type ReducerActionWithoutState<R> = R extends Reducer<unknown, infer A> ? A : never;
+
+export type UseReducerHook = {
+	<R extends Reducer<unknown, unknown>, I>(
+		reducer: R,
+		initializerArg: I,
+		initializer: (arg: I) => ReducerStateWithoutAction<R>
+	): [ReducerStateWithoutAction<R>, (action: ReducerActionWithoutState<R>) => void];
+	<R extends Reducer<unknown, unknown>>(
+		reducer: R,
+		initialState: ReducerStateWithoutAction<R>
+	): [ReducerStateWithoutAction<R>, (action: ReducerActionWithoutState<R>) => void];
+};
 
 // ******************* //
 // VDOM Instance Types //
