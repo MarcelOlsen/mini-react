@@ -192,7 +192,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			setState: () => { }, // Will be set below
+			setState: () => {}, // Will be set below
 		};
 
 		(hooks as StateOrEffectHook<T>[]).push(stateHook);
@@ -355,13 +355,15 @@ export function useReducer<State, Action, Init>(
 	// Initialize hook if it doesn't exist
 	if (hooks.length <= currentHookIndex) {
 		// Calculate initial state based on whether init function is provided
-		const initialState = init ? init(initialArg as Init) : (initialArg as State);
+		const initialState = init
+			? init(initialArg as Init)
+			: (initialArg as State);
 
 		const reducerHook: ReducerHook<State, Action> = {
 			type: "reducer",
 			state: initialState,
 			reducer,
-			dispatch: () => { }, // Will be set below
+			dispatch: () => {}, // Will be set below
 		};
 
 		hooks.push(reducerHook as StateOrEffectHook<unknown>);
@@ -660,12 +662,12 @@ export interface JSXSource {
 
 export interface JSXDEVProps {
 	children?:
-	| AnyMiniReactElement
-	| AnyMiniReactElement[]
-	| string
-	| number
-	| null
-	| undefined;
+		| AnyMiniReactElement
+		| AnyMiniReactElement[]
+		| string
+		| number
+		| null
+		| undefined;
 	[key: string]: unknown;
 }
 

@@ -1,0 +1,25 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"noEmit": false,
+		"emitDeclarationOnly": false,
+		"skipLibCheck": true,
+		"moduleResolution": "node",
+		"allowImportingTsExtensions": false,
+		"verbatimModuleSyntax": false
+	},
+	"include": ["src/**/*", "index.ts"],
+	"exclude": [
+		"tests/**/*",
+		"example/**/*",
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"dist/**/*",
+		"node_modules/**/*"
+	]
+}
