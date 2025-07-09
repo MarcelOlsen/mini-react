@@ -1,0 +1,46 @@
+# Source files (we publish compiled dist/)
+src/
+index.ts
+
+# Build configuration
+tsconfig.json
+tsconfig.build.json
+biome.json
+bunfig.toml
+
+# Tests and examples
+tests/
+example/
+*.test.ts
+*.test.tsx
+*.test.js
+*.test.jsx
+
+# Development files
+.gitignore
+.cursor
+.vscode/
+.idea/
+
+# Logs and caches
+*.log
+.cache
+.DS_Store
+coverage/
+.nyc_output/
+
+# Lock files and package managers
+bun.lock
+yarn.lock
+package-lock.json
+.pnpm-debug.log*
+
+# Build artifacts not needed
+*.tsbuildinfo
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Environment files
+.env* 

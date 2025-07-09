@@ -122,11 +122,14 @@ export interface ReducerHook<State = unknown, Action = unknown> {
 	dispatch: (action: Action) => void;
 }
 
+<<<<<<< HEAD
+=======
 export interface RefHook<T = unknown> {
 	type: "ref";
 	current: T;
 }
 
+>>>>>>> master
 /**
  * Union type for hooks stored in component instances.
  * Note: The generic parameter T only applies to StateHook and ContextHook, EffectHook ignores it.
@@ -135,8 +138,12 @@ export type StateOrEffectHook<T = unknown> =
 	| StateHook<T>
 	| EffectHook
 	| ContextHook<T>
+<<<<<<< HEAD
+	| ReducerHook<T, unknown>;
+=======
 	| ReducerHook<T, unknown>
 	| RefHook<T>;
+>>>>>>> master
 
 export type UseStateHook<T> = [
 	T,
@@ -179,6 +186,8 @@ export type UseReducerHook = {
 	];
 };
 
+<<<<<<< HEAD
+=======
 // Ref types
 export type MutableRefObject<T> = {
 	current: T;
@@ -186,6 +195,7 @@ export type MutableRefObject<T> = {
 
 export type UseRefHook = <T>(initialValue: T) => MutableRefObject<T>;
 
+>>>>>>> master
 // ******************* //
 // VDOM Instance Types //
 // ******************* //

@@ -1,0 +1,125 @@
+name: 🚀 Publish to NPM
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: 🧪 Test & Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 Install dependencies
+        run: bun install
+
+      - name: 🧪 Run tests
+        run: bun test
+
+      - name: 🔍 Run linting and formatting checks
+        run: bun run check
+
+      - name: 🏗️ Test build
+        run: bun run build
+
+      - name: 📊 Upload coverage reports
+        if: success()
+        run: echo "✅ All quality checks passed"
+
+  publish:
+    name: 📦 Publish to NPM
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 Install dependencies
+        run: bun install
+
+      - name: 🏗️ Build package
+        run: bun run build
+
+      - name: 🔖 Determine version bump
+        id: version
+        run: |
+          # Get the last commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+
+          # Determine version bump based on conventional commits
+          if echo "$COMMIT_MSG" | grep -q "BREAKING CHANGE\|!:"; then
+            echo "bump=major" >> $GITHUB_OUTPUT
+            echo "🔥 Major version bump detected"
+          elif echo "$COMMIT_MSG" | grep -q "^feat"; then
+            echo "bump=minor" >> $GITHUB_OUTPUT
+            echo "✨ Minor version bump detected"
+          elif echo "$COMMIT_MSG" | grep -q "^fix\|^perf\|^refactor"; then
+            echo "bump=patch" >> $GITHUB_OUTPUT
+            echo "🐛 Patch version bump detected"
+          else
+            echo "bump=patch" >> $GITHUB_OUTPUT
+            echo "📝 Default patch version bump"
+          fi
+
+      - name: 🔖 Bump version
+        run: |
+          npm version ${{ steps.version.outputs.bump }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "📈 Version bumped to $NEW_VERSION"
+
+      - name: 🏷️ Create Git tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json
+          git commit -m "🔖 chore: bump version to $NEW_VERSION [skip ci]"
+          git tag "v$NEW_VERSION"
+          git push origin master --tags
+
+      - name: 📦 Publish to NPM
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          npm publish --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 📝 Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.NEW_VERSION }}
+          release_name: Release v${{ env.NEW_VERSION }}
+          body: |
+            ## 🎉 What's Changed
+
+            This release was automatically generated from the latest changes in master.
+
+            ### 📦 Installation
+            ```bash
+            npm install mini-react@${{ env.NEW_VERSION }}
+            ```
+
+            ### 🔗 NPM Package
+            https://www.npmjs.com/package/mini-react/v/${{ env.NEW_VERSION }}
+          draft: false
+          prerelease: false
