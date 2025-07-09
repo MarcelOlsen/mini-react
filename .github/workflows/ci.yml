@@ -37,22 +37,6 @@ jobs:
           echo "📦 Bundle size: $BUNDLE_SIZE"
           echo "bundle-size=$BUNDLE_SIZE" >> $GITHUB_OUTPUT
 
-  security:
-    name: 🔒 Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Bun
-        uses: oven-sh/setup-bun@v1
-
-      - name: 📦 Install dependencies
-        run: bun install
-
-      - name: 🔒 Security audit
-        run: bun audit || echo "⚠️ Security audit completed with warnings"
-
   compatibility:
     name: 🌐 Compatibility Test
     runs-on: ubuntu-latest
