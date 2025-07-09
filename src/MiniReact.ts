@@ -24,10 +24,7 @@ import {
 	type PortalElement,
 	type Reducer,
 	type ReducerHook,
-<<<<<<< HEAD
-=======
 	type RefHook,
->>>>>>> master
 	type StateHook,
 	type StateOrEffectHook,
 	TEXT_ELEMENT,
@@ -414,8 +411,6 @@ export function useReducer<State, Action, Init>(
 }
 
 /**
-<<<<<<< HEAD
-=======
  * useRef hook implementation
  * @param initialValue The initial value to set on the ref object
  * @returns A mutable ref object with a current property
@@ -455,7 +450,6 @@ export function useRef<T>(initialValue: T): MutableRefObject<T> {
 }
 
 /**
->>>>>>> master
  * createContext function - Creates a new context object with default value
  * @param defaultValue The default value for the context
  * @returns A context object with Provider component
