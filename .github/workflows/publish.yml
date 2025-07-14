@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [master]
 
+# Add permissions for the workflow
+permissions:
+  contents: write
+  packages: write
+  issues: write
+  pull-requests: write
+
 jobs:
   test:
     name: 🧪 Test & Quality Check
@@ -39,12 +46,15 @@ jobs:
     name: 📦 Publish to NPM
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # Only run on pushes to master, and skip if commit message contains [skip ci]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]')
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Use a personal access token to allow pushing
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🟢 Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -86,7 +96,19 @@ jobs:
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "📈 Version bumped to $NEW_VERSION"
 
-      - name: 🏷️ Create Git tag
+      - name: 🔍 Check if package exists on NPM
+        id: npm_check
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          if npm view $PACKAGE_NAME version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "📦 Package exists on NPM"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "🆕 Package does not exist on NPM - will be first publish"
+          fi
+
+      - name: 🏷️ Create Git tag and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -94,10 +116,23 @@ jobs:
           git commit -m "🔖 chore: bump version to $NEW_VERSION [skip ci]"
           git tag "v$NEW_VERSION"
           git push origin master --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📦 Publish to NPM
+      - name: 📦 Publish to NPM (First Time)
+        if: steps.npm_check.outputs.exists == 'false'
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "🆕 Publishing package for the first time..."
+          npm publish --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 📦 Publish to NPM (Update)
+        if: steps.npm_check.outputs.exists == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "📈 Publishing package update..."
           npm publish --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
