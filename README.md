@@ -12,20 +12,20 @@ A learning project to build a simplified React-like library from scratch, with a
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Development Phases](#development-phases)
-  - [🚀 **ALPHA RELEASE TRACK** (Phases 1-11)](#🚀-alpha-release-track-phases-1-11)
+  - [🚀 **ALPHA RELEASE TRACK** (Phases 1-11)](#-alpha-release-track-phases-1-11)
     - [Phase 1: Element Creation & Basic Rendering ✅](#phase-1-element-creation--basic-rendering-)
     - [Phase 2: Functional Components ✅](#phase-2-functional-components-)
     - [Phase 3: Virtual DOM & Basic Reconciliation ✅](#phase-3-virtual-dom--basic-reconciliation-)
     - [Phase 4: Prop Diffing & Efficient Children Reconciliation ✅](#phase-4-prop-diffing--efficient-children-reconciliation-)
-    - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook)
-    - [Phase 6: Event Handling ✅](#phase-6-event-handling)
+    - [Phase 5: State with useState Hook ✅](#phase-5-state-with-usestate-hook-)
+    - [Phase 6: Event Handling ✅](#phase-6-event-handling-)
     - [Phase 7: Effects with useEffect ✅](#phase-7-effects-with-useeffect-)
     - [Phase 8: Context API ✅](#phase-8-context-api-)
-    - [Phase 9: Portals and Fragments ✅](#phase-9-portals-and-fragments)
-    - [Phase 10: JSX Support ✅](#phase-10-jsx-support)
-    - [Phase 11: Essential Hooks (useRef & useReducer) ✅](#phase-11-essential-hooks-useref--usereducer)
-    - [🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality](#🎉-alpha-release-v010-complete-core-react-like-functionality)
-  - [🚀 **STABLE RELEASE TRACK** (Phases 12-20)](#🚀-stable-release-track-phases-12-20)
+    - [Phase 9: Portals and Fragments ✅](#phase-9-portals-and-fragments-)
+    - [Phase 10: JSX Support ✅](#phase-10-jsx-support-)
+    - [Phase 11: Essential Hooks (useRef & useReducer) ✅](#phase-11-essential-hooks-useref--usereducer-)
+    - [🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality](#-alpha-release-v010---complete-core-react-like-functionality)
+  - [🚀 **STABLE RELEASE TRACK** (Phases 12-20)](#-stable-release-track-phases-12-20)
     - [Phase 12: Performance Optimization Suite](#phase-12-performance-optimization-suite)
     - [Phase 13: Error Boundaries & Resilience](#phase-13-error-boundaries--resilience)
     - [Phase 14: Async Features & Suspense](#phase-14-async-features--suspense)
@@ -35,7 +35,7 @@ A learning project to build a simplified React-like library from scratch, with a
     - [Phase 18: Advanced Component Patterns](#phase-18-advanced-component-patterns)
     - [Phase 19: Testing & Quality Assurance](#phase-19-testing--quality-assurance)
     - [Phase 20: Production Optimizations](#phase-20-production-optimizations)
-    - [🎯 **STABLE RELEASE v1.0.0** - Production-Ready React Alternative](#🎯-stable-release-v100-production-ready-react-alternative)
+    - [🎯 **STABLE RELEASE v1.0.0** - Production-Ready React Alternative](#-stable-release-v100---production-ready-react-alternative)
 - [API Reference](#api-reference)
 - [Testing](#testing)
 - [Code Quality](#code-quality)
@@ -193,7 +193,7 @@ With Phase 10 complete, you can now use JSX syntax! Configure your build tool (T
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "./src/MiniReact"
+    "jsxImportSource": "@marcelolsen/mini-react"
   }
 }
 ```
@@ -201,7 +201,7 @@ With Phase 10 complete, you can now use JSX syntax! Configure your build tool (T
 **JSX Examples:**
 
 ```tsx
-import { render, useState, Fragment } from "./src/MiniReact";
+import { render, useState, Fragment } from "@marcelolsen/mini-react";
 
 // JSX syntax instead of createElement!
 const Greeting = ({ name }: { name: string }) => {
@@ -239,7 +239,12 @@ render(<App />, document.getElementById("root")!);
 #### Portal Usage
 
 ```typescript
-import { createElement, render, createPortal, useState } from "./src/MiniReact";
+import {
+  createElement,
+  render,
+  createPortal,
+  useState,
+} from "@marcelolsen/mini-react";
 
 // Create a portal target in your HTML
 // <div id="modal-root"></div>
@@ -317,7 +322,7 @@ const App = () => {
 #### Fragment Usage
 
 ```typescript
-import { createElement, Fragment } from "./src/MiniReact";
+import { createElement, Fragment } from "@marcelolsen/mini-react";
 
 // Multiple children without wrapper element
 const ItemList = ({ items }: { items: string[] }) => {
@@ -567,7 +572,7 @@ mini-react/
 
 ### 🎉 **ALPHA RELEASE v0.1.0** - Complete Core React-like Functionality
 
-**Status**: ✅ **READY FOR PUBLICATION**
+**Status**: ✅ **NPM PACKAGE PUBLISHED**
 
 **Alpha Release Features:**
 
@@ -579,8 +584,6 @@ mini-react/
 - ✅ 261 tests with full coverage
 - ✅ Developer-friendly API matching React patterns
 - ✅ npm package ready for publication
-
-**Coming Soon**: Package will be available on npm registry for easy installation and use in projects.
 
 ---
 
