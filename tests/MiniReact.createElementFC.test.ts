@@ -15,10 +15,16 @@ describe("MiniReact.createElement with Functional Components", () => {
 		const props = { id: "component-id", "data-value": 123 };
 		const element = createElement(MyComponent, props);
 
+		// Cast to access specific props
+		const typedProps = element.props as typeof element.props & {
+			id: string;
+			"data-value": number;
+		};
+
 		expect(typeof element.type).toBe("function");
 		expect(element.type).toBe(MyComponent);
-		expect(element.props.id).toBe("component-id");
-		expect(element.props["data-value"]).toBe(123);
+		expect(typedProps.id).toBe("component-id");
+		expect(typedProps["data-value"]).toBe(123);
 		expect(element.props.children).toEqual([]); // No children passed directly here
 	});
 
@@ -31,8 +37,13 @@ describe("MiniReact.createElement with Functional Components", () => {
 			childElement,
 		);
 
+		// Cast to access id prop
+		const typedProps = element.props as typeof element.props & {
+			id: string;
+		};
+
 		expect(typeof element.type).toBe("function");
-		expect(element.props.id).toBe("parent");
+		expect(typedProps.id).toBe("parent");
 		// createElement should wrap primitives for children array
 		expect(element.props.children.length).toBe(2);
 		const firstChild = element.props.children[0] as InternalTextElement;
@@ -107,14 +118,25 @@ describe("MiniReact.createElement with Functional Components", () => {
 
 		const element = createElement(MyComponent, complexProps);
 
+		// Cast to access complex props
+		const typedProps = element.props as typeof element.props & {
+			id: string;
+			nested: typeof complexProps.nested;
+			callback: typeof complexProps.callback;
+			nullValue: null;
+			undefinedValue: undefined;
+			booleanValue: boolean;
+			numberValue: number;
+		};
+
 		expect(typeof element.type).toBe("function");
-		expect(element.props.id).toBe("complex-id");
-		expect(element.props.nested).toEqual(complexProps.nested);
-		expect(element.props.callback).toBe(complexProps.callback);
-		expect(element.props.nullValue).toBe(null);
-		expect(element.props.undefinedValue).toBe(undefined);
-		expect(element.props.booleanValue).toBe(true);
-		expect(element.props.numberValue).toBe(42);
+		expect(typedProps.id).toBe("complex-id");
+		expect(typedProps.nested).toEqual(complexProps.nested);
+		expect(typedProps.callback).toBe(complexProps.callback);
+		expect(typedProps.nullValue).toBe(null);
+		expect(typedProps.undefinedValue).toBe(undefined);
+		expect(typedProps.booleanValue).toBe(true);
+		expect(typedProps.numberValue).toBe(42);
 		expect(element.props.children).toEqual([]);
 	});
 
@@ -130,12 +152,22 @@ describe("MiniReact.createElement with Functional Components", () => {
 
 		const element = createElement(MyComponent, specialProps);
 
-		expect(element.props["data-testid"]).toBe("special-test");
-		expect(element.props["aria-label"]).toBe("Special label");
-		expect(element.props["custom:prop"]).toBe("custom-value");
-		expect(element.props["prop-with-dashes"]).toBe("dash-value");
-		expect(element.props.prop_with_underscores).toBe("underscore-value");
-		expect(element.props["prop.with.dots"]).toBe("dot-value");
+		// Cast to access special props
+		const typedProps = element.props as typeof element.props & {
+			"data-testid": string;
+			"aria-label": string;
+			"custom:prop": string;
+			"prop-with-dashes": string;
+			prop_with_underscores: string;
+			"prop.with.dots": string;
+		};
+
+		expect(typedProps["data-testid"]).toBe("special-test");
+		expect(typedProps["aria-label"]).toBe("Special label");
+		expect(typedProps["custom:prop"]).toBe("custom-value");
+		expect(typedProps["prop-with-dashes"]).toBe("dash-value");
+		expect(typedProps.prop_with_underscores).toBe("underscore-value");
+		expect(typedProps["prop.with.dots"]).toBe("dot-value");
 	});
 
 	test("should handle functional component with mixed children types", () => {
@@ -230,10 +262,16 @@ describe("MiniReact.createElement with Functional Components", () => {
 		expect(element.type).toBe(MyComponent);
 
 		// Custom props should be preserved
-		expect(element.props.type).toBe("custom-type");
-		expect(element.props.props).toBe("custom-props");
-		expect(element.props.customToString).toBe("custom-toString");
-		expect(element.props.customValueOf).toBe("custom-valueOf");
+		const typedProps = element.props as typeof element.props & {
+			type: string;
+			props: string;
+			customToString: string;
+			customValueOf: string;
+		};
+		expect(typedProps.type).toBe("custom-type");
+		expect(typedProps.props).toBe("custom-props");
+		expect(typedProps.customToString).toBe("custom-toString");
+		expect(typedProps.customValueOf).toBe("custom-valueOf");
 
 		// But actual children should override the "children" prop
 		expect(element.props.children.length).toBe(1);
