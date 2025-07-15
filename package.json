@@ -22,11 +22,7 @@
 			"require": "./dist/src/jsx-dev-runtime.js"
 		}
 	},
-	"files": [
-		"dist/**/*",
-		"README.md",
-		"LICENSE"
-	],
+	"files": ["dist/**/*", "README.md", "LICENSE"],
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@changesets/cli": "^2.29.5",
@@ -52,12 +48,7 @@
 		"typescript": "^5.0.0"
 	},
 	"type": "module",
-	"keywords": [
-		"react",
-		"jsx",
-		"virtual-dom",
-		"ui-library"
-	],
+	"keywords": ["react", "jsx", "virtual-dom", "ui-library"],
 	"author": "Marcel Olsen",
 	"license": "MIT",
 	"repository": {
