@@ -9,6 +9,7 @@ import {
 	type AnyMiniReactElement,
 	type ElementType,
 	type JSXElementType,
+	PORTAL,
 	TEXT_ELEMENT,
 	type VDOMInstance,
 } from "./types";
@@ -139,7 +140,7 @@ export function findRootContainer(instance: VDOMInstance): HTMLElement | null {
 			current.element &&
 			typeof current.element === "object" &&
 			"type" in current.element &&
-			current.element.type === "PORTAL" // Note: This should be imported from portals
+			current.element.type === PORTAL
 		) {
 			// Found a portal parent - now find which root tree contains this portal
 			for (const [container, rootInstance] of rootInstances) {
