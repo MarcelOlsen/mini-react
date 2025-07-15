@@ -138,7 +138,6 @@ import {
 // Initialize cross-module dependencies
 setScheduleEffect(scheduleEffect);
 setContextHooks(pushContextValues, popContextValues);
-setReconcilerHookContext(setHookContext);
 // Connect context render instance to hooks render instance
 setReconcilerHookContext((instance: VDOMInstance | null) => {
 	setHookContext(instance);
