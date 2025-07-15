@@ -1,6 +1,6 @@
 {
-	"name": "mini-react",
-	"version": "0.0.0",
+	"name": "@marcelolsen/mini-react",
+	"version": "0.1.0",
 	"description": "A minimal React implementation with JSX support",
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
@@ -49,5 +49,13 @@
 	"type": "module",
 	"keywords": ["react", "jsx", "virtual-dom", "ui-library"],
 	"author": "Marcel Olsen",
-	"license": "MIT"
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/MarcelOlsen/mini-react.git"
+	},
+	"homepage": "https://github.com/MarcelOlsen/mini-react#readme",
+	"bugs": {
+		"url": "https://github.com/MarcelOlsen/mini-react/issues"
+	}
 }
