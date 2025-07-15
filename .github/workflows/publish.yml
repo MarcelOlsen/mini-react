@@ -42,17 +42,18 @@ jobs:
         if: success()
         run: echo "✅ All quality checks passed"
 
-  publish:
-    name: 📦 Publish to NPM
+  release:
+    name: 🚀 Release with Changesets
     needs: test
     runs-on: ubuntu-latest
-    # Only run on pushes to master, and skip if commit message contains [skip ci]
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]')
+    # Only run on pushes to master
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🟢 Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -65,81 +66,14 @@ jobs:
       - name: 🏗️ Build package
         run: bun run build
 
-      - name: 📋 Get package info
-        id: package_info
-        run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Package: $PACKAGE_NAME@$CURRENT_VERSION"
-
-      - name: 🔍 Check if package exists on NPM
-        id: npm_check
-        run: |
-          PACKAGE_NAME="${{ steps.package_info.outputs.name }}"
-          CURRENT_VERSION="${{ steps.package_info.outputs.version }}"
-
-          if npm view $PACKAGE_NAME@$CURRENT_VERSION version 2>/dev/null; then
-            echo "published=true" >> $GITHUB_OUTPUT
-            echo "🔄 Version $CURRENT_VERSION already published to NPM"
-          else
-            echo "published=false" >> $GITHUB_OUTPUT
-            echo "🆕 Version $CURRENT_VERSION not yet published to NPM"
-          fi
-
-          if npm view $PACKAGE_NAME version 2>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "📦 Package exists on NPM"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "🆕 Package does not exist on NPM - will be first publish"
-          fi
-
-      - name: 📦 Publish to NPM (First Time)
-        if: steps.npm_check.outputs.exists == 'false' && steps.npm_check.outputs.published == 'false'
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "🆕 Publishing package for the first time..."
-          npm publish --access public
-          echo "✅ Successfully published to NPM!"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: 📦 Publish to NPM (Update)
-        if: steps.npm_check.outputs.exists == 'true' && steps.npm_check.outputs.published == 'false'
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "📈 Publishing package update..."
-          npm publish --access public
-          echo "✅ Successfully published to NPM!"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: 📝 Create GitHub Release and Tag
-        if: steps.npm_check.outputs.published == 'false'
-        uses: actions/create-release@v1
+      - name: 🔄 Create Release Pull Request or Publish to NPM
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: bunx changeset publish
+          version: bunx changeset version
+          commit: "chore: release package"
+          title: "chore: release package"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.package_info.outputs.version }}
-          release_name: Release v${{ steps.package_info.outputs.version }}
-          body: |
-            ## 🎉 What's Changed
-
-            This release was automatically generated from the latest changes in master.
-
-            ### 📦 Installation
-            ```bash
-            npm install ${{ steps.package_info.outputs.name }}@${{ steps.package_info.outputs.version }}
-            ```
-
-            ### 🔗 NPM Package
-            https://www.npmjs.com/package/${{ steps.package_info.outputs.name }}/v/${{ steps.package_info.outputs.version }}
-          draft: false
-          prerelease: false
-
-      - name: ⏭️ Skip publishing
-        if: steps.npm_check.outputs.published == 'true'
-        run: |
-          echo "⏭️ Version ${{ steps.package_info.outputs.version }} already published - skipping"
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
