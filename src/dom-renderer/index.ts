@@ -1,4 +1,4 @@
-import { type JSXElementType, TEXT_ELEMENT } from "./types";
+import { type JSXElementType, TEXT_ELEMENT } from "../core/types";
 
 /* ******************** */
 /* DOM Renderer Utility */

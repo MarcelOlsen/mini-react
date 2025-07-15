@@ -1,8 +1,8 @@
 /* **************** */
-/* Type Definitions */
+/* Core Type Definitions */
 /* **************** */
 
-import type { SyntheticEvent } from "./eventSystem";
+import type { SyntheticEvent } from "../events/types";
 
 export type AnyMiniReactElement =
 	| MiniReactElement
@@ -91,116 +91,6 @@ export const TEXT_ELEMENT = "TEXT_ELEMENT";
 export const FRAGMENT = Symbol("react.fragment");
 export const PORTAL = Symbol("react.portal");
 
-// ********** //
-// Hook Types //
-// ********** //
-
-export interface StateHook<T = unknown> {
-	type: "state";
-	state: T;
-	setState: (newState: T | ((prevState: T) => T)) => void;
-}
-
-export interface EffectHook {
-	type: "effect";
-	callback: EffectCallback;
-	cleanup?: () => void;
-	dependencies?: DependencyList;
-	hasRun: boolean;
-}
-
-export interface ContextHook<T = unknown> {
-	type: "context";
-	context: MiniReactContext<T>;
-	value: T;
-}
-
-export interface ReducerHook<State = unknown, Action = unknown> {
-	type: "reducer";
-	state: State;
-	reducer: (state: State, action: Action) => State;
-	dispatch: (action: Action) => void;
-}
-
-export interface RefHook<T = unknown> {
-	type: "ref";
-	current: T;
-}
-
-export interface MemoHook<T = unknown> {
-	type: "memo";
-	value: T;
-	dependencies?: DependencyList;
-	hasComputed: boolean;
-}
-
-export interface CallbackHook<
-	T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown,
-> {
-	type: "callback";
-	callback: T;
-	dependencies?: DependencyList;
-}
-/**
- * Union type for hooks stored in component instances.
- * Note: The generic parameter T only applies to StateHook and ContextHook, EffectHook ignores it.
- */
-export type StateOrEffectHook<T = unknown> =
-	| StateHook<T>
-	| EffectHook
-	| ContextHook<T>
-	| ReducerHook<T, unknown>
-	| RefHook<T>
-	| MemoHook<T>
-	| CallbackHook<(...args: unknown[]) => unknown>;
-
-export type UseStateHook<T> = [
-	T,
-	(newState: T | ((prevState: T) => T)) => void,
-];
-
-// Effect types
-export type EffectCallback = (() => void) | (() => () => void);
-export type DependencyList = readonly unknown[];
-
-export type UseEffectHook = (
-	callback: EffectCallback,
-	dependencies?: DependencyList,
-) => void;
-
-// Reducer types
-export type Reducer<State, Action> = (state: State, action: Action) => State;
-export type ReducerStateWithoutAction<R> = R extends Reducer<infer S, unknown>
-	? S
-	: never;
-export type ReducerActionWithoutState<R> = R extends Reducer<unknown, infer A>
-	? A
-	: never;
-
-export type UseReducerHook = {
-	<R extends Reducer<unknown, unknown>, I>(
-		reducer: R,
-		initializerArg: I,
-		initializer: (arg: I) => ReducerStateWithoutAction<R>,
-	): [
-		ReducerStateWithoutAction<R>,
-		(action: ReducerActionWithoutState<R>) => void,
-	];
-	<R extends Reducer<unknown, unknown>>(
-		reducer: R,
-		initialState: ReducerStateWithoutAction<R>,
-	): [
-		ReducerStateWithoutAction<R>,
-		(action: ReducerActionWithoutState<R>) => void,
-	];
-};
-
-// Ref types
-export type MutableRefObject<T> = {
-	current: T;
-};
-
-export type UseRefHook = <T>(initialValue: T) => MutableRefObject<T>;
 // ******************* //
 // VDOM Instance Types //
 // ******************* //
@@ -216,23 +106,6 @@ export interface VDOMInstance {
 	rootContainer?: HTMLElement; // Track root container for root-level instances
 }
 
-// ***************** //
-// Context API Types //
-// ***************** //
-
-export interface MiniReactContext<T = unknown> {
-	_currentValue: T;
-	_defaultValue: T;
-	_contextId: symbol;
-	Provider: FunctionalComponent<{ value: T; children?: AnyMiniReactElement[] }>;
-}
-
-export type UseContextHook = <T>(context: MiniReactContext<T>) => T;
-
-export interface PortalElement {
-	type: typeof PORTAL;
-	props: {
-		children: AnyMiniReactElement[];
-		targetContainer: HTMLElement;
-	};
-}
+// Import hook types from hooks module
+import type { StateOrEffectHook } from "../hooks/types";
+import type { PortalElement } from "../portals/types";

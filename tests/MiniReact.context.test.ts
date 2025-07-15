@@ -6,7 +6,7 @@ import {
 	useContext,
 	useState,
 } from "../src/MiniReact";
-import type { FunctionalComponent } from "../src/types";
+import type { FunctionalComponent } from "../src/core/types";
 
 describe("MiniReact.Context API", () => {
 	let container: HTMLElement;
