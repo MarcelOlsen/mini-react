@@ -11,6 +11,7 @@ import {
 } from "./reconciler";
 import {
 	type AnyMiniReactElement,
+	type CallbackHook,
 	type DependencyList,
 	type EffectCallback,
 	type EffectHook,
@@ -18,6 +19,7 @@ import {
 	FRAGMENT,
 	type FunctionalComponent,
 	type JSXElementType,
+	type MemoHook,
 	type MiniReactContext,
 	type MutableRefObject,
 	PORTAL,
@@ -129,6 +131,9 @@ export function render(
 	element: AnyMiniReactElement | null | undefined,
 	containerNode: HTMLElement,
 ): void {
+	// Start performance tracking
+	trackRenderStart();
+
 	// Initialize event system with the container
 	eventSystem.initialize(containerNode);
 
@@ -160,6 +165,9 @@ export function render(
 	if (effectQueue.length > 0) {
 		queueMicrotask(flushEffects);
 	}
+
+	// End performance tracking
+	trackRenderEnd();
 }
 
 /**
@@ -450,6 +458,204 @@ export function useRef<T>(initialValue: T): MutableRefObject<T> {
 }
 
 /**
+ * useMemo hook implementation
+ * @param factory Function that returns the memoized value
+ * @param dependencies Optional dependency array
+ * @returns The memoized value
+ */
+export function useMemo<T>(factory: () => T, dependencies?: DependencyList): T {
+	if (!currentRenderInstance) {
+		throw new Error("useMemo must be called inside a functional component");
+	}
+
+	// Capture the current instance at hook creation time
+	const hookInstance = currentRenderInstance;
+
+	// Ensure hooks array exists
+	if (!hookInstance.hooks) {
+		hookInstance.hooks = [];
+	}
+
+	const hooks = hookInstance.hooks;
+	const currentHookIndex = hookInstance.hookCursor ?? 0;
+	hookInstance.hookCursor = currentHookIndex + 1;
+
+	// Initialize hook if it doesn't exist
+	if (hooks.length <= currentHookIndex) {
+		const memoHook: MemoHook<T> = {
+			type: "memo",
+			value: factory(),
+			dependencies,
+			hasComputed: true,
+		};
+
+		hooks.push(memoHook as StateOrEffectHook<unknown>);
+		return memoHook.value;
+	}
+
+	const hook = hooks[currentHookIndex] as MemoHook<T>;
+	const prevDependencies = hook.dependencies;
+
+	// Check if dependencies have changed
+	const dependenciesChanged =
+		dependencies === undefined ||
+		prevDependencies === undefined ||
+		dependencies.length !== prevDependencies.length ||
+		dependencies.some((dep, index) => !Object.is(dep, prevDependencies[index]));
+
+	// Recompute value if dependencies changed or it's the first computation
+	if (!hook.hasComputed || dependenciesChanged) {
+		hook.value = factory();
+		hook.dependencies = dependencies;
+		hook.hasComputed = true;
+	}
+
+	return hook.value;
+}
+
+/**
+ * useCallback hook implementation
+ * @param callback The callback function to memoize
+ * @param dependencies Optional dependency array
+ * @returns The memoized callback function
+ */
+export function useCallback<T extends (...args: unknown[]) => unknown>(
+	callback: T,
+	dependencies?: DependencyList,
+): T {
+	if (!currentRenderInstance) {
+		throw new Error("useCallback must be called inside a functional component");
+	}
+
+	// Capture the current instance at hook creation time
+	const hookInstance = currentRenderInstance;
+
+	// Ensure hooks array exists
+	if (!hookInstance.hooks) {
+		hookInstance.hooks = [];
+	}
+
+	const hooks = hookInstance.hooks;
+	const currentHookIndex = hookInstance.hookCursor ?? 0;
+	hookInstance.hookCursor = currentHookIndex + 1;
+
+	// Initialize hook if it doesn't exist
+	if (hooks.length <= currentHookIndex) {
+		const callbackHook: CallbackHook<T> = {
+			type: "callback",
+			callback,
+			dependencies,
+		};
+
+		hooks.push(callbackHook as StateOrEffectHook<unknown>);
+		return callbackHook.callback;
+	}
+
+	const hook = hooks[currentHookIndex] as CallbackHook<T>;
+	const prevDependencies = hook.dependencies;
+
+	// Check if dependencies have changed
+	const dependenciesChanged =
+		dependencies === undefined ||
+		prevDependencies === undefined ||
+		dependencies.length !== prevDependencies.length ||
+		dependencies.some((dep, index) => !Object.is(dep, prevDependencies[index]));
+
+	// Update callback if dependencies changed
+	if (dependenciesChanged) {
+		hook.callback = callback;
+		hook.dependencies = dependencies;
+	}
+
+	return hook.callback;
+}
+
+// Global cache for memoized components
+const memoizedComponentCache = new WeakMap<
+	FunctionalComponent<unknown>,
+	{
+		lastProps: unknown;
+		lastResult: AnyMiniReactElement | null;
+		compareFunction?: (prevProps: unknown, nextProps: unknown) => boolean;
+	}
+>();
+
+/**
+ * memo function - Higher-order component that memoizes functional components
+ * @param Component The functional component to memoize
+ * @param areEqual Optional custom comparison function
+ * @returns A memoized version of the component
+ */
+export function memo<P extends Record<string, unknown>>(
+	Component: FunctionalComponent<P>,
+	areEqual?: (prevProps: P, nextProps: P) => boolean,
+): FunctionalComponent<P> {
+	// Default shallow comparison function
+	const defaultAreEqual = (prev: P, next: P): boolean => {
+		if (prev === next) return true;
+		if (!prev || !next) return false;
+
+		// Filter out children and key from comparison as they are handled separately
+		const prevKeys = Object.keys(prev).filter(
+			(key) => key !== "children" && key !== "key",
+		);
+		const nextKeys = Object.keys(next).filter(
+			(key) => key !== "children" && key !== "key",
+		);
+
+		if (prevKeys.length !== nextKeys.length) {
+			return false;
+		}
+
+		return prevKeys.every((key) => Object.is(prev[key], next[key]));
+	};
+
+	// The memoized component function
+	const MemoizedComponent: FunctionalComponent<P> = (props: P) => {
+		// Get cached data for this specific memoized component
+		let cacheData = memoizedComponentCache.get(
+			MemoizedComponent as FunctionalComponent<unknown>,
+		);
+
+		if (!cacheData) {
+			// First render - initialize cache
+			cacheData = {
+				lastProps: props as unknown,
+				lastResult: Component(props),
+				compareFunction: areEqual
+					? (prev: unknown, next: unknown) => areEqual(prev as P, next as P)
+					: (prev: unknown, next: unknown) =>
+							defaultAreEqual(prev as P, next as P),
+			};
+			memoizedComponentCache.set(
+				MemoizedComponent as FunctionalComponent<unknown>,
+				cacheData,
+			);
+			return cacheData.lastResult;
+		}
+
+		const comparison = cacheData.compareFunction ?? (() => false);
+
+		// Check if props have changed
+		if (!comparison(cacheData.lastProps, props as unknown)) {
+			// Props changed, re-render
+			cacheData.lastProps = props as unknown;
+			cacheData.lastResult = Component(props);
+		}
+
+		return cacheData.lastResult;
+	};
+
+	// Add a display name for debugging
+	Object.defineProperty(MemoizedComponent, "name", {
+		value: `Memo(${Component.name || "Component"})`,
+		configurable: true,
+	});
+
+	return MemoizedComponent;
+}
+
+/**
  * createContext function - Creates a new context object with default value
  * @param defaultValue The default value for the context
  * @returns A context object with Provider component
@@ -684,12 +890,78 @@ export function createPortal(
 	};
 }
 
+/* ***************** */
+/* Performance API   */
+/* ***************** */
+
+interface PerformanceMetrics {
+	renderCount: number;
+	totalRenderTime: number;
+	averageRenderTime: number;
+}
+
+let isProfilingEnabled = false;
+let renderCount = 0;
+let totalRenderTime = 0;
+let renderStartTime = 0;
+
+/**
+ * Starts performance profiling
+ */
+export function startProfiling(): void {
+	isProfilingEnabled = true;
+	renderCount = 0;
+	totalRenderTime = 0;
+	renderStartTime = 0;
+}
+
+/**
+ * Stops performance profiling and returns metrics
+ */
+export function stopProfiling(): PerformanceMetrics {
+	isProfilingEnabled = false;
+	return getPerformanceMetrics();
+}
+
+/**
+ * Gets current performance metrics
+ */
+export function getPerformanceMetrics(): PerformanceMetrics {
+	return {
+		renderCount,
+		totalRenderTime,
+		averageRenderTime: renderCount > 0 ? totalRenderTime / renderCount : 0,
+	};
+}
+
+/**
+ * Internal function to track render start
+ */
+function trackRenderStart(): void {
+	if (isProfilingEnabled) {
+		renderStartTime = performance.now();
+	}
+}
+
+/**
+ * Internal function to track render end
+ */
+function trackRenderEnd(): void {
+	if (isProfilingEnabled && renderStartTime > 0) {
+		const renderTime = performance.now() - renderStartTime;
+		renderCount++;
+		totalRenderTime += renderTime;
+		renderStartTime = 0;
+	}
+}
+
 /* ******* */
 /* Exports */
 /* ******* */
 
 // Export types for external use
 export type { FunctionalComponent } from "./types";
+export type { PerformanceMetrics };
 
 /* ***************** */
 /* JSX Runtime API   */
