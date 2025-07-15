@@ -6,7 +6,7 @@ import {
 	type InternalTextElement,
 	type MiniReactElement,
 	TEXT_ELEMENT,
-} from "../src/types";
+} from "../src/core/types";
 
 describe("MiniReact.reconciler", () => {
 	let container: HTMLElement;

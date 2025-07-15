@@ -2,8 +2,8 @@
 /* Event System */
 /* ************ */
 
-import type { VDOMInstance } from "./types";
-import { PORTAL } from "./types";
+import type { VDOMInstance } from "../core/types";
+import { PORTAL } from "../core/types";
 
 /**
  * Mapping of MiniReact event names to their corresponding native DOM event names.

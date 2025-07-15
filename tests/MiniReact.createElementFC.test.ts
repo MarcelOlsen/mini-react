@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createElement } from "../src/MiniReact";
-import type { InternalTextElement, MiniReactElement } from "../src/types";
-import { TEXT_ELEMENT } from "../src/types";
+import type { InternalTextElement, MiniReactElement } from "../src/core/types";
+import { TEXT_ELEMENT } from "../src/core/types";
 
 describe("MiniReact.createElement with Functional Components", () => {
 	const MyComponent = (

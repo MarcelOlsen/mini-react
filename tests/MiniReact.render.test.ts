@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { createElement, render } from "../src/MiniReact";
-import type { MiniReactElement } from "../src/types";
+import type { MiniReactElement } from "../src/core/types";
 
 describe("MiniReact.render", () => {
 	let container: HTMLElement;

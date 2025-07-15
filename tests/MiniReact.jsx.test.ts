@@ -8,7 +8,7 @@ import {
 	render,
 	useState,
 } from "../src/MiniReact";
-import type { FunctionalComponent, MiniReactElement } from "../src/types";
+import type { FunctionalComponent, MiniReactElement } from "../src/core/types";
 
 let window: Window;
 let document: Document;
