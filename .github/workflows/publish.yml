@@ -96,22 +96,6 @@ jobs:
             echo "🆕 Package does not exist on NPM - will be first publish"
           fi
 
-      - name: 🏷️ Create Git tag
-        if: steps.npm_check.outputs.published == 'false'
-        run: |
-          VERSION="${{ steps.package_info.outputs.version }}"
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          # Only create tag if it doesn't exist
-          if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            git tag "v$VERSION"
-            git push origin "v$VERSION"
-            echo "🏷️ Created and pushed tag v$VERSION"
-          else
-            echo "🏷️ Tag v$VERSION already exists"
-          fi
-
       - name: 📦 Publish to NPM (First Time)
         if: steps.npm_check.outputs.exists == 'false' && steps.npm_check.outputs.published == 'false'
         run: |
@@ -132,7 +116,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: 📝 Create GitHub Release
+      - name: 📝 Create GitHub Release and Tag
         if: steps.npm_check.outputs.published == 'false'
         uses: actions/create-release@v1
         env:

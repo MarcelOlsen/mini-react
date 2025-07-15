@@ -1,62 +1,53 @@
 {
-  "name": "mini-react",
-  "version": "0.1.0",
-  "description": "A minimal React implementation with JSX support",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
-    },
-    "./jsx-runtime": {
-      "types": "./dist/src/jsx-runtime.d.ts",
-      "import": "./dist/src/jsx-runtime.js",
-      "require": "./dist/src/jsx-runtime.js"
-    },
-    "./jsx-dev-runtime": {
-      "types": "./dist/src/jsx-dev-runtime.d.ts",
-      "import": "./dist/src/jsx-dev-runtime.js",
-      "require": "./dist/src/jsx-dev-runtime.js"
-    }
-  },
-  "files": [
-    "dist/**/*",
-    "README.md",
-    "LICENSE"
-  ],
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@happy-dom/global-registrator": "^17.5.6",
-    "@types/bun": "latest",
-    "typescript": "^5.0.0"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
-    "prepare": "npm run build",
-    "test": "bun test",
-    "lint": "biome lint .",
-    "format": "biome format .",
-    "check": "biome check .",
-    "lint:write": "biome lint --write .",
-    "format:write": "biome format --write .",
-    "check:write": "biome check --write .",
-    "prepublishOnly": "npm run test && npm run check && npm run build"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "type": "module",
-  "keywords": [
-    "react",
-    "jsx",
-    "virtual-dom",
-    "ui-library"
-  ],
-  "author": "Marcel Olsen",
-  "license": "MIT"
+	"name": "mini-react",
+	"version": "0.0.0",
+	"description": "A minimal React implementation with JSX support",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.js"
+		},
+		"./jsx-runtime": {
+			"types": "./dist/src/jsx-runtime.d.ts",
+			"import": "./dist/src/jsx-runtime.js",
+			"require": "./dist/src/jsx-runtime.js"
+		},
+		"./jsx-dev-runtime": {
+			"types": "./dist/src/jsx-dev-runtime.d.ts",
+			"import": "./dist/src/jsx-dev-runtime.js",
+			"require": "./dist/src/jsx-dev-runtime.js"
+		}
+	},
+	"files": ["dist/**/*", "README.md", "LICENSE"],
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@happy-dom/global-registrator": "^17.5.6",
+		"@types/bun": "latest",
+		"typescript": "^5.0.0"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"clean": "rm -rf dist",
+		"prebuild": "npm run clean",
+		"prepare": "npm run build",
+		"test": "bun test",
+		"lint": "biome lint .",
+		"format": "biome format .",
+		"check": "biome check .",
+		"lint:write": "biome lint --write .",
+		"format:write": "biome format --write .",
+		"check:write": "biome check --write .",
+		"prepublishOnly": "npm run test && npm run check && npm run build"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"type": "module",
+	"keywords": ["react", "jsx", "virtual-dom", "ui-library"],
+	"author": "Marcel Olsen",
+	"license": "MIT"
 }
