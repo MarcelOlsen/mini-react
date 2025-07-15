@@ -96,11 +96,12 @@ Each phase includes clear specifications, working implementations, and extensive
 
 **📦 npm Package (Coming Soon):**
 
+# Installation
+
 ```bash
-# Will be available soon on npm registry
-npm install mini-react
+npm install @marcelolsen/mini-react
 # or
-bun add mini-react
+bun add @marcelolsen/mini-react
 ```
 
 **🔧 Development Installation (Current):**
@@ -123,8 +124,8 @@ bun run build
 ### Basic Usage
 
 ```typescript
-import { createElement, render } from "./src/MiniReact";
-import type { FunctionalComponent } from "./src/types";
+import { createElement, render } from "@marcelolsen/mini-react";
+import type { FunctionalComponent } from "@marcelolsen/mini-react";
 
 // Simple host element
 const simpleElement = createElement("h1", { id: "title" }, "Hello MiniReact!");
