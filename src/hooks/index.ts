@@ -27,6 +27,28 @@ const effectQueue: (() => void)[] = [];
 let isFlushingEffects = false;
 
 /**
+ * Helper function to trigger re-render for a hook instance
+ * @param hookInstance The VDOM instance that contains the hook
+ */
+function triggerRerender(hookInstance: VDOMInstance): void {
+	// Find the root container for this instance and trigger re-render
+	const container = findRootContainer(hookInstance);
+	if (container) {
+		// Use the original root element for re-render instead of stale element from instance
+		const rootElement = getRootElement(container);
+		if (rootElement) {
+			render(rootElement, container);
+		} else {
+			console.warn("No root element found for container, skipping re-render");
+		}
+	} else {
+		console.warn(
+			"No root container found for hook instance, skipping re-render",
+		);
+	}
+}
+
+/**
  * Sets the current render instance for hooks
  * @param instance The current VDOM instance
  */
@@ -126,24 +148,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		// Only update if state actually changed
 		if (nextState !== hook.state) {
 			hook.state = nextState;
-
-			// Find the root container for this instance and trigger re-render
-			const container = findRootContainer(hookInstance);
-			if (container) {
-				// Use the original root element for re-render instead of stale element from instance
-				const rootElement = getRootElement(container);
-				if (rootElement) {
-					render(rootElement, container);
-				} else {
-					console.warn(
-						"No root element found for container, skipping re-render",
-					);
-				}
-			} else {
-				console.warn(
-					"No root container found for hook instance, skipping re-render",
-				);
-			}
+			triggerRerender(hookInstance);
 		}
 	};
 
@@ -297,24 +302,7 @@ export function useReducer<State, Action, Init>(
 		// Only update if state actually changed
 		if (nextState !== hook.state) {
 			hook.state = nextState;
-
-			// Find the root container for this instance and trigger re-render
-			const container = findRootContainer(hookInstance);
-			if (container) {
-				// Use the original root element for re-render instead of stale element from instance
-				const rootElement = getRootElement(container);
-				if (rootElement) {
-					render(rootElement, container);
-				} else {
-					console.warn(
-						"No root element found for container, skipping re-render",
-					);
-				}
-			} else {
-				console.warn(
-					"No root container found for hook instance, skipping re-render",
-				);
-			}
+			triggerRerender(hookInstance);
 		}
 	};
 
