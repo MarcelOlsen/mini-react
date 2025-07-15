@@ -106,6 +106,15 @@ describe("MiniReact.useMemo Hook", () => {
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		expect(calculationCount).toBe(2);
 		expect(container.textContent).toContain("Result: 7");
+
+		// Update other dependency - should recalculate again
+		if (_setB) {
+			_setB(4);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		expect(calculationCount).toBe(3);
+		expect(container.textContent).toContain("Result: 9");
 	});
 
 	test("should handle empty dependency array", async () => {
