@@ -1,6 +1,6 @@
 {
 	"name": "@marcelolsen/mini-react",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "A minimal React implementation with JSX support",
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
@@ -22,7 +22,11 @@
 			"require": "./dist/src/jsx-dev-runtime.js"
 		}
 	},
-	"files": ["dist/**/*", "README.md", "LICENSE"],
+	"files": [
+		"dist/**/*",
+		"README.md",
+		"LICENSE"
+	],
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@changesets/cli": "^2.29.5",
@@ -48,7 +52,12 @@
 		"typescript": "^5.0.0"
 	},
 	"type": "module",
-	"keywords": ["react", "jsx", "virtual-dom", "ui-library"],
+	"keywords": [
+		"react",
+		"jsx",
+		"virtual-dom",
+		"ui-library"
+	],
 	"author": "Marcel Olsen",
 	"license": "MIT",
 	"repository": {
