@@ -3,6 +3,7 @@ import { createElement } from "../src/MiniReact";
 import { reconcile } from "../src/reconciler";
 import {
 	type AnyMiniReactElement,
+	type InternalTextElement,
 	type MiniReactElement,
 	TEXT_ELEMENT,
 } from "../src/types";
@@ -80,7 +81,7 @@ describe("MiniReact.reconciler", () => {
 			const textElement = {
 				type: TEXT_ELEMENT,
 				props: { nodeValue: "Hello World", children: [] },
-			} as AnyMiniReactElement;
+			} as InternalTextElement;
 
 			const instance = reconcile(container, textElement, null);
 
