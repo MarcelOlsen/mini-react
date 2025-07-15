@@ -1,18 +1,12 @@
-name: 🚀 Publish to NPM
+name: 🚀 Release
 
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
 
-# Add permissions for the workflow
-permissions:
-  contents: write
-  packages: write
-  issues: write
-  pull-requests: write
-  id-token: write
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions: {} # reset
 
 jobs:
   test:
@@ -44,18 +38,19 @@ jobs:
         run: echo "✅ All quality checks passed"
 
   release:
-    name: 🚀 Release with Changesets
+    # IMPORTANT: prevent this action from running on forks
+    if: github.repository == 'MarcelOlsen/mini-react'
+    permissions:
+      contents: write # to create release (changesets/action)
+      pull-requests: write # to create pull request (changesets/action)
+    name: 🚀 Release
     needs: test
     runs-on: ubuntu-latest
-    # Only run on pushes to master
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Use PAT for creating PRs if available, fallback to GITHUB_TOKEN
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: 🟢 Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -73,10 +68,6 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: bunx changeset publish
-          version: bunx changeset version && bun run check:write
-          commit: "chore: release package"
-          title: "chore: release package"
         env:
-          # Use PAT for creating PRs if available, fallback to GITHUB_TOKEN
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
