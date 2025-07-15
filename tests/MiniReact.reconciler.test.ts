@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { createElement } from "../src/MiniReact";
-import { reconcile } from "../src/reconciler";
 import {
 	type AnyMiniReactElement,
 	type InternalTextElement,
 	type MiniReactElement,
 	TEXT_ELEMENT,
 } from "../src/core/types";
+import { reconcile } from "../src/reconciler";
 
 describe("MiniReact.reconciler", () => {
 	let container: HTMLElement;
