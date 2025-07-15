@@ -126,6 +126,21 @@ export interface RefHook<T = unknown> {
 	type: "ref";
 	current: T;
 }
+
+export interface MemoHook<T = unknown> {
+	type: "memo";
+	value: T;
+	dependencies?: DependencyList;
+	hasComputed: boolean;
+}
+
+export interface CallbackHook<
+	T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown,
+> {
+	type: "callback";
+	callback: T;
+	dependencies?: DependencyList;
+}
 /**
  * Union type for hooks stored in component instances.
  * Note: The generic parameter T only applies to StateHook and ContextHook, EffectHook ignores it.
@@ -135,7 +150,9 @@ export type StateOrEffectHook<T = unknown> =
 	| EffectHook
 	| ContextHook<T>
 	| ReducerHook<T, unknown>
-	| RefHook<T>;
+	| RefHook<T>
+	| MemoHook<T>
+	| CallbackHook<(...args: unknown[]) => unknown>;
 
 export type UseStateHook<T> = [
 	T,
