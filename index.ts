@@ -16,5 +16,5 @@ export {
 export { jsx, jsxs, jsxDEV } from "./src/MiniReact";
 
 // Types
-export * from "./src/types";
+export * from "./src/core/types";
 export type { SyntheticEvent, MiniReactContext } from "./src/MiniReact";
