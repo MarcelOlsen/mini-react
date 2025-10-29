@@ -16,11 +16,11 @@
  */
 
 import {
+	type ElementType,
 	FRAGMENT,
+	type JSXElementType,
 	PORTAL,
 	TEXT_ELEMENT,
-	type ElementType,
-	type JSXElementType,
 } from "../core/types";
 import type { VDOMInstance } from "../core/types";
 import { eventSystem } from "../events";

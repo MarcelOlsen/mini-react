@@ -4,11 +4,11 @@
 
 import { eventSystem } from "../events";
 import {
+	type FiberRoot,
 	createFiberRoot,
 	getFiberRoot,
 	hasFiberRoot,
 	scheduleUpdateOnFiber,
-	type FiberRoot,
 } from "../fiber";
 import {
 	type AnyMiniReactElement,

@@ -12,9 +12,9 @@
 
 import { beforeEach, describe, expect, test } from "bun:test";
 import {
+	type AnyMiniReactElement,
 	FRAGMENT,
 	TEXT_ELEMENT,
-	type AnyMiniReactElement,
 } from "../../src/core/types";
 import { createFiberRoot, scheduleUpdateOnFiber } from "../../src/fiber";
 import type { Fiber } from "../../src/fiber";
