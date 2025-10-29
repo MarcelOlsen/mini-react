@@ -42,7 +42,8 @@
 		"lint:write": "biome lint --write .",
 		"format:write": "biome format --write .",
 		"check:write": "biome check --write .",
-		"prepublishOnly": "npm run test && npm run check && npm run build"
+		"prepublishOnly": "npm run test && npm run check && npm run build",
+		"typecheck": "tsc --noEmit"
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"

@@ -1,28 +1,26 @@
 {
-	"name": "mini-react-jsx-example",
+	"name": "mini-react-showcase",
 	"version": "1.0.0",
-	"description": "Example project demonstrating JSX with MiniReact",
-	"main": "src/index.js",
+	"description": "Showcase application for MiniReact library using ElysiaJS",
+	"type": "module",
 	"scripts": {
-		"dev": "webpack serve --mode development",
-		"build": "webpack --mode production",
-		"start": "webpack serve --mode development --open"
+		"dev": "bun run build && bun run --watch src/server.ts",
+		"build": "bun build src/app.tsx --outdir=public --target=browser",
+		"build:prod": "bun build src/app.tsx --outdir=public --target=browser --minify",
+		"start": "bun run build:prod && bun run src/server.ts",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome lint .",
+		"format": "biome format .",
+		"check": "biome check .",
+		"lint:write": "biome lint --write .",
+		"format:write": "biome format --write .",
+		"check:write": "biome check --write ."
 	},
 	"dependencies": {
-		"mini-react": "file:../"
+		"elysia": "^1.1.29"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.22.0",
-		"@babel/preset-react": "^7.22.0",
-		"@babel/preset-typescript": "^7.22.0",
-		"babel-loader": "^9.1.0",
-		"html-webpack-plugin": "^5.5.0",
-		"typescript": "^5.0.0",
-		"webpack": "^5.88.0",
-		"webpack-cli": "^5.1.0",
-		"webpack-dev-server": "^4.15.0"
-	},
-	"keywords": ["react", "jsx", "mini-react", "virtual-dom"],
-	"author": "Your Name",
-	"license": "MIT"
+		"@types/bun": "latest",
+		"@biomejs/biome": "^1.9.4"
+	}
 }

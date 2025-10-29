@@ -3,21 +3,19 @@
 /* ****************** */
 
 import { eventSystem } from "../events";
-import { trackRenderEnd, trackRenderStart } from "../performance";
-import { reconcile } from "../reconciler";
+import {
+	createFiberRoot,
+	getFiberRoot,
+	hasFiberRoot,
+	scheduleUpdateOnFiber,
+	type FiberRoot,
+} from "../fiber";
 import {
 	type AnyMiniReactElement,
 	type ElementType,
 	type JSXElementType,
-	PORTAL,
 	TEXT_ELEMENT,
-	type VDOMInstance,
 } from "./types";
-
-// Store root instances for each container
-const rootInstances = new Map<HTMLElement, VDOMInstance | null>();
-// Store original root elements for re-rendering
-const rootElements = new Map<HTMLElement, AnyMiniReactElement | null>();
 
 /**
  * Creates a MiniReact element (virtual DOM node)
@@ -59,7 +57,7 @@ export function createElement(
 }
 
 /**
- * Renders a MiniReact element into a container using the reconciler
+ * Renders a MiniReact element into a container using Fiber architecture
  * @param element The element to render (can be null to clear)
  * @param containerNode The container DOM node
  */
@@ -72,115 +70,53 @@ export function render(
 
 	const newElement = element || null;
 
-	// Get the old instance BEFORE potentially deleting it
-	const oldInstance = rootInstances.get(containerNode) || null;
-
-	if (newElement === null) {
-		// When unmounting, remove original element from map to prevent memory leaks
-		rootElements.delete(containerNode);
+	// Get or create FiberRoot for this container
+	let fiberRoot: FiberRoot;
+	if (hasFiberRoot(containerNode)) {
+		const existingRoot = getFiberRoot(containerNode);
+		if (!existingRoot) {
+			throw new Error(
+				"FiberRoot exists check passed but getFiberRoot returned null",
+			);
+		}
+		fiberRoot = existingRoot;
 	} else {
-		// Store the original element for re-renders
-		rootElements.set(containerNode, newElement);
+		fiberRoot = createFiberRoot(containerNode);
 	}
 
-	// Track render performance
-	trackRenderStart();
-	const newInstance = reconcile(containerNode, newElement, oldInstance);
-	trackRenderEnd();
+	// Update the root fiber's pending props with the new element
+	const rootFiber = fiberRoot.current;
+	rootFiber.pendingProps = {
+		children: newElement ? [newElement] : [],
+	};
 
+	// Trigger Fiber reconciliation and commit
+	scheduleUpdateOnFiber(rootFiber);
+
+	// Clear container if rendering null
 	if (newElement === null) {
-		// Ensure container is completely cleared when rendering null
 		containerNode.innerHTML = "";
-		// Clean up rootInstances after reconciliation
-		rootInstances.delete(containerNode);
-	} else {
-		rootInstances.set(containerNode, newInstance);
 	}
 }
 
 /**
- * Finds the root container for a given VDOM instance
- * @param instance The VDOM instance
- * @returns The root container element or null
+ * @deprecated Old VDOMInstance system - kept for backward compatibility only
+ * Use Fiber's getFiberRoot instead
  */
-export function findRootContainer(instance: VDOMInstance): HTMLElement | null {
-	// Strategy 1: Walk up the parent chain and validate rootContainer references
-	let current: VDOMInstance | undefined = instance;
-	let depth = 0;
-	while (current) {
-		if (current.rootContainer) {
-			// Verify this rootContainer is actually a real root by checking our rootInstances map
-			for (const [container, rootInstance] of rootInstances) {
-				if (container === current.rootContainer && rootInstance) {
-					return container;
-				}
-			}
-		}
-		current = current.parent;
-		depth++;
-		if (depth > 10) {
-			console.warn(
-				"Parent chain depth exceeded 10, breaking to avoid infinite loop",
-			);
-			break;
-		}
-	}
-
-	// Strategy 2: Search through all root instances to find the one containing this instance
-	for (const [container, rootInstance] of rootInstances) {
-		if (rootInstance && isInstanceInTree(instance, rootInstance)) {
-			return container;
-		}
-	}
-
-	// Strategy 3: If not found in main trees, check if this instance is part of a portal tree
-	current = instance;
-	while (current) {
-		if (
-			current.element &&
-			typeof current.element === "object" &&
-			"type" in current.element &&
-			current.element.type === PORTAL
-		) {
-			// Found a portal parent - now find which root tree contains this portal
-			for (const [container, rootInstance] of rootInstances) {
-				if (rootInstance && isInstanceInTree(current, rootInstance)) {
-					return container;
-				}
-			}
-		}
-		current = current.parent;
-	}
-
+export function findRootContainer(): HTMLElement | null {
+	console.warn(
+		"findRootContainer is deprecated - use Fiber's getFiberRoot instead",
+	);
 	return null;
 }
 
 /**
- * Checks if a given instance is part of a VDOM tree
- * @param targetInstance The instance to find
- * @param rootInstance The root of the tree to search
- * @returns True if the instance is in the tree
+ * @deprecated Old VDOMInstance system - kept for backward compatibility only
+ * Use Fiber's getFiberRoot instead
  */
-function isInstanceInTree(
-	targetInstance: VDOMInstance,
-	rootInstance: VDOMInstance,
-): boolean {
-	if (targetInstance === rootInstance) {
-		return true;
-	}
-
-	return rootInstance.childInstances.some((child) =>
-		isInstanceInTree(targetInstance, child),
+export function getRootElement(): AnyMiniReactElement | null {
+	console.warn(
+		"getRootElement is deprecated - use Fiber's getFiberRoot instead",
 	);
-}
-
-/**
- * Gets the root element for re-rendering
- * @param container The container element
- * @returns The root element or null
- */
-export function getRootElement(
-	container: HTMLElement,
-): AnyMiniReactElement | null {
-	return rootElements.get(container) || null;
+	return null;
 }

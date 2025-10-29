@@ -1,342 +1,179 @@
-# JSX with MiniReact - Real Project Example
+# MiniReact Showcase
 
-This example demonstrates how to use JSX with the MiniReact library in a real project setup.
+A comprehensive showcase application demonstrating all features of the MiniReact library, served with ElysiaJS.
 
-## Project Structure
+## Features Demonstrated
+
+### Core Features
+- ✅ **JSX/TSX Support** - Full JSX syntax with TypeScript
+- ✅ **Component Rendering** - Functional components with props
+- ✅ **Event Handling** - Delegated event system with synthetic events
+
+### Hooks
+- ✅ **useState** - State management in functional components
+- ✅ **useEffect** - Side effects with cleanup
+- ✅ **useContext** - Context API for global state
+- ✅ **useRef** - DOM references and mutable values
+- ✅ **useCallback** - Memoized callbacks
+- ✅ **useMemo** - Memoized values
+- ✅ **memo** - Component memoization
+
+### Advanced Features
+- ✅ **Portals** - Render outside parent DOM tree
+- ✅ **Context API** - Global state management
+- ✅ **Event Bubbling** - Events bubble through React tree (even in portals)
+- ✅ **Key-based Reconciliation** - Efficient list updates
+
+## Getting Started
+
+### Install Dependencies
+
+```bash
+cd example
+bun install
+```
+
+### Development
+
+Run the development server with hot reload:
+
+```bash
+bun run dev
+```
+
+The app will be available at `http://localhost:3000`
+
+### Build
+
+Build the client bundle:
+
+```bash
+bun run build
+```
+
+### Production
+
+Run the production server:
+
+```bash
+bun start
+```
+
+## Architecture
+
+### Tech Stack
+- **Server**: ElysiaJS (fast, type-safe web framework)
+- **Client**: MiniReact (React clone with Fiber architecture)
+- **Runtime**: Bun (fast JavaScript runtime)
+- **Language**: TypeScript (fully type-safe)
+
+### Type Safety
+
+The entire application is fully type-safe:
+- All components have proper TypeScript types
+- Props are strictly typed
+- Event handlers use correct event types
+- Context values are type-safe
+- No `any` types used
+
+### Components
+
+#### Counter
+Demonstrates `useState` with a simple counter that can increment, decrement, and reset.
+
+#### Todo List
+Shows complex state management with an array of todos. Each todo can be:
+- Added with keyboard (Enter) or button
+- Toggled as completed
+- Deleted
+Demonstrates `useState` with objects and `useRef` for DOM access.
+
+#### Timer
+Uses `useEffect` to create a timer that:
+- Starts/pauses on button click
+- Cleans up interval on pause
+- Can be reset to zero
+
+#### Portal
+Demonstrates `createPortal` by rendering a notification outside the main DOM tree.
+Events still bubble through the React tree, not the DOM tree.
+
+#### Memoization
+Shows `memo` HOC that prevents unnecessary re-renders when props haven't changed.
+
+#### Callback Demo
+Demonstrates `useCallback` to memoize callbacks and prevent function recreation.
+
+#### Theme Toggle
+Uses `useContext` to provide a global theme that can be toggled between light and dark mode.
+
+## File Structure
 
 ```
 example/
 ├── src/
-│   ├── App.jsx          # Main application component
-│   ├── Counter.jsx      # Example counter component with hooks
-│   ├── TodoList.jsx     # More complex component example
-│   └── index.js         # Entry point
+│   ├── server.ts          # ElysiaJS server
+│   └── app.tsx            # Main application
 ├── public/
-│   └── index.html       # HTML template
-├── babel.config.js      # Babel configuration for JSX
-├── webpack.config.js    # Webpack bundler configuration
-├── tsconfig.json        # TypeScript configuration (optional)
-└── package.json         # Project dependencies
-
+│   └── app.js            # Built client bundle
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
 
-## Setup Steps
+## Key Implementation Details
 
-### 1. Install Dependencies
+### Type-Safe Context
 
-```bash
-npm init -y
-npm install mini-react
-npm install --save-dev @babel/core @babel/preset-react babel-loader webpack webpack-cli webpack-dev-server html-webpack-plugin
-```
-
-### 2. Configure Babel for JSX Transform
-
-Create `babel.config.js`:
-
-```js
-module.exports = {
-  presets: [
-    [
-      "@babel/preset-react",
-      {
-        // Use the new automatic JSX runtime
-        runtime: "automatic",
-        // Import JSX functions from MiniReact instead of React
-        importSource: "mini-react",
-      },
-    ],
-  ],
-};
-```
-
-### 3. Configure Webpack
-
-Create `webpack.config.js`:
-
-```js
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-
-module.exports = {
-  entry: "./src/index.js",
-  output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "bundle.js",
-  },
-  module: {
-    rules: [
-      {
-        test: /\.jsx?$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader",
-        },
-      },
-    ],
-  },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: "./public/index.html",
-    }),
-  ],
-  devServer: {
-    static: path.join(__dirname, "dist"),
-    port: 3000,
-    open: true,
-  },
-  resolve: {
-    extensions: [".js", ".jsx"],
-  },
-};
-```
-
-### 4. TypeScript Support (Optional)
-
-If using TypeScript, create `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "jsx": "react-jsx",
-    "jsxImportSource": "mini-react",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*"]
-}
-```
-
-## How JSX Works
-
-### Before JSX Transform (What you write):
-
-```jsx
-// src/App.jsx
-import { useState } from "mini-react";
-
-function App() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <div className="app">
-      <h1>Hello MiniReact!</h1>
-      <Counter count={count} onIncrement={() => setCount(count + 1)} />
-    </div>
-  );
+```typescript
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
 }
 
-export default App;
-```
-
-### After JSX Transform (What the bundler generates):
-
-```js
-// Generated by Babel
-import { jsx as _jsx, jsxs as _jsxs } from "mini-react/jsx-runtime";
-import { useState } from "mini-react";
-
-function App() {
-  const [count, setCount] = useState(0);
-
-  return _jsxs("div", {
-    className: "app",
-    children: [
-      _jsx("h1", { children: "Hello MiniReact!" }),
-      _jsx(Counter, {
-        count: count,
-        onIncrement: () => setCount(count + 1),
-      }),
-    ],
+const ThemeContext: MiniReactContext<ThemeContextType> =
+  createContext<ThemeContextType>({
+    theme: "light",
+    toggleTheme: () => {},
   });
-}
-
-export default App;
 ```
 
-## Key Features Demonstrated
+### Type-Safe Events
 
-1. **Automatic JSX Runtime**: No need to import JSX functions manually
-2. **Component Composition**: Building complex UIs from simple components
-3. **Complete Hook Ecosystem**: All MiniReact hooks with comprehensive examples
-4. **Event Handling**: onClick, onChange, etc. work as expected
-5. **Conditional Rendering**: Using JavaScript expressions in JSX
-6. **Lists and Keys**: Rendering dynamic lists with proper reconciliation
-
-### Hook Demonstrations
-
-The example project includes comprehensive demonstrations of all MiniReact hooks:
-
-#### useState & useEffect (Counter.jsx)
-
-- Basic state management with increment/decrement functionality
-- Effect cleanup and dependency arrays
-- Conditional rendering based on state
-
-#### useRef (RefDemo.jsx)
-
-- **DOM References**: Direct access to DOM elements for focus management
-- **Mutable Values**: Persistent values across re-renders without triggering updates
-- **Render Counting**: Tracking component renders without causing infinite loops
-- **Previous Value Storage**: Storing previous state values
-
-```jsx
-// Example: DOM reference and mutable values
-const inputRef = useRef(null);
-const renderCountRef = useRef(0);
-
-// Focus input directly
-const focusInput = () => inputRef.current.focus();
-
-// Track renders without causing re-renders
-useEffect(() => {
-  renderCountRef.current += 1;
-});
+```typescript
+onInput={(e: Event) => setInput((e.target as HTMLInputElement).value)}
+onKeyDown={(e: KeyboardEvent) => {
+  if (e.key === "Enter") addTodo();
+}}
 ```
 
-#### useReducer (ReducerDemo.jsx)
+### Type-Safe Refs
 
-- **Shopping Cart**: Complex state management with multiple related values
-- **Form Validation**: Coordinated state updates for forms with validation
-- **Action Dispatching**: Structured state updates using reducer patterns
+```typescript
+const inputRef = useRef<HTMLInputElement | null>(null) as
+  MutableRefObject<HTMLInputElement | null>;
 
-```jsx
-// Example: Shopping cart reducer
-const cartReducer = (state, action) => {
-  switch (action.type) {
-    case "ADD_ITEM":
-    // Complex logic for adding items
-    case "UPDATE_QUANTITY":
-    // Handle quantity updates
-    default:
-      return state;
-  }
-};
-
-const [cartState, cartDispatch] = useReducer(cartReducer, initialState);
+// Later:
+inputRef.current?.focus();
 ```
 
-#### useContext (App.jsx, ThemedButton)
+## Performance
 
-- **Theme System**: Sharing theme state across components
-- **Provider Pattern**: Wrapping components with context providers
-- **Context Consumption**: Accessing context values in nested components
+The application demonstrates MiniReact's performance features:
+- **Fiber Architecture**: Incremental rendering foundation
+- **Key-based Reconciliation**: Efficient list updates
+- **Event Delegation**: One listener per event type
+- **Memoization**: Prevent unnecessary re-renders
+- **Effect Cleanup**: Proper resource management
 
-```jsx
-// Create and provide context
-const ThemeContext = createContext("light");
+## Browser Support
 
-function App() {
-  return (
-    <ThemeContext.Provider value={theme}>
-      <ThemedButton />
-    </ThemeContext.Provider>
-  );
-}
+Modern browsers with ES2020+ support required:
+- Chrome 80+
+- Firefox 72+
+- Safari 13.1+
+- Edge 80+
 
-// Consume context
-function ThemedButton() {
-  const theme = useContext(ThemeContext);
-  return <button className={`btn-${theme}`}>Button</button>;
-}
-```
+## License
 
-### Component Examples
-
-#### TodoList.jsx
-
-- Dynamic list rendering with keys
-- Multiple state management patterns
-- Form handling and validation
-- Filtering and conditional rendering
-
-#### Modal.jsx
-
-- Portal usage for rendering outside normal DOM hierarchy
-- Conditional component rendering
-- Event handling and cleanup
-
-## Running the Example
-
-```bash
-# Development mode
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-```
-
-## Advanced Usage
-
-### Context API with JSX
-
-```jsx
-import { createContext, useContext } from "mini-react";
-
-const ThemeContext = createContext("light");
-
-function App() {
-  return (
-    <ThemeContext.Provider value="dark">
-      <ThemedButton />
-    </ThemeContext.Provider>
-  );
-}
-
-function ThemedButton() {
-  const theme = useContext(ThemeContext);
-  return <button className={`btn-${theme}`}>Themed Button</button>;
-}
-```
-
-### Portals with JSX
-
-```jsx
-import { createPortal } from "mini-react";
-
-function Modal({ children, isOpen }) {
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div className="modal-overlay">
-      <div className="modal">{children}</div>
-    </div>,
-    document.getElementById("modal-root")
-  );
-}
-```
-
-### Fragments
-
-```jsx
-import { Fragment } from "mini-react";
-
-function List() {
-  return (
-    <Fragment>
-      <li>Item 1</li>
-      <li>Item 2</li>
-      <li>Item 3</li>
-    </Fragment>
-  );
-
-  // Or using the shorthand syntax:
-  return (
-    <>
-      <li>Item 1</li>
-      <li>Item 2</li>
-      <li>Item 3</li>
-    </>
-  );
-}
-```
-
-This setup provides a complete development environment for building applications with MiniReact and JSX, just like you would with regular React!
+MIT

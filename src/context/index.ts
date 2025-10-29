@@ -3,26 +3,12 @@
 /* ***************** */
 
 import { createElement } from "../core";
-import type {
-	AnyMiniReactElement,
-	FunctionalComponent,
-	VDOMInstance,
-} from "../core/types";
+import type { AnyMiniReactElement, FunctionalComponent } from "../core/types";
+import { getCurrentRenderingFiber } from "../fiber/fiberHooks";
 import type { MiniReactContext } from "./types";
 
 // Context system - Track context providers in the render tree
 const contextStack: Map<symbol, unknown>[] = [];
-
-// Hook state management
-let currentRenderInstance: VDOMInstance | null = null;
-
-/**
- * Sets the current render instance for context hooks
- * @param instance The current VDOM instance
- */
-export function setContextRenderInstance(instance: VDOMInstance | null): void {
-	currentRenderInstance = instance;
-}
 
 /**
  * Pushes a context value onto the context stack
@@ -61,12 +47,13 @@ export function createContext<T>(defaultValue: T): MiniReactContext<T> {
 		// Update the context's current value to keep it in sync
 		context._currentValue = value;
 
-		// Store context value in the current instance so reconciler can manage context stack
-		if (currentRenderInstance) {
-			if (!currentRenderInstance.contextValues) {
-				currentRenderInstance.contextValues = new Map();
+		// Store context value in the current fiber
+		const fiber = getCurrentRenderingFiber();
+		if (fiber) {
+			if (!fiber.contextValues) {
+				fiber.contextValues = new Map();
 			}
-			currentRenderInstance.contextValues.set(contextId, value);
+			fiber.contextValues.set(contextId, value);
 		}
 
 		// Render children
@@ -98,11 +85,22 @@ export function createContext<T>(defaultValue: T): MiniReactContext<T> {
  * @returns The current context value
  */
 export function useContext<T>(context: MiniReactContext<T>): T {
-	if (!currentRenderInstance) {
+	const fiber = getCurrentRenderingFiber();
+
+	if (!fiber) {
 		throw new Error("useContext must be called inside a functional component");
 	}
 
-	// Check the global context stack for active context values
+	// Walk up the fiber tree to find the nearest Provider
+	let currentFiber = fiber.return;
+	while (currentFiber !== null) {
+		if (currentFiber.contextValues?.has(context._contextId)) {
+			return currentFiber.contextValues.get(context._contextId) as T;
+		}
+		currentFiber = currentFiber.return;
+	}
+
+	// Check the global context stack for active context values (backward compat)
 	for (let i = contextStack.length - 1; i >= 0; i--) {
 		const contextMap = contextStack[i];
 		if (contextMap.has(context._contextId)) {

@@ -3,11 +3,13 @@
 /* ********** */
 
 import type { MiniReactContext } from "../context/types";
+import type { UpdateQueue } from "../fiber/types";
 
 export interface StateHook<T = unknown> {
 	type: "state";
 	state: T;
 	setState: (newState: T | ((prevState: T) => T)) => void;
+	queue?: UpdateQueue<unknown>; // Update queue for Fiber integration
 }
 
 export interface EffectHook {
@@ -16,6 +18,7 @@ export interface EffectHook {
 	cleanup?: () => void;
 	dependencies?: DependencyList;
 	hasRun: boolean;
+	needsRun?: boolean; // Flag to indicate effect should run in commit phase
 }
 
 export interface ContextHook<T = unknown> {
@@ -29,6 +32,7 @@ export interface ReducerHook<State = unknown, Action = unknown> {
 	state: State;
 	reducer: (state: State, action: Action) => State;
 	dispatch: (action: Action) => void;
+	queue?: UpdateQueue<unknown>; // Update queue for Fiber integration
 }
 
 export interface RefHook<T = unknown> {

@@ -13,7 +13,8 @@
 			"**/bundle.js",
 			"**/*.bundle.js",
 			"**/node_modules/**",
-			"**/.git/**"
+			"**/.git/**",
+			"example/public/**"
 		]
 	},
 	"formatter": {
@@ -33,9 +34,24 @@
 			},
 			"security": {
 				"noGlobalEval": "warn"
+			},
+			"style": {
+				"noNonNullAssertion": "error"
 			}
 		}
 	},
+	"overrides": [
+		{
+			"include": ["tests/**/*.test.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noNonNullAssertion": "off"
+					}
+				}
+			}
+		}
+	],
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"

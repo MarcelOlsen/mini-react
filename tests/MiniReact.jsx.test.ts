@@ -1,5 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
-import { Window } from "happy-dom";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
 	Fragment,
 	jsx,
@@ -10,19 +9,18 @@ import {
 } from "../src/MiniReact";
 import type { FunctionalComponent, MiniReactElement } from "../src/core/types";
 
-let window: Window;
-let document: Document;
 let container: HTMLElement;
 
 beforeEach(() => {
-	window = new Window();
-	document = window.document as unknown as Document;
-	global.document = document;
-	// biome-ignore lint/suspicious/noExplicitAny: Testing environment requires type compatibility workaround
-	global.window = window as any;
-
 	container = document.createElement("div");
 	document.body.appendChild(container);
+});
+
+afterEach(() => {
+	// Clean up DOM
+	if (container?.parentNode) {
+		container.parentNode.removeChild(container);
+	}
 });
 
 describe("JSX Runtime Functions", () => {
