@@ -1,5 +1,7 @@
 import { Elysia } from "elysia";
 
+const PORT = Number(process.env.PORT) || 3000;
+
 const app = new Elysia()
 	.get("/app.js", async () => {
 		const file = Bun.file("./public/app.js");
@@ -10,207 +12,15 @@ const app = new Elysia()
 			},
 		});
 	})
-	.get("/", () => {
-		return new Response(
-			`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniReact Showcase</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    #root {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .card h2 {
-      margin-bottom: 16px;
-      color: #1a202c;
-      font-size: 24px;
-    }
-
-    .card p {
-      color: #4a5568;
-      margin-bottom: 12px;
-      line-height: 1.6;
-    }
-
-    button {
-      background: #667eea;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
-
-    button:hover {
-      background: #5a67d8;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    button.secondary {
-      background: #48bb78;
-    }
-
-    button.secondary:hover {
-      background: #38a169;
-    }
-
-    button.danger {
-      background: #f56565;
-    }
-
-    button.danger:hover {
-      background: #e53e3e;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #e2e8f0;
-      border-radius: 6px;
-      font-size: 14px;
-      margin-bottom: 12px;
-      font-family: inherit;
-    }
-
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    .counter {
-      font-size: 48px;
-      font-weight: bold;
-      color: #667eea;
-      text-align: center;
-      margin: 20px 0;
-    }
-
-    .todo-item {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      background: #f7fafc;
-      border-radius: 6px;
-      margin-bottom: 8px;
-    }
-
-    .todo-item.completed {
-      opacity: 0.6;
-      text-decoration: line-through;
-    }
-
-    .todo-item input[type="checkbox"] {
-      width: auto;
-      margin-right: 12px;
-      margin-bottom: 0;
-    }
-
-    .todo-item span {
-      flex: 1;
-    }
-
-    .portal-target {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #2d3748;
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-      max-width: 300px;
-    }
-
-    .theme-dark {
-      background: #1a202c;
-      color: #e2e8f0;
-    }
-
-    .theme-dark .card {
-      background: #2d3748;
-      color: #e2e8f0;
-    }
-
-    .theme-dark .card h2 {
-      color: #e2e8f0;
-    }
-
-    .theme-dark .card p {
-      color: #cbd5e0;
-    }
-
-    .theme-dark .todo-item {
-      background: #1a202c;
-      color: #e2e8f0;
-    }
-
-    .header {
-      text-align: center;
-      color: white;
-      padding: 40px 20px;
-    }
-
-    .header h1 {
-      font-size: 48px;
-      margin-bottom: 12px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .header p {
-      font-size: 18px;
-      opacity: 0.9;
-    }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <div id="portal-root"></div>
-  <script type="module" src="/app.js"></script>
-</body>
-</html>`,
-			{
-				headers: {
-					"Content-Type": "text/html",
-				},
+	.get("/", async () => {
+		const file = Bun.file("./src/templates/index.html");
+		return new Response(file, {
+			headers: {
+				"Content-Type": "text/html",
 			},
-		);
+		});
 	})
-	.listen(3000);
+	.listen(PORT);
 
 console.log(
 	`🚀 MiniReact Showcase running at http://${app.server?.hostname}:${app.server?.port}`,

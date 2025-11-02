@@ -79,7 +79,7 @@ function createHostRootFiber(): Fiber {
 
 		// Work-in-progress
 		alternate: null,
-		effectTag: null,
+		effectTag: 0, // NoEffect
 		nextEffect: null,
 		firstEffect: null,
 		lastEffect: null,

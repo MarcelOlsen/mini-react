@@ -23,7 +23,7 @@ import {
 	updateProperties,
 	updateTextContent,
 } from "./domOperations";
-import { Placement, UpdateEffect } from "./fiberFlags";
+import { Placement, UpdateEffect, hasEffectTag } from "./fiberFlags";
 import type { Fiber, FiberRoot, PortalContainer, RefObject } from "./types";
 
 /**
@@ -75,22 +75,27 @@ function commitMutationEffects(root: FiberRoot, finishedWork: Fiber): void {
 	while (effect !== null) {
 		const effectTag = effect.effectTag;
 
-		if (effectTag === Placement) {
+		// Handle Placement (may have both Placement and Update)
+		if (hasEffectTag(effectTag, Placement)) {
 			commitPlacement(effect);
-			// Clear the placement flag after processing
-			effect.effectTag = null;
-		} else if (effectTag === UpdateEffect) {
-			commitUpdate(effect);
-			effect.effectTag = null;
 		}
+
+		// Handle Update (may have both Placement and Update for moved nodes with prop changes)
+		if (hasEffectTag(effectTag, UpdateEffect)) {
+			commitUpdate(effect);
+		}
+
+		// Clear all effect flags after processing
+		effect.effectTag = 0;
 
 		effect = effect.nextEffect;
 	}
 
 	// Also process the root fiber itself if it has an effect
-	if (finishedWork.effectTag === Placement) {
+	if (hasEffectTag(finishedWork.effectTag, Placement)) {
 		commitPlacement(finishedWork);
-	} else if (finishedWork.effectTag === UpdateEffect) {
+	}
+	if (hasEffectTag(finishedWork.effectTag, UpdateEffect)) {
 		commitUpdate(finishedWork);
 	}
 }
@@ -102,6 +107,11 @@ function commitLayoutEffects(finishedWork: Fiber): void {
 	// Process all effects in the effect list
 	let effect = finishedWork.firstEffect;
 	while (effect !== null) {
+		// Detach old ref if ref identity changed
+		if (effect.alternate && effect.alternate.ref !== effect.ref) {
+			commitDetachRef(effect.alternate);
+		}
+
 		// Attach refs
 		commitAttachRef(effect);
 
@@ -112,6 +122,13 @@ function commitLayoutEffects(finishedWork: Fiber): void {
 	}
 
 	// Also process the root fiber itself
+	// Detach old ref if ref identity changed
+	if (
+		finishedWork.alternate &&
+		finishedWork.alternate.ref !== finishedWork.ref
+	) {
+		commitDetachRef(finishedWork.alternate);
+	}
 	commitAttachRef(finishedWork);
 	commitFiberEffects(finishedWork);
 
@@ -304,7 +321,7 @@ function getHostSibling(fiber: Fiber): Node | null {
 		// Skip over components/fragments to find a host node
 		while (!isHostFiber(node)) {
 			// If this is a placement, skip it (it's also being inserted)
-			if (node.effectTag === Placement) {
+			if (hasEffectTag(node.effectTag, Placement)) {
 				continue siblings;
 			}
 
@@ -318,7 +335,7 @@ function getHostSibling(fiber: Fiber): Node | null {
 
 		// Found a host sibling!
 		// But if it's also being placed, keep looking
-		if (node.effectTag !== Placement) {
+		if (!hasEffectTag(node.effectTag, Placement)) {
 			return node.stateNode as Node;
 		}
 	}

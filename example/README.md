@@ -109,7 +109,7 @@ Uses `useContext` to provide a global theme that can be toggled between light an
 
 ## File Structure
 
-```
+```text
 example/
 ├── src/
 │   ├── server.ts          # ElysiaJS server

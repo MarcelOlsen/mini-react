@@ -161,14 +161,65 @@ export function createWorkInProgress(
 }
 
 /**
+ * Clone the entire child list (all siblings) into the work-in-progress tree
+ *
+ * This is critical for memo bailout to maintain the double-buffering invariant.
+ * If we only clone the first child, sibling pointers still point to the current tree,
+ * which causes the work loop to mutate the live tree instead of the WIP tree.
+ *
+ * @param current The current fiber whose children we're cloning
+ * @param workInProgressFiber The parent WIP fiber
+ * @returns The first cloned child, or null if no children
+ */
+export function cloneChildFibers(
+	current: Fiber | null,
+	workInProgressFiber: Fiber,
+): Fiber | null {
+	if (current === null || current.child === null) {
+		workInProgressFiber.child = null;
+		return null;
+	}
+
+	// Clone first child
+	let currentChild: Fiber | null = current.child;
+	let newChild = createWorkInProgress(currentChild, currentChild.pendingProps);
+	newChild.return = workInProgressFiber;
+
+	workInProgressFiber.child = newChild;
+
+	// Clone all siblings
+	currentChild = currentChild.sibling;
+	while (currentChild !== null) {
+		const newSibling = createWorkInProgress(
+			currentChild,
+			currentChild.pendingProps,
+		);
+		newSibling.return = workInProgressFiber;
+
+		// Link sibling to the previous child
+		newChild.sibling = newSibling;
+		newChild = newSibling;
+
+		currentChild = currentChild.sibling;
+	}
+
+	// Last child has no sibling
+	newChild.sibling = null;
+
+	return workInProgressFiber.child;
+}
+
+/**
  * Create a fiber from a MiniReact element
  *
  * This is the main entry point for creating fibers during reconciliation.
  *
  * @param element The element to create a fiber for
- * @returns A new Fiber instance
+ * @returns A new Fiber instance, or null for null/undefined elements (valid "render nothing" case)
  */
-export function createFiberFromElement(element: AnyMiniReactElement): Fiber {
+export function createFiberFromElement(
+	element: AnyMiniReactElement,
+): Fiber | null {
 	// Handle primitives (strings, numbers, booleans)
 	if (
 		typeof element === "string" ||
@@ -178,9 +229,9 @@ export function createFiberFromElement(element: AnyMiniReactElement): Fiber {
 		return createFiberFromText(element);
 	}
 
-	// Handle null/undefined
+	// Handle null/undefined - valid "render nothing" case
 	if (element === null || element === undefined) {
-		throw new Error("Cannot create fiber from null or undefined element");
+		return null;
 	}
 
 	// Type guard: ensure we have an object with type and props

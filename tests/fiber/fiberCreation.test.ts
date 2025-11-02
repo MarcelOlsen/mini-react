@@ -10,6 +10,7 @@ import { FRAGMENT, TEXT_ELEMENT } from "../../src/core/types";
 import {
 	NoEffect,
 	NoLanes,
+	UpdateEffect,
 	cloneFiber,
 	createFiber,
 	createFiberFromElement,
@@ -91,7 +92,7 @@ describe("Fiber Creation", () => {
 			const wip1 = createWorkInProgress(current, {});
 
 			// Simulate effects from previous render
-			wip1.effectTag = "UPDATE";
+			wip1.effectTag = UpdateEffect;
 			wip1.nextEffect = createFiber("span", {}, null);
 			wip1.firstEffect = createFiber("p", {}, null);
 
@@ -142,7 +143,7 @@ describe("Fiber Creation", () => {
 				props: { id: "test", children: [] },
 			};
 
-			const fiber = createFiberFromElement(element);
+			const fiber = createFiberFromElement(element)!;
 
 			expect(fiber.type).toBe("div");
 			expect(fiber.props.id).toBe("test");
@@ -155,7 +156,7 @@ describe("Fiber Creation", () => {
 				props: { name: "Test", children: [] },
 			};
 
-			const fiber = createFiberFromElement(element);
+			const fiber = createFiberFromElement(element)!;
 
 			expect(fiber.type).toBe(Component);
 			expect(fiber.props.name).toBe("Test");
@@ -167,39 +168,41 @@ describe("Fiber Creation", () => {
 				props: { nodeValue: "Hello", children: [] },
 			};
 
-			const fiber = createFiberFromElement(element);
+			const fiber = createFiberFromElement(element)!;
 
 			expect(fiber.type).toBe(TEXT_ELEMENT);
 			expect(fiber.props.nodeValue).toBe("Hello");
 		});
 
 		test("creates fiber from string primitive", () => {
-			const fiber = createFiberFromElement("Hello");
+			const fiber = createFiberFromElement("Hello")!;
 
 			expect(fiber.type).toBe(TEXT_ELEMENT);
 			expect(fiber.props.nodeValue).toBe("Hello");
 		});
 
 		test("creates fiber from number primitive", () => {
-			const fiber = createFiberFromElement(42);
+			const fiber = createFiberFromElement(42)!;
 
 			expect(fiber.type).toBe(TEXT_ELEMENT);
 			expect(fiber.props.nodeValue).toBe("42");
 		});
 
 		test("creates fiber from boolean primitive", () => {
-			const fiber = createFiberFromElement(true);
+			const fiber = createFiberFromElement(true)!;
 
 			expect(fiber.type).toBe(TEXT_ELEMENT);
 			expect(fiber.props.nodeValue).toBe("true");
 		});
 
-		test("throws on null element", () => {
-			expect(() => createFiberFromElement(null)).toThrow();
+		test("returns null for null element (valid render nothing case)", () => {
+			const fiber = createFiberFromElement(null);
+			expect(fiber).toBeNull();
 		});
 
-		test("throws on undefined element", () => {
-			expect(() => createFiberFromElement(undefined)).toThrow();
+		test("returns null for undefined element (valid render nothing case)", () => {
+			const fiber = createFiberFromElement(undefined);
+			expect(fiber).toBeNull();
 		});
 
 		test("extracts key from element props", () => {
@@ -208,7 +211,7 @@ describe("Fiber Creation", () => {
 				props: { key: "unique-key", children: [] },
 			};
 
-			const fiber = createFiberFromElement(element);
+			const fiber = createFiberFromElement(element)!;
 
 			expect(fiber.key).toBe("unique-key");
 		});
@@ -219,7 +222,7 @@ describe("Fiber Creation", () => {
 				props: { children: [] },
 			};
 
-			const fiber = createFiberFromElement(element);
+			const fiber = createFiberFromElement(element)!;
 
 			expect(fiber.key).toBeNull();
 		});

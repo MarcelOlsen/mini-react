@@ -671,7 +671,7 @@ class EventSystem {
 	 */
 	cleanup(): void {
 		if (this.rootContainer) {
-			// Remove all delegated event listeners
+			// Remove all delegated event listeners from root container
 			for (const eventName of this.registeredEvents) {
 				this.rootContainer.removeEventListener(
 					eventName,
@@ -679,7 +679,19 @@ class EventSystem {
 				);
 			}
 		}
+
+		// Remove event listeners from all portal containers
+		for (const portalContainer of this.portalContainers) {
+			for (const eventName of this.registeredEvents) {
+				portalContainer.removeEventListener(
+					eventName,
+					this.boundHandleDelegatedEvent,
+				);
+			}
+		}
+
 		this.registeredEvents.clear();
+		this.portalContainers.clear();
 		this.instanceToNode = new WeakMap();
 		this.nodeToInstance = new WeakMap();
 		this.rootContainer = null;

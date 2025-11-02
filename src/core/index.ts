@@ -68,7 +68,7 @@ export function render(
 	// Initialize event system with the container
 	eventSystem.initialize(containerNode);
 
-	const newElement = element || null;
+	const newElement = element ?? null;
 
 	// Get or create FiberRoot for this container
 	let fiberRoot: FiberRoot;
@@ -87,16 +87,11 @@ export function render(
 	// Update the root fiber's pending props with the new element
 	const rootFiber = fiberRoot.current;
 	rootFiber.pendingProps = {
-		children: newElement ? [newElement] : [],
+		children: newElement != null ? [newElement] : [],
 	};
 
 	// Trigger Fiber reconciliation and commit
 	scheduleUpdateOnFiber(rootFiber);
-
-	// Clear container if rendering null
-	if (newElement === null) {
-		containerNode.innerHTML = "";
-	}
 }
 
 /**

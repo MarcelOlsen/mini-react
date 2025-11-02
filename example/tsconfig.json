@@ -22,6 +22,6 @@
 			"@marcelolsen/mini-react/jsx-dev-runtime": ["../src/jsx-dev-runtime.ts"]
 		}
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "../src/jsx.d.ts"],
 	"exclude": ["node_modules"]
 }

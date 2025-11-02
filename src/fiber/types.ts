@@ -30,8 +30,9 @@ export type Props = {
 /**
  * Effect tags indicate what kind of DOM operation needs to be performed
  * on this fiber during the commit phase.
+ * Uses bitwise flags so multiple effects can be combined.
  */
-export type EffectTag = "PLACEMENT" | "UPDATE" | "DELETION" | null;
+export type EffectTag = number;
 
 /**
  * Priority lanes for concurrent rendering (Phase 15)
@@ -468,7 +469,7 @@ export function isFiberRoot(fiber: Fiber): boolean {
  * Check if a fiber has any effects (needs commit work)
  */
 export function fiberHasEffect(fiber: Fiber): boolean {
-	return fiber.effectTag !== null;
+	return fiber.effectTag !== 0;
 }
 
 /**

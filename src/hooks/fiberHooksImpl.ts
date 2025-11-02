@@ -119,7 +119,7 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
-			queue: queue as UpdateQueue<unknown>,
+			queue: queue as UpdateQueue<T>,
 			setState: () => {}, // Will be set below
 		};
 
@@ -198,7 +198,7 @@ export function useReducer<State, Action, Init>(
 			type: "reducer",
 			state: initialState,
 			reducer,
-			queue: queue as UpdateQueue<unknown>,
+			queue: queue as UpdateQueue<State>,
 			dispatch: () => {}, // Will be set below
 		};
 

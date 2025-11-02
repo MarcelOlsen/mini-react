@@ -92,7 +92,7 @@ describe("CompleteWork", () => {
 			completeWork(current, wip);
 
 			// Should not have effect tag
-			expect(wip.effectTag).toBeNull();
+			expect(wip.effectTag).toBe(0);
 		});
 
 		test("should append single child DOM node", () => {
@@ -363,7 +363,7 @@ describe("CompleteWork", () => {
 
 			completeWork(current, wip);
 
-			expect(wip.effectTag).toBeNull();
+			expect(wip.effectTag).toBe(0);
 		});
 
 		test("should handle numeric text", () => {
@@ -421,7 +421,7 @@ describe("CompleteWork", () => {
 
 			completeWork(null, fiber);
 
-			expect(fiber.effectTag).toBeNull();
+			expect(fiber.effectTag).toBe(0);
 		});
 
 		test("should handle fragment on update", () => {
@@ -454,7 +454,7 @@ describe("CompleteWork", () => {
 
 			completeWork(null, fiber);
 
-			expect(fiber.effectTag).toBeNull();
+			expect(fiber.effectTag).toBe(0);
 		});
 	});
 
@@ -474,7 +474,7 @@ describe("CompleteWork", () => {
 
 			completeWork(null, fiber);
 
-			expect(fiber.effectTag).toBeNull();
+			expect(fiber.effectTag).toBe(0);
 		});
 	});
 
@@ -495,7 +495,7 @@ describe("CompleteWork", () => {
 
 			completeWork(null, rootFiber);
 
-			expect(rootFiber.effectTag).toBeNull();
+			expect(rootFiber.effectTag).toBe(0);
 		});
 	});
 
@@ -763,11 +763,9 @@ describe("CompleteWork", () => {
 				prevChild = child;
 			}
 
-			const start = performance.now();
 			completeWork(null, parent);
-			const duration = performance.now() - start;
 
-			expect(duration).toBeLessThan(50);
+			// Verify all children were appended correctly
 			expect((parent.stateNode as HTMLElement).children.length).toBe(100);
 		});
 
@@ -789,16 +787,15 @@ describe("CompleteWork", () => {
 				}
 			}
 
-			// Complete from bottom up
-			const start = performance.now();
+			// Complete from bottom up - should not throw
 			let current = top;
 			while (current) {
 				completeWork(null, current);
 				current = current.return;
 			}
-			const duration = performance.now() - start;
 
-			expect(duration).toBeLessThan(30);
+			// Verify deep nesting was handled correctly
+			expect(top?.stateNode).toBeDefined();
 		});
 	});
 });

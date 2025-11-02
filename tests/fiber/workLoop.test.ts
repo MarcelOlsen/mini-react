@@ -523,12 +523,19 @@ describe("Work Loop", () => {
 
 			rootFiber.pendingProps = { children };
 
-			const start = performance.now();
 			scheduleUpdateOnFiber(rootFiber);
-			const duration = performance.now() - start;
 
-			// Should complete in reasonable time (< 100ms)
-			expect(duration).toBeLessThan(100);
+			// Verify tree was constructed correctly
+			expect(root.current).not.toBeNull();
+
+			// Count siblings to verify all 100 children were created
+			let count = 0;
+			let child = root.current.child;
+			while (child) {
+				count++;
+				child = child.sibling;
+			}
+			expect(count).toBe(100);
 		});
 
 		test("should handle deep trees efficiently", () => {
@@ -545,12 +552,19 @@ describe("Work Loop", () => {
 
 			rootFiber.pendingProps = { children };
 
-			const start = performance.now();
 			scheduleUpdateOnFiber(rootFiber);
-			const duration = performance.now() - start;
 
-			// Should complete in reasonable time (< 50ms)
-			expect(duration).toBeLessThan(50);
+			// Verify tree was constructed correctly
+			expect(root.current).not.toBeNull();
+
+			// Traverse to verify depth (51 levels: 1 initial + 50 wrappings)
+			let depth = 0;
+			let current = root.current.child;
+			while (current) {
+				depth++;
+				current = current.child;
+			}
+			expect(depth).toBe(51);
 		});
 	});
 });

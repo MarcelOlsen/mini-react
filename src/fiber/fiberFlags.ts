@@ -8,23 +8,24 @@
 import type { EffectTag, Lanes } from "./types";
 
 // ===== EFFECT TAGS =====
+// Using bitwise flags so multiple effects can be combined
 
 /**
  * No effect - fiber doesn't need any DOM operation
  */
-export const NoEffect: EffectTag = null;
+export const NoEffect: EffectTag = 0b0000;
 
 /**
  * Placement - fiber needs to be inserted into the DOM
  * Used for newly created fibers or fibers that moved in the tree
  */
-export const Placement: EffectTag = "PLACEMENT";
+export const Placement: EffectTag = 0b0001;
 
 /**
  * Update - fiber's DOM node needs to be updated
  * Props or content changed, but the node itself stays in the same position
  */
-export const UpdateEffect: EffectTag = "UPDATE";
+export const UpdateEffect: EffectTag = 0b0010;
 // Keep old name for backwards compatibility temporarily
 export const Update = UpdateEffect;
 
@@ -32,7 +33,7 @@ export const Update = UpdateEffect;
  * Deletion - fiber's DOM node needs to be removed
  * Fiber is being removed from the tree
  */
-export const Deletion: EffectTag = "DELETION";
+export const Deletion: EffectTag = 0b0100;
 
 // ===== LANES (Priority System) =====
 
@@ -65,11 +66,14 @@ export const IdleLane: Lanes = 4;
  * Check if an effect tag indicates DOM mutation is needed
  */
 export function isEffectTagMutation(effectTag: EffectTag): boolean {
-	return (
-		effectTag === Placement ||
-		effectTag === UpdateEffect ||
-		effectTag === Deletion
-	);
+	return (effectTag & (Placement | UpdateEffect | Deletion)) !== 0;
+}
+
+/**
+ * Check if effect tag includes a specific flag
+ */
+export function hasEffectTag(effectTag: EffectTag, flag: EffectTag): boolean {
+	return (effectTag & flag) !== 0;
 }
 
 /**

@@ -458,7 +458,7 @@ interface UpdateQueue<T> {
 
 Why circular? It makes it easy to find the first update (it's `pending.next`) and the last update (it's `pending`).
 
-```
+```text
 pending -> Update3 -> Update1 -> Update2 -> Update3 (circular)
            ^                                 ^
            last                              first

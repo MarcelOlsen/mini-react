@@ -335,7 +335,7 @@ When all children have keys, reconciliation is straightforward - match by key an
 
 Consider:
 
-```
+```text
 Old: [A(key), B, C(key)]
 New: [C(key), D, A(key)]
 ```
@@ -404,7 +404,7 @@ The idea: As we process new children left to right, we track the highest old ind
 
 Example:
 
-```
+```text
 Old: [A(0), B(1), C(2), D(3)]
 New: [C, A, D, B]
 

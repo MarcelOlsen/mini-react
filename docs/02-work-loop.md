@@ -242,7 +242,7 @@ This function does a few important things:
 
 The combination of `performUnitOfWork` and `completeUnitOfWork` gives us a depth-first traversal:
 
-```
+```text
         A
        / \
       B   C

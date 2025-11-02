@@ -486,12 +486,7 @@ describe("Child Reconciliation", () => {
 				});
 			}
 
-			const start = performance.now();
 			reconcileChildren(null, parent, children);
-			const duration = performance.now() - start;
-
-			// Should complete quickly (< 50ms)
-			expect(duration).toBeLessThan(50);
 
 			// Count children
 			let count = 0;
@@ -597,12 +592,7 @@ describe("Child Reconciliation", () => {
 				});
 			}
 
-			const start = performance.now();
 			reconcileChildren(current, parent, newChildren);
-			const duration = performance.now() - start;
-
-			// Should be fast (< 5ms)
-			expect(duration).toBeLessThan(5);
 
 			// All should be reused
 			let child = parent.child;

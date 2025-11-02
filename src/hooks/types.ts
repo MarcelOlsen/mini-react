@@ -9,7 +9,7 @@ export interface StateHook<T = unknown> {
 	type: "state";
 	state: T;
 	setState: (newState: T | ((prevState: T) => T)) => void;
-	queue?: UpdateQueue<unknown>; // Update queue for Fiber integration
+	queue?: UpdateQueue<T>; // Update queue for Fiber integration
 }
 
 export interface EffectHook {
@@ -32,7 +32,7 @@ export interface ReducerHook<State = unknown, Action = unknown> {
 	state: State;
 	reducer: (state: State, action: Action) => State;
 	dispatch: (action: Action) => void;
-	queue?: UpdateQueue<unknown>; // Update queue for Fiber integration
+	queue?: UpdateQueue<State>; // Update queue for Fiber integration
 }
 
 export interface RefHook<T = unknown> {

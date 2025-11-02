@@ -107,7 +107,7 @@ Key topics:
 
 ### Code Organization
 
-```
+```text
 src/
 ├── fiber/
 │   ├── workLoop.ts          # Main rendering loop

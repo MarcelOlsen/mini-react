@@ -23,7 +23,7 @@ import {
 	getElementKey,
 	getElementType,
 } from "./fiberCreation";
-import { Deletion, Placement, UpdateEffect } from "./fiberFlags";
+import { Deletion, Placement, UpdateEffect, hasEffectTag } from "./fiberFlags";
 import type { Fiber } from "./types";
 import { isSameElementType } from "./types";
 
@@ -122,6 +122,11 @@ function mountChildFibers(
 		const element = newChildren[i];
 		const newFiber = createFiberFromElement(element);
 
+		// Skip null elements (valid "render nothing" case)
+		if (newFiber === null) {
+			continue;
+		}
+
 		// Set relationships
 		newFiber.return = returnFiber;
 		newFiber.index = i;
@@ -191,7 +196,7 @@ function reconcileSingleElement(
 	// Search through old children for a match
 	while (child !== null) {
 		// Skip deleted fibers - they should not be reused
-		if (child.effectTag === Deletion) {
+		if (hasEffectTag(child.effectTag, Deletion)) {
 			child = child.sibling;
 			continue;
 		}
@@ -237,6 +242,12 @@ function reconcileSingleElement(
 
 	// No match found - create new fiber
 	const newFiber = createFiberFromElement(element);
+
+	// Handle null element (valid "render nothing" case)
+	if (newFiber === null) {
+		return null;
+	}
+
 	newFiber.return = returnFiber;
 	newFiber.index = 0;
 	newFiber.effectTag = Placement;
@@ -306,13 +317,17 @@ function reconcileChildrenArray(
 			} else {
 				// No match - create new fiber
 				newFiber = createFiberFromElement(element);
-				newFiber.effectTag = Placement;
+				if (newFiber !== null) {
+					newFiber.effectTag = Placement;
+				}
 			}
 		} else {
 			// Unkeyed child BUT there are keyed children - create fresh
 			// (mixing keys and no keys makes position unreliable)
 			newFiber = createFiberFromElement(element);
-			newFiber.effectTag = Placement;
+			if (newFiber !== null) {
+				newFiber.effectTag = Placement;
+			}
 		}
 
 		if (newFiber === null) {
@@ -350,6 +365,10 @@ function reconcileChildrenArray(
 	// Delete any old children that weren't reused (both keyed and unkeyed)
 	for (const child of allChildren) {
 		if (!reusedChildren.has(child)) {
+			// Skip if already marked for deletion to avoid double-enqueuing
+			if (hasEffectTag(child.effectTag, Deletion)) {
+				continue;
+			}
 			deleteChild(returnFiber, child);
 		}
 	}
@@ -433,6 +452,12 @@ function updateSlot(
 
 	// No match or type changed - create new fiber
 	const newFiber = createFiberFromElement(element);
+
+	// Handle null element (valid "render nothing" case)
+	if (newFiber === null) {
+		return null;
+	}
+
 	newFiber.effectTag = Placement;
 
 	return newFiber;
@@ -454,7 +479,7 @@ function mapRemainingChildren(currentFirstChild: Fiber | null): {
 	while (existingChild !== null) {
 		// Skip fibers that were deleted in a previous render
 		// Deleted fibers should not be reused
-		if (existingChild.effectTag !== Deletion) {
+		if (!hasEffectTag(existingChild.effectTag, Deletion)) {
 			// Only add keyed children to the map for matching
 			if (existingChild.key !== null) {
 				keyedChildren.set(existingChild.key, existingChild);
@@ -502,7 +527,10 @@ function deleteRemainingChildren(
 	let childToDelete = currentFirstChild;
 
 	while (childToDelete !== null) {
-		deleteChild(returnFiber, childToDelete);
+		// Skip if already marked for deletion to avoid double-enqueuing
+		if (!hasEffectTag(childToDelete.effectTag, Deletion)) {
+			deleteChild(returnFiber, childToDelete);
+		}
 		childToDelete = childToDelete.sibling;
 	}
 

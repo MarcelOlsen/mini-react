@@ -16,7 +16,7 @@
 
 import type { AnyMiniReactElement, FunctionalComponent } from "../core/types";
 import { FRAGMENT, PORTAL, TEXT_ELEMENT } from "../core/types";
-import { createWorkInProgress } from "./fiberCreation";
+import { cloneChildFibers } from "./fiberCreation";
 import { setCurrentRenderingFiber } from "./fiberHooks";
 import { reconcileChildren } from "./reconcileChildren";
 import type { Fiber } from "./types";
@@ -127,18 +127,9 @@ function updateFunctionComponent(
 			// Props are equal - bail out completely
 			// Reuse the entire child tree from current
 
-			// Clone the child fiber to ensure correct return pointers
-			// We need to clone at least one level to fix return pointers
-			if (current.child !== null) {
-				const clonedChild = createWorkInProgress(
-					current.child,
-					current.child.pendingProps,
-				);
-				clonedChild.return = workInProgress;
-				workInProgress.child = clonedChild;
-			} else {
-				workInProgress.child = null;
-			}
+			// Clone the entire child list (including all siblings) to ensure
+			// the work-in-progress tree is properly isolated from the current tree
+			cloneChildFibers(current, workInProgress);
 
 			// Copy memoized props to prevent future comparisons from failing
 			workInProgress.memoizedProps = current.memoizedProps;

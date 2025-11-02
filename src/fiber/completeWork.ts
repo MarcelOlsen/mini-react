@@ -105,7 +105,8 @@ function completeHostComponent(
 
 		if (hasChanged) {
 			// Props changed - mark for update
-			workInProgress.effectTag = UpdateEffect;
+			// Use bitwise OR to preserve existing flags (e.g., Placement)
+			workInProgress.effectTag |= UpdateEffect;
 		}
 		// Note: We don't update the DOM here!
 		// That happens in commit phase (Phase 4)
@@ -124,7 +125,8 @@ function completeHostComponent(
 		workInProgress.stateNode = instance;
 
 		// Mark for placement (needs to be inserted into parent)
-		workInProgress.effectTag = Placement;
+		// Use bitwise OR to preserve existing flags (though unlikely here)
+		workInProgress.effectTag |= Placement;
 	}
 
 	// Save memoized props for future comparisons
@@ -146,14 +148,16 @@ function completeHostText(current: Fiber | null, workInProgress: Fiber): void {
 		const oldText = String(current.memoizedProps?.nodeValue ?? "");
 		const newText = textContent;
 		if (oldText !== newText) {
-			workInProgress.effectTag = UpdateEffect;
+			// Use bitwise OR to preserve existing flags (e.g., Placement)
+			workInProgress.effectTag |= UpdateEffect;
 		} else {
 		}
 	} else {
 		// PLACEMENT: Create new text node
 		const textInstance = document.createTextNode(textContent);
 		workInProgress.stateNode = textInstance;
-		workInProgress.effectTag = Placement;
+		// Use bitwise OR to preserve existing flags (though unlikely here)
+		workInProgress.effectTag |= Placement;
 	}
 
 	// Save memoized props for future comparisons

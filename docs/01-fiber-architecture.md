@@ -53,7 +53,7 @@ Here's where it gets interesting. We maintain two fiber trees at any given time:
 
 These trees are linked through the `alternate` property. When we start rendering, we clone the current tree to create the work-in-progress tree. After we finish rendering and commit the changes, the work-in-progress becomes the new current.
 
-```
+```text
 Current Tree              Work-in-Progress Tree
 ┌─────────┐              ┌─────────┐
 │  Root   │ <─alternate─>│  Root   │
