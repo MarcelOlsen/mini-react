@@ -6,7 +6,7 @@
  */
 
 import { NoLanes } from "./fiberFlags";
-import type { Fiber, FiberRoot } from "./types";
+import { FIBER_BRAND, type Fiber, type FiberRoot } from "./types";
 
 /**
  * WeakMap to track FiberRoots by their container elements
@@ -67,6 +67,9 @@ export function createFiberRoot(containerInfo: HTMLElement): FiberRoot {
  */
 function createHostRootFiber(): Fiber {
 	return {
+		// Brand for runtime type checking
+		[FIBER_BRAND]: true,
+
 		// Identity
 		type: null, // Root has no type
 		key: null,

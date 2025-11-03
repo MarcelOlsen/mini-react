@@ -11,7 +11,7 @@
  * - Root fiber handling
  */
 
-import { beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
 	type AnyMiniReactElement,
 	type ElementType,
@@ -32,6 +32,14 @@ describe("BeginWork", () => {
 	beforeEach(() => {
 		container = document.createElement("div");
 		document.body.appendChild(container);
+	});
+
+	afterEach(() => {
+		// Clean up DOM to prevent test pollution
+		if (container && container.parentNode) {
+			container.parentNode.removeChild(container);
+		}
+		container = null!;
 	});
 
 	describe("Dispatcher", () => {

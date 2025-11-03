@@ -52,7 +52,6 @@ describe("Work Loop", () => {
 			const rootFiber = root.current;
 
 			// Add a child
-			const _child = createFiber("div", { children: [] }, null);
 			rootFiber.pendingProps = {
 				children: [{ type: "div", props: { children: [] } }],
 			};
@@ -93,11 +92,6 @@ describe("Work Loop", () => {
 			//  div(B) div(C)
 			//   |      |
 			// div(D) div(E)
-
-			const _traversalOrder: string[] = [];
-
-			// We'll track traversal by checking when fibers are marked with effects
-			// This isn't perfect but gives us insight into traversal order
 
 			rootFiber.pendingProps = {
 				children: [

@@ -501,6 +501,13 @@ function deleteChild(returnFiber: Fiber, childToDelete: Fiber): void {
 	// Mark fiber for deletion
 	childToDelete.effectTag = Deletion;
 
+	// Clear effect pointers to prevent stale chains
+	// This ensures the deleted fiber doesn't keep pointing to old neighbors
+	// which could resurrect stale effect chains or cause memory leaks
+	childToDelete.nextEffect = null;
+	childToDelete.firstEffect = null;
+	childToDelete.lastEffect = null;
+
 	// Add to parent's deletion list
 	if (!returnFiber.deletions) {
 		returnFiber.deletions = [];

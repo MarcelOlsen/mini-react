@@ -285,40 +285,9 @@ describe("CompleteWork", () => {
 				null,
 			);
 
-			// Debug: Log initial state
-			console.log("BEFORE completeWork:", {
-				stateNode: fiber.stateNode,
-				stateNodeType: fiber.stateNode?.constructor?.name,
-				effectTag: fiber.effectTag,
-				pendingProps: fiber.pendingProps,
-				type: fiber.type,
-			});
-
 			completeWork(null, fiber);
 
-			// Debug: Log final state
-			console.log("AFTER completeWork:", {
-				stateNode: fiber.stateNode,
-				stateNodeType: fiber.stateNode?.constructor?.name,
-				effectTag: fiber.effectTag,
-				isText: fiber.stateNode instanceof Text,
-				TextConstructor: Text,
-				actualConstructor: fiber.stateNode?.constructor,
-				match: fiber.stateNode?.constructor === Text,
-			});
-
-			if (!(fiber.stateNode instanceof Text)) {
-				console.error("INSTANCEOF FAILED!");
-				console.error("stateNode constructor:", fiber.stateNode?.constructor);
-				console.error("Text constructor:", Text);
-				console.error("Are they equal?", fiber.stateNode?.constructor === Text);
-				console.error(
-					"stateNode proto:",
-					Object.getPrototypeOf(fiber.stateNode),
-				);
-				console.error("Text proto:", Text.prototype);
-			}
-
+			// Verify text node was created with correct content and effect tag
 			expect(fiber.stateNode).toBeInstanceOf(Text);
 			expect((fiber.stateNode as Text).textContent).toBe("hello");
 			expect(fiber.effectTag).toBe(Placement);

@@ -17,6 +17,7 @@
 import type { AnyMiniReactElement, FunctionalComponent } from "../core/types";
 import { FRAGMENT, PORTAL, TEXT_ELEMENT } from "../core/types";
 import { cloneChildFibers } from "./fiberCreation";
+import { Deletion } from "./fiberFlags";
 import { setCurrentRenderingFiber } from "./fiberHooks";
 import { reconcileChildren } from "./reconcileChildren";
 import type { Fiber } from "./types";
@@ -245,6 +246,12 @@ function updatePortal(
 				workInProgress.deletions = workInProgress.deletions || [];
 				let child: Fiber | null = current.child;
 				while (child !== null) {
+					// Mark for deletion and clear effect pointers
+					child.effectTag = Deletion;
+					child.nextEffect = null;
+					child.firstEffect = null;
+					child.lastEffect = null;
+
 					workInProgress.deletions.push(child);
 					child = child.sibling;
 				}

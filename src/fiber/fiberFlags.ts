@@ -36,29 +36,49 @@ export const Update = UpdateEffect;
 export const Deletion: EffectTag = 0b0100;
 
 // ===== LANES (Priority System) =====
+// Using bitwise flags for fine-grained priority control
+// Lower bit position = higher priority
 
 /**
  * No lanes - no work scheduled
  */
-export const NoLanes: Lanes = 0;
+export const NoLanes: Lanes = 0b00000000;
 
 /**
  * Sync lane - highest priority, must complete immediately
- * Used for user interactions (clicks, typing, etc)
+ * Used for controlled inputs, urgent user interactions
  */
-export const SyncLane: Lanes = 1;
+export const SyncLane: Lanes = 0b00000001;
 
 /**
- * Default lane - normal priority
- * Used for data fetches, most updates
+ * Input lane - high priority for discrete user input
+ * Used for clicks, key presses, focus changes
  */
-export const DefaultLane: Lanes = 2;
+export const InputLane: Lanes = 0b00000010;
 
 /**
- * Idle lane - lowest priority
- * Used for non-critical updates that can be delayed
+ * Default lane - normal priority for most updates
+ * Used for data fetches, network responses, regular state updates
  */
-export const IdleLane: Lanes = 4;
+export const DefaultLane: Lanes = 0b00000100;
+
+/**
+ * Transition lane - lower priority for transitions
+ * Used for startTransition(), loading states, animations
+ */
+export const TransitionLane: Lanes = 0b00001000;
+
+/**
+ * Retry lane - for retrying failed updates
+ * Used internally for suspense and error boundaries
+ */
+export const RetryLane: Lanes = 0b00010000;
+
+/**
+ * Idle lane - lowest priority for non-critical updates
+ * Used for analytics, prefetching, offscreen rendering
+ */
+export const IdleLane: Lanes = 0b00100000;
 
 // ===== HELPER FUNCTIONS =====
 
@@ -106,9 +126,20 @@ export function isSubsetOfLanes(set: Lanes, subset: Lanes): boolean {
 
 /**
  * Get the highest priority lane from a set
+ *
+ * Uses two's complement negation to isolate the lowest-order (rightmost) set bit.
+ * In two's complement, -x = ~x + 1. When we AND x with -x, all bits cancel except
+ * the rightmost set bit.
+ *
+ * Example: lanes = 0b0110 (InputLane | DefaultLane)
+ *   lanes:      0b0110
+ *   -lanes:     0b1010  (two's complement)
+ *   lanes & -lanes: 0b0010  (isolates rightmost set bit = InputLane)
+ *
+ * Since lower bit positions represent higher priority (SyncLane = 0b00000001 is highest),
+ * the rightmost set bit is the highest priority lane.
  */
 export function getHighestPriorityLane(lanes: Lanes): Lanes {
-	// Return the rightmost (highest priority) bit
 	return lanes & -lanes;
 }
 

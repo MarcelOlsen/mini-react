@@ -9,7 +9,7 @@
 import type { AnyMiniReactElement, ElementType } from "../core/types";
 import { FRAGMENT, PORTAL, TEXT_ELEMENT } from "../core/types";
 import { NoEffect, NoLanes } from "./fiberFlags";
-import type { Fiber, Props } from "./types";
+import { FIBER_BRAND, type Fiber, type Props } from "./types";
 
 /**
  * Create a new Fiber instance
@@ -28,6 +28,9 @@ export function createFiber(
 	key: string | null,
 ): Fiber {
 	const fiber: Fiber = {
+		// Brand for runtime type checking
+		[FIBER_BRAND]: true,
+
 		// Identity
 		type,
 		key,

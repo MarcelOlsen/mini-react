@@ -6,7 +6,7 @@ Welcome to the MiniReact design docs. These documents dive deep into how the fib
 
 MiniReact is a simplified React clone built with a modern fiber architecture. It's not trying to be a production framework - it's an educational project that demonstrates how React works under the hood.
 
-The codebase is fully functional with 484 passing tests covering all major features. It's a great way to understand React's internals without getting lost in production complexity.
+The codebase is fully functional with 539 passing tests covering all major features. It's a great way to understand React's internals without getting lost in production complexity.
 
 ## Documentation Structure
 
@@ -19,6 +19,7 @@ The docs are organized to build understanding progressively:
 Start here. This covers the fundamental concepts: what fibers are, why we have two trees, how the render and commit phases work, and how we traverse the tree without recursion.
 
 Key topics:
+
 - Fiber data structure
 - Double-buffer pattern
 - Render vs commit phases
@@ -30,6 +31,7 @@ Key topics:
 The work loop is the engine that drives everything. It schedules updates, builds the work-in-progress tree, and coordinates between phases.
 
 Key topics:
+
 - Processing units of work
 - Depth-first traversal
 - Effect collection
@@ -41,6 +43,7 @@ Key topics:
 Reconciliation is the diffing algorithm. It figures out what changed between renders and computes the minimal DOM operations needed.
 
 Key topics:
+
 - Key-based reconciliation
 - Movement detection
 - Handling mixed keyed/unkeyed children
@@ -54,6 +57,7 @@ Key topics:
 Events in MiniReact use delegation for efficiency. One listener at the root handles everything and routes events through the React tree.
 
 Key topics:
+
 - Event delegation
 - Synthetic events
 - Portal event bubbling
@@ -65,6 +69,7 @@ Key topics:
 Hooks let functional components have state and side effects. They're implemented as an array on each fiber with order maintained by a cursor.
 
 Key topics:
+
 - Hook storage and context
 - useState and useReducer
 - useEffect and cleanup
@@ -193,7 +198,7 @@ Current bottlenecks and future work:
 
 ## Testing
 
-The test suite has 484 passing tests covering:
+The test suite has 539 passing tests covering:
 
 - Core rendering and reconciliation
 - All hooks (useState, useEffect, useRef, etc.)
@@ -259,6 +264,6 @@ MiniReact implements:
 - Fragment support
 - Component memoization
 
-All in about 3000 lines of readable TypeScript with 100% test coverage.
+All in about 3000 lines of readable TypeScript with comprehensive test coverage.
 
 The goal is understanding, not production use. Fork it, break it, learn from it.

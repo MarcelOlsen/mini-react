@@ -7,7 +7,15 @@
  */
 
 import type { AnyMiniReactElement, ElementType } from "../core/types";
+import { FRAGMENT, PORTAL, TEXT_ELEMENT } from "../core/types";
 import type { StateOrEffectHook } from "../hooks/types";
+
+/**
+ * Unique symbol used to brand Fiber objects for stronger runtime type checking.
+ * This prevents false positives in isFiber() by ensuring the object was actually
+ * created as a Fiber, not just any object with similar properties.
+ */
+export const FIBER_BRAND = Symbol.for("mini.react.fiber");
 
 /**
  * Ref types for fiber
@@ -17,15 +25,29 @@ export type RefCallback<T> = (instance: T | null) => void;
 export type Ref = RefObject<unknown> | RefCallback<unknown> | null;
 
 /**
- * Props type for fiber
- * Represents any props object that can be passed to a component
+ * Base props that every component/element can have
  */
-export type Props = {
+export interface BaseProps {
 	children?: AnyMiniReactElement[];
 	key?: string | number | null;
 	ref?: Ref;
-	[key: string]: unknown;
-};
+}
+
+/**
+ * Props type for fiber
+ *
+ * Combines base React props (children, key, ref) with arbitrary attributes.
+ * The Record<string, unknown> allows:
+ * - DOM attributes (id, className, style, etc.)
+ * - Event handlers (onClick, onChange, etc.)
+ * - Data attributes (data-*, aria-*)
+ * - Custom component props
+ *
+ * Note: While this allows any string key, values should be serializable
+ * or functions (for event handlers). Avoid passing complex objects or
+ * circular references that can't be compared for reconciliation.
+ */
+export type Props = BaseProps & Record<string, unknown>;
 
 /**
  * Effect tags indicate what kind of DOM operation needs to be performed
@@ -141,6 +163,12 @@ export interface UpdateQueue<State> {
  */
 export interface Fiber {
 	// ===== IDENTITY =====
+	/**
+	 * Brand symbol for runtime type checking
+	 * This ensures the object was created as a Fiber, not just duck-typed
+	 */
+	readonly [FIBER_BRAND]: true;
+
 	/**
 	 * The type of this fiber's element
 	 * - string: host component (div, span, etc)
@@ -402,13 +430,25 @@ export interface FiberRoot {
 
 /**
  * Type guard to check if a value is a Fiber
+ *
+ * Checks for the FIBER_BRAND first for strong typing, then falls back to
+ * structural property checks for compatibility with older code or testing.
  */
 export function isFiber(value: unknown): value is Fiber {
+	// Quick null/primitive check
+	if (value == null || typeof value !== "object") {
+		return false;
+	}
+
+	// Primary check: verify the brand symbol (strongest guarantee)
+	if (FIBER_BRAND in value && value[FIBER_BRAND] === true) {
+		return true;
+	}
+
+	// Fallback: structural duck-typing for compatibility
+	// This handles fibers created before the brand was added, or in tests
 	return (
-		value !== null &&
-		typeof value === "object" &&
 		"type" in value &&
-		"props" in value &&
 		"return" in value &&
 		"child" in value &&
 		"sibling" in value
@@ -433,29 +473,21 @@ export function isFiberFunctionComponent(fiber: Fiber): boolean {
  * Type guard to check if a fiber represents text content
  */
 export function isFiberText(fiber: Fiber): boolean {
-	return fiber.type === "TEXT_ELEMENT";
+	return fiber.type === TEXT_ELEMENT;
 }
 
 /**
  * Type guard to check if a fiber represents a fragment
  */
 export function isFiberFragment(fiber: Fiber): boolean {
-	// Import FRAGMENT symbol when needed
-	return (
-		typeof fiber.type === "symbol" &&
-		fiber.type.toString() === "Symbol(react.fragment)"
-	);
+	return fiber.type === FRAGMENT;
 }
 
 /**
  * Type guard to check if a fiber represents a portal
  */
 export function isFiberPortal(fiber: Fiber): boolean {
-	// Import PORTAL symbol when needed
-	return (
-		typeof fiber.type === "symbol" &&
-		fiber.type.toString() === "Symbol(react.portal)"
-	);
+	return fiber.type === PORTAL;
 }
 
 /**
