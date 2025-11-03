@@ -36,7 +36,7 @@ describe("BeginWork", () => {
 
 	afterEach(() => {
 		// Clean up DOM to prevent test pollution
-		if (container && container.parentNode) {
+		if (container?.parentNode) {
 			container.parentNode.removeChild(container);
 		}
 		container = null!;

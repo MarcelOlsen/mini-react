@@ -20,7 +20,7 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 	});
 
 	afterEach(() => {
-		if (container && container.parentNode) {
+		if (container?.parentNode) {
 			container.parentNode.removeChild(container);
 		}
 	});
@@ -296,7 +296,6 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 
 			render({ type: "div", props: { children: [null] } }, container);
 			expect(container.textContent).toBe("");
-
 		});
 
 		test("should handle elements with falsy props", () => {
