@@ -9,6 +9,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
+import { completeWork } from "../../src/fiber/completeWork";
+import { createFiber } from "../../src/fiber/fiberCreation";
 import {
 	Deletion,
 	NoEffect,
@@ -16,8 +18,6 @@ import {
 	UpdateEffect,
 	hasEffectTag,
 } from "../../src/fiber/fiberFlags";
-import { createFiber } from "../../src/fiber/fiberCreation";
-import { completeWork } from "../../src/fiber/completeWork";
 import { reconcileChildren } from "../../src/fiber/reconcileChildren";
 
 describe("Effect Tags - Bitwise Flags", () => {
@@ -272,11 +272,7 @@ describe("Effect Tags - Bitwise Flags", () => {
 			parent.child = text;
 
 			// Complete work on text with Placement flag and changed content
-			const wipText = createFiber(
-				"TEXT_ELEMENT",
-				{ nodeValue: "new" },
-				null,
-			);
+			const wipText = createFiber("TEXT_ELEMENT", { nodeValue: "new" }, null);
 			wipText.stateNode = text.stateNode;
 			wipText.effectTag = Placement;
 

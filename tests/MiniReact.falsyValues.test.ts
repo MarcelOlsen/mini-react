@@ -38,9 +38,7 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 				{
 					type: "div",
 					props: {
-						children: [
-							{ type: "span", props: { children: [0] } },
-						],
+						children: [{ type: "span", props: { children: [0] } }],
 					},
 				},
 				container,
@@ -228,11 +226,7 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 				{
 					type: "div",
 					props: {
-						children: [
-							"before",
-							null,
-							"after",
-						],
+						children: ["before", null, "after"],
 					},
 				},
 				container,
@@ -269,10 +263,7 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 				{
 					type: "div",
 					props: {
-						children: [
-							{ type: "span", props: { children: [null] } },
-							"text",
-						],
+						children: [{ type: "span", props: { children: [null] } }, "text"],
 					},
 				},
 				container,
@@ -300,11 +291,7 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 				{
 					type: "div",
 					props: {
-						children: [
-							"before",
-							undefined,
-							"after",
-						],
+						children: ["before", undefined, "after"],
 					},
 				},
 				container,
@@ -332,14 +319,7 @@ describe("MiniReact.FalsyValues - Comprehensive", () => {
 				{
 					type: "div",
 					props: {
-						children: [
-							0,
-							"",
-							false,
-							null,
-							undefined,
-							"text",
-						],
+						children: [0, "", false, null, undefined, "text"],
 					},
 				},
 				container,
