@@ -4,7 +4,7 @@
 	"description": "Showcase application for MiniReact library using ElysiaJS",
 	"type": "module",
 	"scripts": {
-		"dev": "bun run build && bun run --watch src/server.ts",
+		"dev": "bun run build && bun --watch run src/server.ts",
 		"build": "bun build src/app.tsx --outdir=public --target=browser",
 		"build:prod": "bun build src/app.tsx --outdir=public --target=browser --minify",
 		"start": "bun run build:prod && bun run src/server.ts",
