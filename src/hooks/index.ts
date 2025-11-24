@@ -35,57 +35,12 @@ import type {
 	UseStateHook,
 } from "./types";
 
-/**
- * Effect queue for backward compatibility
- *
- * In the old implementation, effects were scheduled via microtask.
- * In Fiber, effects run during commit phase.
- * This queue is kept for backward compatibility but will be deprecated.
- */
-const effectQueue: (() => void)[] = [];
-let isFlushingEffects = false;
-
-/**
- * Schedule an effect to be run after the current render
- *
- * @deprecated Effects should run in commit phase, not via microtask
- */
-export function scheduleEffect(effectFn: () => void): void {
-	effectQueue.push(effectFn);
-
-	if (!isFlushingEffects) {
-		queueMicrotask(flushEffects);
-	}
-}
-
-/**
- * Flush all queued effects
- */
-function flushEffects(): void {
-	if (isFlushingEffects) return;
-
-	isFlushingEffects = true;
-
-	try {
-		while (effectQueue.length > 0) {
-			const effect = effectQueue.shift();
-			if (effect) {
-				effect();
-			}
-		}
-	} finally {
-		isFlushingEffects = false;
-	}
-}
-
-/**
- * Get the effect queue for external access
- *
- * @deprecated For testing only
- */
-export function getEffectQueue(): (() => void)[] {
-	return effectQueue;
-}
+// Re-export legacy scheduler functions for backward compatibility
+export {
+	scheduleEffect,
+	getEffectQueue,
+	resetEffectQueueForTests,
+} from "./legacyScheduler";
 
 /**
  * useState hook implementation
@@ -120,11 +75,18 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		// Create update queue for this hook
 		const queue = createUpdateQueue<T>(initialStateValue);
 
+		// Create stable setState function once during initialization
+		// Capture the fiber reference at creation time
+		const capturedFiber = fiber;
+		const setState = (newState: T | ((prevState: T) => T)) => {
+			dispatchSetState(capturedFiber, queue as UpdateQueue<T>, newState);
+		};
+
 		const stateHook: StateHook<T> = {
 			type: "state",
 			state: initialStateValue,
 			queue: queue as UpdateQueue<T>,
-			setState: () => {}, // Will be set below
+			setState: setState,
 		};
 
 		hooks.push(stateHook as StateOrEffectHook<unknown>);
@@ -138,17 +100,8 @@ export function useState<T>(initialState: T | (() => T)): UseStateHook<T> {
 		hook.state = newState;
 	}
 
-	// Create setState function with closure over fiber and queue
-	const queue = hook.queue as UpdateQueue<T>;
-	const setState = (newState: T | ((prevState: T) => T)) => {
-		// Dispatch state update to fiber
-		dispatchSetState(fiber, queue, newState);
-	};
-
-	// Update the setState function reference
-	hook.setState = setState;
-
-	return [hook.state as T, setState];
+	// Return the stable setState reference from the hook
+	return [hook.state as T, hook.setState];
 }
 
 /**
@@ -198,12 +151,25 @@ export function useReducer<State, Action, Init>(
 		// Create update queue
 		const queue = createUpdateQueue<State>(initialState);
 
+		// Create stable dispatch function once during initialization
+		// Capture fiber reference and read reducer from the mutable hook object
+		const capturedFiber = fiber;
+		const dispatch = (action: Action) => {
+			const currentHook = hooks[currentHookIndex] as ReducerHook<State, Action>;
+			dispatchReducerAction(
+				capturedFiber,
+				queue as UpdateQueue<State>,
+				action,
+				currentHook.reducer,
+			);
+		};
+
 		const reducerHook: ReducerHook<State, Action> = {
 			type: "reducer",
 			state: initialState,
 			reducer,
 			queue: queue as UpdateQueue<State>,
-			dispatch: () => {}, // Will be set below
+			dispatch: dispatch,
 		};
 
 		hooks.push(reducerHook as StateOrEffectHook<unknown>);
@@ -223,17 +189,8 @@ export function useReducer<State, Action, Init>(
 		hook.state = newState;
 	}
 
-	// Create dispatch function with closure over fiber, queue, and reducer
-	const queue = hook.queue as UpdateQueue<State>;
-	const dispatch = (action: Action) => {
-		// Dispatch reducer action to fiber with reducer for optimization
-		dispatchReducerAction(fiber, queue, action, reducer);
-	};
-
-	// Update the dispatch function reference
-	hook.dispatch = dispatch;
-
-	return [hook.state, dispatch];
+	// Return the stable dispatch reference from the hook
+	return [hook.state, hook.dispatch];
 }
 
 /**
