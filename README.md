@@ -114,6 +114,9 @@ cd mini-react
 # Install dependencies
 bun install
 
+# Setup git hooks (automatic code formatting)
+./scripts/setup-hooks.sh
+
 # Run tests to verify installation
 bun test
 
