@@ -457,7 +457,18 @@ cleanup(): void {
     }
   }
 
+  // Remove event listeners from all portal containers
+  for (const portalContainer of this.portalContainers) {
+    for (const eventName of this.registeredEvents) {
+      portalContainer.removeEventListener(
+        eventName,
+        this.boundHandleDelegatedEvent
+      )
+    }
+  }
+
   this.registeredEvents.clear()
+  this.portalContainers.clear()
   this.instanceToNode = new WeakMap()
   this.nodeToInstance = new WeakMap()
   this.rootContainer = null
