@@ -5,7 +5,7 @@ import {
 	render,
 	useCallback,
 	useState,
-} from "../src/MiniReact";
+} from "@/MiniReact";
 
 describe("MiniReact.useCallback Hook", () => {
 	let container: HTMLElement;
