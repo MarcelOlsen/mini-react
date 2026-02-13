@@ -91,21 +91,17 @@ export const TEXT_ELEMENT = "TEXT_ELEMENT";
 export const FRAGMENT = Symbol("react.fragment");
 export const PORTAL = Symbol("react.portal");
 
-// ******************* //
-// VDOM Instance Types //
-// ******************* //
-
-export interface VDOMInstance {
-	element: JSXElementType;
-	dom: Node | null;
-	childInstances: VDOMInstance[];
-	parent?: VDOMInstance;
-	hooks?: StateOrEffectHook<unknown>[];
-	hookCursor?: number;
-	contextValues?: Map<symbol, unknown>; // For context providers
-	rootContainer?: HTMLElement; // Track root container for root-level instances
-}
-
-// Import hook types from hooks module
-import type { StateOrEffectHook } from "../hooks/types";
 import type { PortalElement } from "../portals/types";
+
+// ******************* //
+// Public Hook Types    //
+// ******************* //
+
+export type EffectCallback = (() => void) | (() => () => void);
+export type DependencyList = readonly unknown[];
+
+export type Reducer<State, Action> = (state: State, action: Action) => State;
+
+export type MutableRefObject<T> = {
+	current: T;
+};
