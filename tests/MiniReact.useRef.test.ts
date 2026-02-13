@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { createElement, render, useRef, useState } from "../src/MiniReact";
+import { createElement, render, useRef, useState } from "@/MiniReact";
 
 describe("MiniReact.useRef Hook", () => {
 	let container: HTMLElement;
@@ -295,7 +295,7 @@ describe("MiniReact.useRef Hook", () => {
 		expect(refs.length).toBe(2);
 
 		// The ref object should be the same instance across re-renders
-		expect(refs[0]).toBe(refs[1]);
+		expect(refs[0]!).toBe(refs[1]!);
 		expect(refs[0]?.current).toBe(42);
 		expect(refs[1]?.current).toBe(42);
 	});
