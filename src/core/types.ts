@@ -94,6 +94,24 @@ export const PORTAL = Symbol("react.portal");
 import type { PortalElement } from "../portals/types";
 
 // ******************* //
+// VDOM Instance Types //
+// ******************* //
+
+export interface VDOMInstance {
+	element: JSXElementType;
+	dom: Node | null;
+	childInstances: VDOMInstance[];
+	parent?: VDOMInstance;
+	hooks?: StateOrEffectHook<unknown>[];
+	hookCursor?: number;
+	contextValues?: Map<symbol, unknown>; // For context providers
+	rootContainer?: HTMLElement; // Track root container for root-level instances
+}
+
+// Import hook types from hooks module
+import type { StateOrEffectHook } from "../hooks/types";
+
+// ******************* //
 // Public Hook Types    //
 // ******************* //
 
