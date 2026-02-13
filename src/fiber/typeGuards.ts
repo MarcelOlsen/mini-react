@@ -1,0 +1,615 @@
+/* **************** */
+/* Type Guards and Assertions */
+/* **************** */
+
+/**
+ * Type predicates and assertion functions for safe type narrowing.
+ * These replace explicit casts with runtime-validated type narrowing.
+ */
+
+import type {
+	Effect,
+	Fiber,
+	FiberRoot,
+	Flags,
+	Hook,
+	Lane,
+	Lanes,
+	PortalStateNode,
+	UpdateQueue,
+} from "./types";
+import { NoFlags, NoLanes, WorkTag } from "./types";
+
+// ============================================
+// Fiber Tag Type Guards
+// ============================================
+
+/**
+ * Type guard for host component fibers.
+ * Narrows stateNode to Element.
+ */
+export function isHostComponentFiber(
+	fiber: Fiber,
+): fiber is Fiber & { stateNode: Element } {
+	return fiber.tag === WorkTag.HostComponent;
+}
+
+/**
+ * Type guard for host text fibers.
+ * Narrows stateNode to Text.
+ */
+export function isHostTextFiber(
+	fiber: Fiber,
+): fiber is Fiber & { stateNode: Text } {
+	return fiber.tag === WorkTag.HostText;
+}
+
+/**
+ * Type guard for host root fibers.
+ * Narrows stateNode to FiberRoot.
+ */
+export function isHostRootFiber(
+	fiber: Fiber,
+): fiber is Fiber & { stateNode: FiberRoot } {
+	return fiber.tag === WorkTag.HostRoot;
+}
+
+/**
+ * Type guard for portal fibers.
+ * Narrows stateNode to PortalStateNode.
+ */
+export function isHostPortalFiber(
+	fiber: Fiber,
+): fiber is Fiber & { stateNode: PortalStateNode } {
+	return fiber.tag === WorkTag.HostPortal;
+}
+
+/**
+ * Type guard for function component fibers.
+ */
+export function isFunctionComponentFiber(fiber: Fiber): boolean {
+	return fiber.tag === WorkTag.FunctionComponent;
+}
+
+/**
+ * Type guard for memo component fibers.
+ */
+export function isMemoComponentFiber(fiber: Fiber): boolean {
+	return fiber.tag === WorkTag.MemoComponent;
+}
+
+/**
+ * Type guard for fragment fibers.
+ */
+export function isFragmentFiber(fiber: Fiber): boolean {
+	return fiber.tag === WorkTag.Fragment;
+}
+
+/**
+ * Type guard for context provider fibers.
+ */
+export function isContextProviderFiber(fiber: Fiber): boolean {
+	return fiber.tag === WorkTag.ContextProvider;
+}
+
+/**
+ * Type guard for context consumer fibers.
+ */
+export function isContextConsumerFiber(fiber: Fiber): boolean {
+	return fiber.tag === WorkTag.ContextConsumer;
+}
+
+// ============================================
+// StateNode Assertions (using `asserts` for type narrowing)
+// ============================================
+
+/**
+ * Narrowed fiber type for host components with non-null stateNode.
+ */
+export type HostComponentFiber = Fiber & {
+	tag: typeof WorkTag.HostComponent;
+	stateNode: Element;
+};
+
+/**
+ * Narrowed fiber type for host text with non-null stateNode.
+ */
+export type HostTextFiber = Fiber & {
+	tag: typeof WorkTag.HostText;
+	stateNode: Text;
+};
+
+/**
+ * Narrowed fiber type for host root with non-null stateNode.
+ */
+export type HostRootFiber = Fiber & {
+	tag: typeof WorkTag.HostRoot;
+	stateNode: FiberRoot;
+};
+
+/**
+ * Narrowed fiber type for portal with non-null stateNode.
+ */
+export type HostPortalFiber = Fiber & {
+	tag: typeof WorkTag.HostPortal;
+	stateNode: PortalStateNode;
+};
+
+/**
+ * Asserts that a fiber is a host component with non-null stateNode.
+ * Narrows the type in the calling scope.
+ * @throws Error if stateNode is null or fiber is not a host component
+ */
+export function assertHostComponentFiber(
+	fiber: Fiber,
+): asserts fiber is HostComponentFiber {
+	if (fiber.tag !== WorkTag.HostComponent) {
+		throw new Error(`Expected HostComponent fiber, got tag ${fiber.tag}`);
+	}
+	if (fiber.stateNode === null) {
+		throw new Error("HostComponent fiber has null stateNode");
+	}
+}
+
+/**
+ * Asserts that a fiber is a host text with non-null stateNode.
+ * Narrows the type in the calling scope.
+ * @throws Error if stateNode is null or fiber is not a host text
+ */
+export function assertHostTextFiber(
+	fiber: Fiber,
+): asserts fiber is HostTextFiber {
+	if (fiber.tag !== WorkTag.HostText) {
+		throw new Error(`Expected HostText fiber, got tag ${fiber.tag}`);
+	}
+	if (fiber.stateNode === null) {
+		throw new Error("HostText fiber has null stateNode");
+	}
+}
+
+/**
+ * Asserts that a fiber is a host root with non-null stateNode.
+ * Narrows the type in the calling scope.
+ * @throws Error if stateNode is null or fiber is not a host root
+ */
+export function assertHostRootFiber(
+	fiber: Fiber,
+): asserts fiber is HostRootFiber {
+	if (fiber.tag !== WorkTag.HostRoot) {
+		throw new Error(`Expected HostRoot fiber, got tag ${fiber.tag}`);
+	}
+	if (fiber.stateNode === null) {
+		throw new Error("HostRoot fiber has null stateNode");
+	}
+}
+
+/**
+ * Asserts that a fiber is a portal with non-null stateNode.
+ * Narrows the type in the calling scope.
+ * @throws Error if stateNode is null or fiber is not a portal
+ */
+export function assertHostPortalFiber(
+	fiber: Fiber,
+): asserts fiber is HostPortalFiber {
+	if (fiber.tag !== WorkTag.HostPortal) {
+		throw new Error(`Expected HostPortal fiber, got tag ${fiber.tag}`);
+	}
+	if (fiber.stateNode === null) {
+		throw new Error("HostPortal fiber has null stateNode");
+	}
+}
+
+/**
+ * Gets the stateNode as Element or Text for host fibers.
+ * Returns null if not a host fiber or stateNode is null.
+ */
+export function getHostStateNode(fiber: Fiber): Element | Text | null {
+	if (fiber.tag === WorkTag.HostComponent) {
+		return fiber.stateNode as Element | null;
+	}
+	if (fiber.tag === WorkTag.HostText) {
+		return fiber.stateNode as Text | null;
+	}
+	return null;
+}
+
+/**
+ * Asserts fiber is a host fiber (component or text) with non-null stateNode.
+ * Narrows the type in the calling scope.
+ * @throws Error if not a host fiber or stateNode is null
+ */
+export function assertHostFiber(
+	fiber: Fiber,
+): asserts fiber is HostComponentFiber | HostTextFiber {
+	if (fiber.tag !== WorkTag.HostComponent && fiber.tag !== WorkTag.HostText) {
+		throw new Error(
+			`Expected host fiber (HostComponent or HostText), got tag ${fiber.tag}`,
+		);
+	}
+	if (fiber.stateNode === null) {
+		throw new Error("Host fiber has null stateNode");
+	}
+}
+
+// ============================================
+// MemoizedState Type Guards
+// ============================================
+
+/**
+ * Type guard for hook linked list in memoizedState.
+ */
+export function isHookState(value: unknown): value is Hook {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	const obj = value as Record<string, unknown>;
+	return "memoizedState" in obj && "next" in obj && "queue" in obj;
+}
+
+/**
+ * Type guard for effect in memoizedState.
+ */
+export function isEffectState(value: unknown): value is Effect {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	const obj = value as Record<string, unknown>;
+	return "tag" in obj && "create" in obj && "deps" in obj;
+}
+
+/**
+ * Asserts that memoizedState is a Hook and returns it.
+ * @throws Error if not a valid Hook
+ */
+export function assertHookState(fiber: Fiber): Hook {
+	const state = fiber.memoizedState;
+	if (!isHookState(state)) {
+		throw new Error("Expected Hook in fiber.memoizedState");
+	}
+	return state;
+}
+
+/**
+ * Gets memoized state as a specific type, with null check.
+ */
+export function getMemoizedState<T>(fiber: Fiber): T | null {
+	return fiber.memoizedState as T | null;
+}
+
+/**
+ * Asserts memoized state is not null and returns as type T.
+ * @throws Error if memoizedState is null
+ */
+export function assertMemoizedState<T>(fiber: Fiber): T {
+	if (fiber.memoizedState === null) {
+		throw new Error("fiber.memoizedState is null");
+	}
+	return fiber.memoizedState as T;
+}
+
+// ============================================
+// Props Type Guards
+// ============================================
+
+/**
+ * Type for text element props.
+ */
+export type TextProps = { nodeValue: string | number };
+
+/**
+ * Type guard for text props.
+ */
+export function isTextProps(props: unknown): props is TextProps {
+	if (props === null || typeof props !== "object") {
+		return false;
+	}
+	return "nodeValue" in props;
+}
+
+/**
+ * Gets props as a record, with null handling.
+ */
+export function getPropsAsRecord(fiber: Fiber): Record<string, unknown> | null {
+	const props = fiber.pendingProps ?? fiber.memoizedProps;
+	if (props === null || typeof props !== "object") {
+		return null;
+	}
+	return props as Record<string, unknown>;
+}
+
+/**
+ * Asserts props are not null and returns as Record.
+ * @throws Error if props are null
+ */
+export function assertPropsAsRecord(fiber: Fiber): Record<string, unknown> {
+	const props = getPropsAsRecord(fiber);
+	if (props === null) {
+		throw new Error("Fiber props are null");
+	}
+	return props;
+}
+
+/**
+ * Asserts text props and returns them.
+ * @throws Error if not text props
+ */
+export function assertTextProps(fiber: Fiber): TextProps {
+	const props = fiber.pendingProps ?? fiber.memoizedProps;
+	if (!isTextProps(props)) {
+		throw new Error("Expected TextProps in fiber.pendingProps");
+	}
+	return props;
+}
+
+// ============================================
+// Update Queue Type Guards
+// ============================================
+
+/**
+ * Type guard for UpdateQueue.
+ */
+export function isUpdateQueue<S>(value: unknown): value is UpdateQueue<S> {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	const obj = value as Record<string, unknown>;
+	return "pending" in obj && "lanes" in obj && "dispatch" in obj;
+}
+
+/**
+ * Asserts update queue is not null and returns it.
+ * @throws Error if updateQueue is null
+ */
+export function assertUpdateQueue<S>(hook: Hook): UpdateQueue<S> {
+	if (hook.queue === null) {
+		throw new Error("Hook queue is null");
+	}
+	return hook.queue as UpdateQueue<S>;
+}
+
+// ============================================
+// Branded Type Helpers
+// ============================================
+
+/**
+ * Safely performs bitwise OR on lanes.
+ */
+export function mergeLanesUnsafe(a: Lanes | Lane, b: Lanes | Lane): Lanes {
+	return ((a as number) | (b as number)) as Lanes;
+}
+
+/**
+ * Safely performs bitwise AND on lanes.
+ */
+export function intersectLanesUnsafe(a: Lanes, b: Lanes): Lanes {
+	return ((a as number) & (b as number)) as Lanes;
+}
+
+/**
+ * Safely performs bitwise AND NOT on lanes.
+ */
+export function removeLanesUnsafe(set: Lanes, subset: Lanes | Lane): Lanes {
+	return ((set as number) & ~(subset as number)) as Lanes;
+}
+
+/**
+ * Checks if lanes include a specific lane.
+ */
+export function lanesIncludeLane(lanes: Lanes, lane: Lane): boolean {
+	return ((lanes as number) & (lane as number)) !== 0;
+}
+
+/**
+ * Checks if lanes are empty.
+ */
+export function isLanesEmpty(lanes: Lanes): boolean {
+	return lanes === NoLanes;
+}
+
+/**
+ * Checks if flags include a specific flag.
+ */
+export function flagsInclude(flags: Flags, flag: Flags): boolean {
+	return ((flags as number) & (flag as number)) !== 0;
+}
+
+/**
+ * Merges flags.
+ */
+export function mergeFlags(a: Flags, b: Flags): Flags {
+	return ((a as number) | (b as number)) as Flags;
+}
+
+/**
+ * Checks if flags are empty.
+ */
+export function isFlagsEmpty(flags: Flags): boolean {
+	return flags === NoFlags;
+}
+
+// ============================================
+// DOM Type Guards
+// ============================================
+
+/**
+ * Type guard for Element.
+ */
+export function isElement(node: Node): node is Element {
+	return node.nodeType === Node.ELEMENT_NODE;
+}
+
+/**
+ * Type guard for Text node.
+ */
+export function isTextNode(node: Node): node is Text {
+	return node.nodeType === Node.TEXT_NODE;
+}
+
+/**
+ * Type guard for HTMLElement.
+ */
+export function isHTMLElement(node: Node): node is HTMLElement {
+	return node instanceof HTMLElement;
+}
+
+/**
+ * Type guard for HTMLInputElement.
+ */
+export function isHTMLInputElement(
+	element: Element,
+): element is HTMLInputElement {
+	return element instanceof HTMLInputElement;
+}
+
+/**
+ * Asserts a node is an Element.
+ * Narrows the type in the calling scope.
+ * @throws Error if node is not an Element
+ */
+export function assertElement(node: Node): asserts node is Element {
+	if (!isElement(node)) {
+		throw new Error(`Expected Element, got nodeType ${node.nodeType}`);
+	}
+}
+
+/**
+ * Asserts a node is a Text node.
+ * Narrows the type in the calling scope.
+ * @throws Error if node is not a Text node
+ */
+export function assertTextNode(node: Node): asserts node is Text {
+	if (!isTextNode(node)) {
+		throw new Error(`Expected Text node, got nodeType ${node.nodeType}`);
+	}
+}
+
+// ============================================
+// FiberRoot Type Guards
+// ============================================
+
+/**
+ * Type guard for FiberRoot.
+ */
+export function isFiberRoot(value: unknown): value is FiberRoot {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	const obj = value as Record<string, unknown>;
+	return "containerInfo" in obj && "current" in obj && "pendingLanes" in obj;
+}
+
+/**
+ * Asserts a value is a FiberRoot.
+ * Narrows the type in the calling scope.
+ * @throws Error if not a FiberRoot
+ */
+export function assertFiberRoot(value: unknown): asserts value is FiberRoot {
+	if (!isFiberRoot(value)) {
+		throw new Error("Expected FiberRoot");
+	}
+}
+
+// ============================================
+// Fiber Type Guards
+// ============================================
+
+/**
+ * Type guard for Fiber with non-null return.
+ */
+export function hasFiberParent(
+	fiber: Fiber,
+): fiber is Fiber & { return: Fiber } {
+	return fiber.return !== null;
+}
+
+/**
+ * Type guard for Fiber with non-null child.
+ */
+export function hasFiberChild(fiber: Fiber): fiber is Fiber & { child: Fiber } {
+	return fiber.child !== null;
+}
+
+/**
+ * Type guard for Fiber with non-null sibling.
+ */
+export function hasFiberSibling(
+	fiber: Fiber,
+): fiber is Fiber & { sibling: Fiber } {
+	return fiber.sibling !== null;
+}
+
+/**
+ * Type guard for Fiber with non-null alternate.
+ */
+export function hasFiberAlternate(
+	fiber: Fiber,
+): fiber is Fiber & { alternate: Fiber } {
+	return fiber.alternate !== null;
+}
+
+/**
+ * Asserts fiber has a parent and returns it.
+ * @throws Error if fiber.return is null
+ */
+export function assertFiberParent(fiber: Fiber): Fiber {
+	if (fiber.return === null) {
+		throw new Error("Fiber has no parent");
+	}
+	return fiber.return;
+}
+
+// ============================================
+// Safe Property Access
+// ============================================
+
+/**
+ * Safely sets a dynamic property on an object.
+ * Use this instead of `(obj as unknown as Record<string, unknown>)[key] = value`
+ */
+export function setDynamicProperty(
+	obj: object,
+	key: string,
+	value: unknown,
+): void {
+	(obj as Record<string, unknown>)[key] = value;
+}
+
+/**
+ * Safely gets a dynamic property from an object.
+ */
+export function getDynamicProperty<T>(obj: object, key: string): T | undefined {
+	return (obj as Record<string, unknown>)[key] as T | undefined;
+}
+
+// ============================================
+// Component Type Guards
+// ============================================
+
+/**
+ * Type for a memo component with $$typeof symbol.
+ */
+export type MemoComponent = {
+	$$typeof: symbol;
+	type: unknown;
+	compare: ((prev: unknown, next: unknown) => boolean) | null;
+};
+
+/**
+ * Type guard for memo components.
+ */
+export function isMemoComponent(value: unknown): value is MemoComponent {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	const obj = value as Record<string, unknown>;
+	return "$$typeof" in obj && typeof obj["$$typeof"] === "symbol";
+}
+
+/**
+ * Type guard for function component type.
+ */
+export function isFunctionType(
+	type: unknown,
+): type is (props: Record<string, unknown>) => unknown {
+	return typeof type === "function";
+}
