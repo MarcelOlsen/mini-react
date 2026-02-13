@@ -28,13 +28,14 @@
 		"@changesets/cli": "^2.29.5",
 		"@happy-dom/global-registrator": "^17.5.6",
 		"@types/bun": "latest",
-		"typescript": "^5.0.0"
+		"@typescript/native-preview": "^7.0.0-dev.20260209.1"
 	},
 	"scripts": {
-		"build": "tsc -p tsconfig.build.json",
+		"build": "tsgo -p tsconfig.build.json",
 		"clean": "rm -rf dist",
 		"prebuild": "npm run clean",
 		"prepare": "npm run build",
+		"typecheck": "tsgo --noEmit",
 		"test": "bun test",
 		"lint": "biome lint .",
 		"format": "biome format .",
@@ -45,7 +46,7 @@
 		"prepublishOnly": "npm run test && npm run check && npm run build"
 	},
 	"peerDependencies": {
-		"typescript": "^5.0.0"
+		"@typescript/native-preview": "^7.0.0-dev"
 	},
 	"type": "module",
 	"keywords": ["react", "jsx", "virtual-dom", "ui-library"],
