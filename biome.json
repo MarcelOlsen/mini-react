@@ -35,7 +35,7 @@
 				"useLiteralKeys": "off"
 			},
 			"style": {
-				"noNonNullAssertion": "off"
+				"noNonNullAssertion": "error"
 			},
 			"security": {
 				"noGlobalEval": "warn"

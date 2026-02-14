@@ -28,7 +28,7 @@ jobs:
       - name: 🔍 Lint and format check
         run: bun run check
 
-      - name: typecheck
+      - name: 🔎 Typecheck
         run: bun run typecheck
 
       - name: 🏗️ Test build

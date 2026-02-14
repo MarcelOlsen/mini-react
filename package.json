@@ -45,9 +45,6 @@
 		"check:write": "biome check --write .",
 		"prepublishOnly": "npm run test && npm run check && npm run build"
 	},
-	"peerDependencies": {
-		"@typescript/native-preview": "^7.0.0-dev"
-	},
 	"type": "module",
 	"keywords": ["react", "jsx", "virtual-dom", "ui-library"],
 	"author": "Marcel Olsen",
