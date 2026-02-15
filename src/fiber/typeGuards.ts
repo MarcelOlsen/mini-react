@@ -253,7 +253,13 @@ export function isHookState(value: unknown): value is Hook {
 		return false;
 	}
 	const obj = value as Record<string, unknown>;
-	return "memoizedState" in obj && "next" in obj && "queue" in obj;
+	return (
+		"memoizedState" in obj &&
+		"baseState" in obj &&
+		"baseQueue" in obj &&
+		"queue" in obj &&
+		"next" in obj
+	);
 }
 
 /**
@@ -264,7 +270,13 @@ export function isEffectState(value: unknown): value is Effect {
 		return false;
 	}
 	const obj = value as Record<string, unknown>;
-	return "tag" in obj && "create" in obj && "deps" in obj;
+	return (
+		"tag" in obj &&
+		"create" in obj &&
+		"destroy" in obj &&
+		"deps" in obj &&
+		"next" in obj
+	);
 }
 
 /**
@@ -364,7 +376,18 @@ export function isUpdateQueue<S>(value: unknown): value is UpdateQueue<S> {
 		return false;
 	}
 	const obj = value as Record<string, unknown>;
-	return "pending" in obj && "lanes" in obj && "dispatch" in obj;
+	return (
+		"pending" in obj &&
+		(obj["pending"] === null || typeof obj["pending"] === "object") &&
+		"lanes" in obj &&
+		typeof obj["lanes"] === "number" &&
+		"dispatch" in obj &&
+		(obj["dispatch"] === null || typeof obj["dispatch"] === "function") &&
+		"lastRenderedReducer" in obj &&
+		(obj["lastRenderedReducer"] === null ||
+			typeof obj["lastRenderedReducer"] === "function") &&
+		"lastRenderedState" in obj
+	);
 }
 
 /**
