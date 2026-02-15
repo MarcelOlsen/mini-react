@@ -31,6 +31,12 @@
 				"noUnusedImports": "error",
 				"noUnusedVariables": "error"
 			},
+			"complexity": {
+				"useLiteralKeys": "off"
+			},
+			"style": {
+				"noNonNullAssertion": "error"
+			},
 			"security": {
 				"noGlobalEval": "warn"
 			}
