@@ -257,8 +257,11 @@ export function isHookState(value: unknown): value is Hook {
 		"memoizedState" in obj &&
 		"baseState" in obj &&
 		"baseQueue" in obj &&
+		(obj["baseQueue"] === null || typeof obj["baseQueue"] === "object") &&
 		"queue" in obj &&
-		"next" in obj
+		(obj["queue"] === null || typeof obj["queue"] === "object") &&
+		"next" in obj &&
+		(obj["next"] === null || typeof obj["next"] === "object")
 	);
 }
 
@@ -272,10 +275,15 @@ export function isEffectState(value: unknown): value is Effect {
 	const obj = value as Record<string, unknown>;
 	return (
 		"tag" in obj &&
+		typeof obj["tag"] === "number" &&
 		"create" in obj &&
+		typeof obj["create"] === "function" &&
 		"destroy" in obj &&
+		(obj["destroy"] === undefined || typeof obj["destroy"] === "function") &&
 		"deps" in obj &&
-		"next" in obj
+		(obj["deps"] === null || Array.isArray(obj["deps"])) &&
+		"next" in obj &&
+		(obj["next"] === null || typeof obj["next"] === "object")
 	);
 }
 
@@ -359,7 +367,9 @@ export function assertPropsAsRecord(fiber: Fiber): Record<string, unknown> {
 export function assertTextProps(fiber: Fiber): TextProps {
 	const props = fiber.pendingProps ?? fiber.memoizedProps;
 	if (!isTextProps(props)) {
-		throw new Error("Expected TextProps in fiber.pendingProps");
+		const source =
+			fiber.pendingProps !== undefined ? "pendingProps" : "memoizedProps";
+		throw new Error(`Expected TextProps in fiber.${source}`);
 	}
 	return props;
 }
@@ -532,7 +542,13 @@ export function isFiberRoot(value: unknown): value is FiberRoot {
 		return false;
 	}
 	const obj = value as Record<string, unknown>;
-	return "containerInfo" in obj && "current" in obj && "pendingLanes" in obj;
+	return (
+		obj["containerInfo"] !== null &&
+		typeof obj["containerInfo"] === "object" &&
+		obj["current"] !== null &&
+		typeof obj["current"] === "object" &&
+		typeof obj["pendingLanes"] === "number"
+	);
 }
 
 /**
@@ -599,8 +615,11 @@ export function assertFiberParent(fiber: Fiber): Fiber {
 // Safe Property Access
 // ============================================
 
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
 /**
  * Safely sets a dynamic property on an object.
+ * Rejects prototype-polluting keys (__proto__, constructor, prototype).
  * Use this instead of `(obj as unknown as Record<string, unknown>)[key] = value`
  */
 export function setDynamicProperty(
@@ -608,13 +627,20 @@ export function setDynamicProperty(
 	key: string,
 	value: unknown,
 ): void {
+	if (UNSAFE_KEYS.has(key)) {
+		throw new Error(`Refusing to set unsafe property "${key}"`);
+	}
 	(obj as Record<string, unknown>)[key] = value;
 }
 
 /**
  * Safely gets a dynamic property from an object.
+ * Rejects prototype-polluting keys (__proto__, constructor, prototype).
  */
 export function getDynamicProperty<T>(obj: object, key: string): T | undefined {
+	if (UNSAFE_KEYS.has(key)) {
+		throw new Error(`Refusing to access unsafe property "${key}"`);
+	}
 	return (obj as Record<string, unknown>)[key] as T | undefined;
 }
 
