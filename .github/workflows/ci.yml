@@ -22,14 +22,14 @@ jobs:
       - name: 📦 Install dependencies
         run: bun install
 
-      - name: 🧪 Run tests
-        run: bun test
-
       - name: 🔍 Lint and format check
         run: bun run check
 
       - name: 🔎 Typecheck
         run: bun run typecheck
+
+      - name: 🧪 Run tests
+        run: bun test
 
       - name: 🏗️ Test build
         run: bun run build
