@@ -30,7 +30,7 @@ import { NoFlags, NoLanes, WorkTag } from "./types";
  */
 export function isHostComponentFiber(
 	fiber: Fiber,
-): fiber is Fiber & { stateNode: Element } {
+): fiber is HostComponentFiber {
 	return fiber.tag === WorkTag.HostComponent && fiber.stateNode !== null;
 }
 
@@ -40,7 +40,7 @@ export function isHostComponentFiber(
  */
 export function isHostTextFiber(
 	fiber: Fiber,
-): fiber is Fiber & { stateNode: Text } {
+): fiber is HostTextFiber {
 	return fiber.tag === WorkTag.HostText && fiber.stateNode !== null;
 }
 
@@ -50,7 +50,7 @@ export function isHostTextFiber(
  */
 export function isHostRootFiber(
 	fiber: Fiber,
-): fiber is Fiber & { stateNode: FiberRoot } {
+): fiber is HostRootFiber {
 	return fiber.tag === WorkTag.HostRoot && fiber.stateNode !== null;
 }
 
@@ -60,7 +60,7 @@ export function isHostRootFiber(
  */
 export function isHostPortalFiber(
 	fiber: Fiber,
-): fiber is Fiber & { stateNode: PortalStateNode } {
+): fiber is HostPortalFiber {
 	return fiber.tag === WorkTag.HostPortal && fiber.stateNode !== null;
 }
 
