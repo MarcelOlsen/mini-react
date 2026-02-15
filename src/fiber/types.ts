@@ -144,7 +144,6 @@ export const HookEffectTag = {
 } as const satisfies Record<string, number>;
 
 export type HookEffectTag = (typeof HookEffectTag)[keyof typeof HookEffectTag];
-export type HookEffectTagType = HookEffectTag;
 
 /**
  * Type for effect create callbacks.
@@ -158,7 +157,7 @@ export type EffectCreate = (() => (() => void) | undefined) | (() => void);
  * Effect object stored in fiber's updateQueue for effects.
  */
 export type Effect = {
-	tag: HookEffectTagType;
+	tag: HookEffectTag;
 	create: EffectCreate;
 	destroy: (() => void) | undefined;
 	deps: readonly unknown[] | null;
@@ -529,8 +528,9 @@ export function isHostRoot(
 /**
  * Check if a fiber is a portal.
  */
-export function isPortal(
-	fiber: Fiber,
-): fiber is Fiber & { tag: typeof WorkTag.HostPortal } {
+export function isPortal(fiber: Fiber): fiber is Fiber & {
+	tag: typeof WorkTag.HostPortal;
+	stateNode: PortalStateNode;
+} {
 	return fiber.tag === WorkTag.HostPortal;
 }
