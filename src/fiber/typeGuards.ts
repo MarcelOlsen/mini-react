@@ -16,6 +16,7 @@ import type {
 	Lane,
 	Lanes,
 	PortalStateNode,
+	Update,
 	UpdateQueue,
 } from "./types";
 import { NoFlags, NoLanes, WorkTag } from "./types";
@@ -251,7 +252,7 @@ export function isHookState(value: unknown): value is Hook {
 		"memoizedState" in obj &&
 		"baseState" in obj &&
 		"baseQueue" in obj &&
-		(obj["baseQueue"] === null || isUpdateQueue(obj["baseQueue"])) &&
+		(obj["baseQueue"] === null || isUpdate(obj["baseQueue"])) &&
 		"queue" in obj &&
 		(obj["queue"] === null || isUpdateQueue(obj["queue"])) &&
 		"next" in obj &&
@@ -366,6 +367,30 @@ export function assertTextProps(fiber: Fiber): TextProps {
 		throw new Error(`Expected TextProps in fiber.${source}`);
 	}
 	return props;
+}
+
+// ============================================
+// Update Type Guards
+// ============================================
+
+/**
+ * Type guard for Update.
+ */
+export function isUpdate<S>(value: unknown): value is Update<S> {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	const obj = value as Record<string, unknown>;
+	return (
+		"lane" in obj &&
+		typeof obj["lane"] === "number" &&
+		"action" in obj &&
+		"hasEagerState" in obj &&
+		typeof obj["hasEagerState"] === "boolean" &&
+		"eagerState" in obj &&
+		"next" in obj &&
+		(obj["next"] === null || typeof obj["next"] === "object")
+	);
 }
 
 // ============================================
