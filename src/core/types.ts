@@ -3,6 +3,8 @@
 /* **************** */
 
 import type { SyntheticEvent } from "../events/types";
+import type { StateOrEffectHook } from "../hooks/types";
+import type { PortalElement } from "../portals/types";
 
 export type AnyMiniReactElement =
 	| MiniReactElement
@@ -106,6 +108,13 @@ export interface VDOMInstance {
 	rootContainer?: HTMLElement; // Track root container for root-level instances
 }
 
-// Import hook types from hooks module
-import type { StateOrEffectHook } from "../hooks/types";
-import type { PortalElement } from "../portals/types";
+// ******************* //
+// Public Hook Types    //
+// ******************* //
+
+export type {
+	EffectCallback,
+	DependencyList,
+	Reducer,
+	MutableRefObject,
+} from "../hooks/types";
