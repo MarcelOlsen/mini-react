@@ -3,6 +3,7 @@
 /* **************** */
 
 import type { SyntheticEvent } from "../events/types";
+import type { PortalElement } from "../portals/types";
 
 export type AnyMiniReactElement =
 	| MiniReactElement
@@ -91,8 +92,6 @@ export const TEXT_ELEMENT = "TEXT_ELEMENT";
 export const FRAGMENT = Symbol("react.fragment");
 export const PORTAL = Symbol("react.portal");
 
-import type { PortalElement } from "../portals/types";
-
 // ******************* //
 // VDOM Instance Types //
 // ******************* //
@@ -115,11 +114,9 @@ import type { StateOrEffectHook } from "../hooks/types";
 // Public Hook Types    //
 // ******************* //
 
-export type EffectCallback = (() => void) | (() => () => void);
-export type DependencyList = readonly unknown[];
-
-export type Reducer<State, Action> = (state: State, action: Action) => State;
-
-export type MutableRefObject<T> = {
-	current: T;
-};
+export type {
+	EffectCallback,
+	DependencyList,
+	Reducer,
+	MutableRefObject,
+} from "../hooks/types";

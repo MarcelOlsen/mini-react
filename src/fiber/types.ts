@@ -64,6 +64,8 @@ export type Flags = number & { readonly [FlagsBrand]: typeof FlagsBrand };
 export const createLane = (value: number): Lane => value as Lane;
 export const createLanes = (value: number): Lanes => value as Lanes;
 export const createFlags = (value: number): Flags => value as Flags;
+export const combineFlags = (...flags: Flags[]): Flags =>
+	createFlags(flags.reduce((acc, f) => acc | (f as number), 0));
 
 // ============================================
 // Lane Constants - Priority levels
@@ -91,7 +93,7 @@ export const OffscreenLane: Lane =
 export const NoFlags: Flags = createFlags(0b0000000000000000000000000000);
 export const PerformedWork: Flags = createFlags(0b0000000000000000000000000001);
 export const Placement: Flags = createFlags(0b0000000000000000000000000010);
-export const Update: Flags = createFlags(0b0000000000000000000000000100);
+export const UpdateEffect: Flags = createFlags(0b0000000000000000000000000100);
 export const ChildDeletion: Flags = createFlags(0b0000000000000000000000010000);
 export const ContentReset: Flags = createFlags(0b0000000000000000000000100000);
 export const Callback: Flags = createFlags(0b0000000000000000000001000000);
@@ -107,31 +109,23 @@ export const StoreConsistency: Flags =
 	createFlags(0b0000000000000100000000000000);
 
 // Combined flags for common operations
-export const PlacementAndUpdate: Flags = createFlags(
-	(Placement as number) | (Update as number),
-);
-export const Deletion: Flags = createFlags(
-	(ChildDeletion as number) | (Placement as number),
-);
+export const PlacementAndUpdate: Flags = combineFlags(Placement, UpdateEffect);
+export const Deletion: Flags = combineFlags(ChildDeletion, Placement);
 
 // Flags that indicate the fiber has work to do in commit phase
-export const MutationMask: Flags = createFlags(
-	(Placement as number) |
-		(Update as number) |
-		(ChildDeletion as number) |
-		(ContentReset as number) |
-		(Ref as number) |
-		(Hydrating as number) |
-		(Visibility as number),
+export const MutationMask: Flags = combineFlags(
+	Placement,
+	UpdateEffect,
+	ChildDeletion,
+	ContentReset,
+	Ref,
+	Hydrating,
+	Visibility,
 );
 
-export const LayoutMask: Flags = createFlags(
-	(Update as number) | (Callback as number) | (Ref as number),
-);
+export const LayoutMask: Flags = combineFlags(UpdateEffect, Callback, Ref);
 
-export const PassiveMask: Flags = createFlags(
-	(Passive as number) | (ChildDeletion as number),
-);
+export const PassiveMask: Flags = combineFlags(Passive, ChildDeletion);
 
 // ============================================
 // Hook Types for Fiber
@@ -150,6 +144,7 @@ export const HookEffectTag = {
 } as const satisfies Record<string, number>;
 
 export type HookEffectTag = (typeof HookEffectTag)[keyof typeof HookEffectTag];
+export type HookEffectTagType = HookEffectTag;
 
 /**
  * Type for effect create callbacks.
@@ -163,7 +158,7 @@ export type EffectCreate = (() => (() => void) | undefined) | (() => void);
  * Effect object stored in fiber's updateQueue for effects.
  */
 export type Effect = {
-	tag: number; // HookEffectTag bitmask
+	tag: HookEffectTagType;
 	create: EffectCreate;
 	destroy: (() => void) | undefined;
 	deps: readonly unknown[] | null;
@@ -254,9 +249,10 @@ export type Fiber = {
 	/**
 	 * Local state associated with this fiber.
 	 * For host components: the DOM node
-	 * For class components: the instance
 	 * For function components: null
 	 * For portals: PortalStateNode with container info
+	 * TODO(ClassComponent): Add class component instance type to this union
+	 * when implementing WorkTag.ClassComponent support.
 	 */
 	stateNode: Element | Text | FiberRoot | PortalStateNode | null;
 
@@ -312,7 +308,7 @@ export type Fiber = {
 
 	// === Effects ===
 
-	/** Bitmask of side effects (Placement, Update, etc.) */
+	/** Bitmask of side effects (Placement, UpdateEffect, etc.) */
 	flags: Flags;
 
 	/** Subtree flags (bubbled up from children) */
@@ -481,29 +477,30 @@ export type StateNodeFor<T extends WorkTag> =
 				: null;
 
 // ============================================
-// Context Import (circular dependency handled)
+// Context Import (type-only to avoid circular dependency)
 // ============================================
 
-// Forward declare context type to avoid circular import
-// The actual implementation is in context/types.ts
-export type MiniReactContext<T> = {
-	$$typeof: symbol;
-	_currentValue: T;
-	_defaultValue: T;
-	Provider: ElementType;
-	Consumer: ElementType;
-};
+import type { MiniReactContext } from "../context/types";
+export type { MiniReactContext };
 
 // ============================================
 // Helper Type Guards
 // ============================================
 
 /**
- * Check if a fiber is a host component (has a DOM node).
+ * Check if a fiber represents a DOM element or text node.
+ * Use this when you need to perform DOM operations on fiber.stateNode.
  */
-export function isHostFiber(
+export function isDOMFiber(
 	fiber: Fiber,
 ): fiber is Fiber & { stateNode: Element | Text } {
+	return fiber.tag === WorkTag.HostComponent || fiber.tag === WorkTag.HostText;
+}
+
+/**
+ * Check if a fiber is a host fiber (DOM element, text node, or host root).
+ */
+export function isHostFiber(fiber: Fiber): boolean {
 	return (
 		fiber.tag === WorkTag.HostComponent ||
 		fiber.tag === WorkTag.HostText ||
