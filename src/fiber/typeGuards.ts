@@ -372,10 +372,10 @@ export function isUpdateQueue<S>(value: unknown): value is UpdateQueue<S> {
  * @throws Error if updateQueue is null
  */
 export function assertUpdateQueue<S>(hook: Hook): UpdateQueue<S> {
-	if (hook.queue === null) {
-		throw new Error("Hook queue is null");
+	if (!isUpdateQueue<S>(hook.queue)) {
+		throw new Error("Hook queue is not a valid UpdateQueue");
 	}
-	return hook.queue as UpdateQueue<S>;
+	return hook.queue;
 }
 
 // ============================================
@@ -446,14 +446,14 @@ export function isFlagsEmpty(flags: Flags): boolean {
  * Type guard for Element.
  */
 export function isElement(node: Node): node is Element {
-	return node.nodeType === Node.ELEMENT_NODE;
+	return typeof Node !== "undefined" && node.nodeType === Node.ELEMENT_NODE;
 }
 
 /**
  * Type guard for Text node.
  */
 export function isTextNode(node: Node): node is Text {
-	return node.nodeType === Node.TEXT_NODE;
+	return typeof Node !== "undefined" && node.nodeType === Node.TEXT_NODE;
 }
 
 /**
@@ -616,7 +616,13 @@ export function isMemoComponent(value: unknown): value is MemoComponent {
 		return false;
 	}
 	const obj = value as Record<string, unknown>;
-	return "$$typeof" in obj && typeof obj["$$typeof"] === "symbol";
+	return (
+		"$$typeof" in obj &&
+		typeof obj["$$typeof"] === "symbol" &&
+		"type" in obj &&
+		obj["type"] !== undefined &&
+		(typeof obj["compare"] === "function" || obj["compare"] === null)
+	);
 }
 
 /**
