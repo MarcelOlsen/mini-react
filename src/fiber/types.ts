@@ -473,7 +473,9 @@ export type StateNodeFor<T extends WorkTag> =
 			? Text
 			: T extends typeof WorkTag.HostRoot
 				? FiberRoot
-				: null;
+				: T extends typeof WorkTag.HostPortal
+					? PortalStateNode
+					: null;
 
 // ============================================
 // Context Import (type-only to avoid circular dependency)
