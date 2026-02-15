@@ -251,9 +251,9 @@ export function isHookState(value: unknown): value is Hook {
 		"memoizedState" in obj &&
 		"baseState" in obj &&
 		"baseQueue" in obj &&
-		(obj["baseQueue"] === null || typeof obj["baseQueue"] === "object") &&
+		(obj["baseQueue"] === null || isUpdateQueue(obj["baseQueue"])) &&
 		"queue" in obj &&
-		(obj["queue"] === null || typeof obj["queue"] === "object") &&
+		(obj["queue"] === null || isUpdateQueue(obj["queue"])) &&
 		"next" in obj &&
 		(obj["next"] === null || typeof obj["next"] === "object")
 	);
@@ -362,7 +362,7 @@ export function assertTextProps(fiber: Fiber): TextProps {
 	const props = fiber.pendingProps ?? fiber.memoizedProps;
 	if (!isTextProps(props)) {
 		const source =
-			fiber.pendingProps !== undefined ? "pendingProps" : "memoizedProps";
+			fiber.pendingProps != null ? "pendingProps" : "memoizedProps";
 		throw new Error(`Expected TextProps in fiber.${source}`);
 	}
 	return props;
