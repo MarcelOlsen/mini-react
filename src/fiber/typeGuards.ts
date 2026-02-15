@@ -38,9 +38,7 @@ export function isHostComponentFiber(
  * Type guard for host text fibers.
  * Narrows stateNode to Text.
  */
-export function isHostTextFiber(
-	fiber: Fiber,
-): fiber is HostTextFiber {
+export function isHostTextFiber(fiber: Fiber): fiber is HostTextFiber {
 	return fiber.tag === WorkTag.HostText && fiber.stateNode !== null;
 }
 
@@ -48,9 +46,7 @@ export function isHostTextFiber(
  * Type guard for host root fibers.
  * Narrows stateNode to FiberRoot.
  */
-export function isHostRootFiber(
-	fiber: Fiber,
-): fiber is HostRootFiber {
+export function isHostRootFiber(fiber: Fiber): fiber is HostRootFiber {
 	return fiber.tag === WorkTag.HostRoot && fiber.stateNode !== null;
 }
 
@@ -58,9 +54,7 @@ export function isHostRootFiber(
  * Type guard for portal fibers.
  * Narrows stateNode to PortalStateNode.
  */
-export function isHostPortalFiber(
-	fiber: Fiber,
-): fiber is HostPortalFiber {
+export function isHostPortalFiber(fiber: Fiber): fiber is HostPortalFiber {
 	return fiber.tag === WorkTag.HostPortal && fiber.stateNode !== null;
 }
 
