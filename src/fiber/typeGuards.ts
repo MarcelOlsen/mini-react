@@ -31,7 +31,7 @@ import { NoFlags, NoLanes, WorkTag } from "./types";
 export function isHostComponentFiber(
 	fiber: Fiber,
 ): fiber is Fiber & { stateNode: Element } {
-	return fiber.tag === WorkTag.HostComponent;
+	return fiber.tag === WorkTag.HostComponent && fiber.stateNode !== null;
 }
 
 /**
@@ -41,7 +41,7 @@ export function isHostComponentFiber(
 export function isHostTextFiber(
 	fiber: Fiber,
 ): fiber is Fiber & { stateNode: Text } {
-	return fiber.tag === WorkTag.HostText;
+	return fiber.tag === WorkTag.HostText && fiber.stateNode !== null;
 }
 
 /**
@@ -51,7 +51,7 @@ export function isHostTextFiber(
 export function isHostRootFiber(
 	fiber: Fiber,
 ): fiber is Fiber & { stateNode: FiberRoot } {
-	return fiber.tag === WorkTag.HostRoot;
+	return fiber.tag === WorkTag.HostRoot && fiber.stateNode !== null;
 }
 
 /**
@@ -61,41 +61,51 @@ export function isHostRootFiber(
 export function isHostPortalFiber(
 	fiber: Fiber,
 ): fiber is Fiber & { stateNode: PortalStateNode } {
-	return fiber.tag === WorkTag.HostPortal;
+	return fiber.tag === WorkTag.HostPortal && fiber.stateNode !== null;
 }
 
 /**
  * Type guard for function component fibers.
  */
-export function isFunctionComponentFiber(fiber: Fiber): boolean {
+export function isFunctionComponentFiber(
+	fiber: Fiber,
+): fiber is Fiber & { tag: typeof WorkTag.FunctionComponent } {
 	return fiber.tag === WorkTag.FunctionComponent;
 }
 
 /**
  * Type guard for memo component fibers.
  */
-export function isMemoComponentFiber(fiber: Fiber): boolean {
+export function isMemoComponentFiber(
+	fiber: Fiber,
+): fiber is Fiber & { tag: typeof WorkTag.MemoComponent } {
 	return fiber.tag === WorkTag.MemoComponent;
 }
 
 /**
  * Type guard for fragment fibers.
  */
-export function isFragmentFiber(fiber: Fiber): boolean {
+export function isFragmentFiber(
+	fiber: Fiber,
+): fiber is Fiber & { tag: typeof WorkTag.Fragment } {
 	return fiber.tag === WorkTag.Fragment;
 }
 
 /**
  * Type guard for context provider fibers.
  */
-export function isContextProviderFiber(fiber: Fiber): boolean {
+export function isContextProviderFiber(
+	fiber: Fiber,
+): fiber is Fiber & { tag: typeof WorkTag.ContextProvider } {
 	return fiber.tag === WorkTag.ContextProvider;
 }
 
 /**
  * Type guard for context consumer fibers.
  */
-export function isContextConsumerFiber(fiber: Fiber): boolean {
+export function isContextConsumerFiber(
+	fiber: Fiber,
+): fiber is Fiber & { tag: typeof WorkTag.ContextConsumer } {
 	return fiber.tag === WorkTag.ContextConsumer;
 }
 
@@ -303,7 +313,8 @@ export function isTextProps(props: unknown): props is TextProps {
 	if (props === null || typeof props !== "object") {
 		return false;
 	}
-	return "nodeValue" in props;
+	const nv = (props as Record<string, unknown>).nodeValue;
+	return typeof nv === "string" || typeof nv === "number";
 }
 
 /**
@@ -449,7 +460,7 @@ export function isTextNode(node: Node): node is Text {
  * Type guard for HTMLElement.
  */
 export function isHTMLElement(node: Node): node is HTMLElement {
-	return node instanceof HTMLElement;
+	return typeof HTMLElement !== "undefined" && node instanceof HTMLElement;
 }
 
 /**
@@ -458,7 +469,10 @@ export function isHTMLElement(node: Node): node is HTMLElement {
 export function isHTMLInputElement(
 	element: Element,
 ): element is HTMLInputElement {
-	return element instanceof HTMLInputElement;
+	return (
+		typeof HTMLInputElement !== "undefined" &&
+		element instanceof HTMLInputElement
+	);
 }
 
 /**
