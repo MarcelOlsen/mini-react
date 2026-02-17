@@ -22,6 +22,42 @@ import type {
 import { NoFlags, NoLanes, WorkTag } from "./types";
 
 // ============================================
+// Narrowed Fiber Type Aliases
+// ============================================
+
+/**
+ * Narrowed fiber type for host components with non-null stateNode.
+ */
+export type HostComponentFiber = Fiber & {
+	tag: typeof WorkTag.HostComponent;
+	stateNode: Element;
+};
+
+/**
+ * Narrowed fiber type for host text with non-null stateNode.
+ */
+export type HostTextFiber = Fiber & {
+	tag: typeof WorkTag.HostText;
+	stateNode: Text;
+};
+
+/**
+ * Narrowed fiber type for host root with non-null stateNode.
+ */
+export type HostRootFiber = Fiber & {
+	tag: typeof WorkTag.HostRoot;
+	stateNode: FiberRoot;
+};
+
+/**
+ * Narrowed fiber type for portal with non-null stateNode.
+ */
+export type HostPortalFiber = Fiber & {
+	tag: typeof WorkTag.HostPortal;
+	stateNode: PortalStateNode;
+};
+
+// ============================================
 // Fiber Tag Type Guards
 // ============================================
 
@@ -107,38 +143,6 @@ export function isContextConsumerFiber(
 // ============================================
 // StateNode Assertions (using `asserts` for type narrowing)
 // ============================================
-
-/**
- * Narrowed fiber type for host components with non-null stateNode.
- */
-export type HostComponentFiber = Fiber & {
-	tag: typeof WorkTag.HostComponent;
-	stateNode: Element;
-};
-
-/**
- * Narrowed fiber type for host text with non-null stateNode.
- */
-export type HostTextFiber = Fiber & {
-	tag: typeof WorkTag.HostText;
-	stateNode: Text;
-};
-
-/**
- * Narrowed fiber type for host root with non-null stateNode.
- */
-export type HostRootFiber = Fiber & {
-	tag: typeof WorkTag.HostRoot;
-	stateNode: FiberRoot;
-};
-
-/**
- * Narrowed fiber type for portal with non-null stateNode.
- */
-export type HostPortalFiber = Fiber & {
-	tag: typeof WorkTag.HostPortal;
-	stateNode: PortalStateNode;
-};
 
 /**
  * Asserts that a fiber is a host component with non-null stateNode.
@@ -295,14 +299,20 @@ export function assertHookState(fiber: Fiber): Hook {
 }
 
 /**
- * Gets memoized state as a specific type, with null check.
+ * Gets memoized state cast to a specific type, with null check.
+ * WARNING: Does not perform runtime validation of T. This is an unchecked cast.
+ * Use specific guards like {@link isHookState} or {@link isEffectState} when
+ * runtime validation is required.
  */
 export function getMemoizedState<T>(fiber: Fiber): T | null {
 	return fiber.memoizedState as T | null;
 }
 
 /**
- * Asserts memoized state is not null and returns as type T.
+ * Asserts memoized state is not null and returns cast to type T.
+ * WARNING: Does not perform runtime validation of T. This is an unchecked cast
+ * that only verifies non-null. Use specific guards like {@link isHookState} or
+ * {@link isEffectState} when runtime shape validation is required.
  * @throws Error if memoizedState is null
  */
 export function assertMemoizedState<T>(fiber: Fiber): T {
@@ -407,7 +417,7 @@ export function isUpdateQueue<S>(value: unknown): value is UpdateQueue<S> {
 	const obj = value as Record<string, unknown>;
 	return (
 		"pending" in obj &&
-		(obj["pending"] === null || typeof obj["pending"] === "object") &&
+		(obj["pending"] === null || isUpdate(obj["pending"])) &&
 		"lanes" in obj &&
 		typeof obj["lanes"] === "number" &&
 		"dispatch" in obj &&
@@ -435,23 +445,23 @@ export function assertUpdateQueue<S>(hook: Hook): UpdateQueue<S> {
 // ============================================
 
 /**
- * Safely performs bitwise OR on lanes.
+ * Performs bitwise OR on branded Lane/Lanes types, returning a merged Lanes bitmask.
  */
-export function mergeLanesUnsafe(a: Lanes | Lane, b: Lanes | Lane): Lanes {
+export function mergeLanes(a: Lanes | Lane, b: Lanes | Lane): Lanes {
 	return ((a as number) | (b as number)) as Lanes;
 }
 
 /**
- * Safely performs bitwise AND on lanes.
+ * Performs bitwise AND on branded Lanes types, returning the intersection.
  */
-export function intersectLanesUnsafe(a: Lanes, b: Lanes): Lanes {
+export function intersectLanes(a: Lanes, b: Lanes): Lanes {
 	return ((a as number) & (b as number)) as Lanes;
 }
 
 /**
- * Safely performs bitwise AND NOT on lanes.
+ * Performs bitwise AND NOT on branded Lanes types, removing subset from set.
  */
-export function removeLanesUnsafe(set: Lanes, subset: Lanes | Lane): Lanes {
+export function removeLanes(set: Lanes, subset: Lanes | Lane): Lanes {
 	return ((set as number) & ~(subset as number)) as Lanes;
 }
 
