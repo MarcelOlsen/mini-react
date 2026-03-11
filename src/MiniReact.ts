@@ -10,34 +10,28 @@ export type {
 	FunctionalComponent,
 	ElementType,
 	MiniReactElement,
-} from "./core/types";
-
-// Hooks
-export {
-	useState,
-	useEffect,
-	useReducer,
-	useRef,
-	useMemo,
-	useCallback,
-} from "./hooks";
-export type {
-	UseStateHook,
-	UseEffectHook,
-	UseReducerHook,
-	UseRefHook,
 	EffectCallback,
 	DependencyList,
 	Reducer,
 	MutableRefObject,
-} from "./hooks/types";
+} from "./core/types";
+
+// Fiber-based hooks
+export {
+	useStateFiber as useState,
+	useEffectFiber as useEffect,
+	useReducerFiber as useReducer,
+	useRefFiber as useRef,
+	useMemoFiber as useMemo,
+	useCallbackFiber as useCallback,
+} from "./fiber";
 
 // Context
 export { createContext, useContext } from "./context";
 export type { MiniReactContext } from "./context/types";
 
 // Fragments
-export { Fragment } from "./fragments";
+export { FRAGMENT as Fragment } from "./core/types";
 
 // Portals
 export { createPortal } from "./portals";
@@ -57,18 +51,17 @@ export { jsx, jsxs, jsxDEV } from "./jsx-runtime";
 export type { SyntheticEvent } from "./events/types";
 
 import { createContext, useContext } from "./context";
-// Higher-order components
 import { createElement, render } from "./core";
-import type { FunctionalComponent, VDOMInstance } from "./core/types";
-import { Fragment } from "./fragments";
+import { FRAGMENT as Fragment } from "./core/types";
+import type { FunctionalComponent } from "./core/types";
 import {
-	useCallback,
-	useEffect,
-	useMemo,
-	useReducer,
-	useRef,
-	useState,
-} from "./hooks";
+	useCallbackFiber as useCallback,
+	useEffectFiber as useEffect,
+	useMemoFiber as useMemo,
+	useReducerFiber as useReducer,
+	useRefFiber as useRef,
+	useStateFiber as useState,
+} from "./fiber";
 import { jsx, jsxDEV, jsxs } from "./jsx-runtime";
 import {
 	getPerformanceMetrics,
@@ -90,7 +83,7 @@ export function memo<P extends Record<string, unknown>>(
 	};
 
 	// Store the comparison function and original component for reconciliation
-	(MemoizedComponent as unknown as Record<string, unknown>).__memo = {
+	(MemoizedComponent as unknown as Record<string, unknown>)["__memo"] = {
 		Component,
 		areEqual: areEqual || shallowEqual,
 	};
@@ -122,30 +115,7 @@ function shallowEqual<P extends Record<string, unknown>>(
 	return true;
 }
 
-import {
-	popContextValues,
-	pushContextValues,
-	setContextRenderInstance,
-} from "./context";
-// Set up cross-module dependencies
-import { scheduleEffect, setHookContext } from "./hooks";
-import {
-	setContextHooks,
-	setHookContext as setReconcilerHookContext,
-	setScheduleEffect,
-} from "./reconciler";
-
-// Initialize cross-module dependencies
-setScheduleEffect(scheduleEffect);
-setContextHooks(pushContextValues, popContextValues);
-// Connect context render instance to hooks render instance
-setReconcilerHookContext((instance: VDOMInstance | null) => {
-	setHookContext(instance);
-	setContextRenderInstance(instance);
-});
-
-// Export internal utilities for advanced usage
-export { setHookContext } from "./hooks";
+// Export event system for advanced usage
 export { eventSystem } from "./events";
 
 // Constants
