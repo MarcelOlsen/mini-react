@@ -43,10 +43,16 @@ export {
 // ============================================
 
 /**
- * All non-idle lanes.
+ * All non-idle lanes. Derived from lane constants so it stays correct when
+ * lane definitions change.
  */
-export const NonIdleLanes: Lanes =
-	createLanes(0b0001111111111111111111111111111);
+export const NonIdleLanes: Lanes = createLanes(
+	(SyncLane as number) |
+		(InputContinuousLane as number) |
+		(DefaultLane as number) |
+		(TransitionLane1 as number) |
+		(TransitionLane2 as number),
+);
 
 /**
  * All transition lanes.
@@ -228,6 +234,12 @@ export function getNextLanes(
 		return NoLanes;
 	}
 
+	// Expired lanes must be flushed synchronously — give them highest priority.
+	const expiredPendingLanes = intersectLanes(pendingLanes, root.expiredLanes);
+	if (expiredPendingLanes !== NoLanes) {
+		return getHighestPriorityLanes(expiredPendingLanes);
+	}
+
 	let nextLanes = NoLanes;
 
 	// Check for suspended lanes
@@ -293,6 +305,11 @@ export function getNextLanes(
  */
 export function markRootUpdated(root: FiberRoot, updateLane: Lane): void {
 	root.pendingLanes = mergeLanes(root.pendingLanes, updateLane);
+	// A new update arriving on this lane means it is no longer suspended or
+	// waiting for a ping — clear any stale blocked state so getNextLanes can
+	// pick it up immediately.
+	root.suspendedLanes = removeLanes(root.suspendedLanes, updateLane);
+	root.pingedLanes = removeLanes(root.pingedLanes, updateLane);
 }
 
 /**
@@ -342,13 +359,22 @@ export function markRootExpired(root: FiberRoot, expiredLanes: Lanes): void {
  * Schedules an update lane on a fiber.
  */
 export function scheduleUpdateOnFiber(fiber: Fiber, lane: Lane): void {
-	// Mark the fiber with the update lane
+	// Mark the fiber and its alternate with the update lane.
 	fiber.lanes = mergeLanes(fiber.lanes, lane);
+	if (fiber.alternate !== null) {
+		fiber.alternate.lanes = mergeLanes(fiber.alternate.lanes, lane);
+	}
 
-	// Bubble up to parents
+	// Bubble up to parents, keeping both current and alternate trees in sync.
 	let parent = fiber.return;
 	while (parent !== null) {
 		parent.childLanes = mergeLanes(parent.childLanes, lane);
+		if (parent.alternate !== null) {
+			parent.alternate.childLanes = mergeLanes(
+				parent.alternate.childLanes,
+				lane,
+			);
+		}
 		parent = parent.return;
 	}
 }
@@ -409,6 +435,14 @@ export function clearCurrentEventTime(): void {
 }
 
 /**
+ * Number of distinct transition lanes defined between TransitionLane1 and
+ * TransitionLane2 (inclusive). Derived so it updates automatically when more
+ * transition lanes are added.
+ */
+const TRANSITION_LANE_COUNT =
+	Math.log2((TransitionLane2 as number) / (TransitionLane1 as number)) + 1;
+
+/**
  * Transition lane tracking.
  */
 let currentTransitionLane = 0;
@@ -434,17 +468,10 @@ export function requestUpdateLane(_fiber: Fiber): Lane {
  * Used for useTransition/startTransition.
  */
 export function claimNextTransitionLane(): Lane {
-	const lane = 1 << currentTransitionLane;
-	currentTransitionLane = (currentTransitionLane + 1) % 31;
-
-	// Ensure we're in the transition lane range
-	if (lane < (TransitionLane1 as number)) {
-		return TransitionLane1;
-	}
-	if (lane > (TransitionLane2 as number)) {
-		return TransitionLane2;
-	}
-
+	// Shift TransitionLane1 left by the current index so we cycle only through
+	// the real transition-lane bit positions rather than arbitrary bit slots.
+	const lane = (TransitionLane1 as number) << currentTransitionLane;
+	currentTransitionLane = (currentTransitionLane + 1) % TRANSITION_LANE_COUNT;
 	return createLane(lane);
 }
 
@@ -495,10 +522,18 @@ export function addEntangledLanes(lanes: Lanes): Lanes {
 // ============================================
 
 /**
+ * Total number of bits used for lane representation.
+ * Derived from the highest defined lane (OffscreenLane) so formatLanes stays
+ * correct when new lanes are added.
+ */
+const MAX_LANE_BITS =
+	Math.floor(Math.log2(OffscreenLane as number)) + 1;
+
+/**
  * Formats lanes for debugging.
  */
 export function formatLanes(lanes: Lanes): string {
-	return (lanes as number).toString(2).padStart(31, "0");
+	return (lanes as number).toString(2).padStart(MAX_LANE_BITS, "0");
 }
 
 /**
