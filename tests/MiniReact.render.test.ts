@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { createElement, render } from "../src/MiniReact";
-import type { MiniReactElement } from "../src/core/types";
+import { createElement, render } from "@/MiniReact";
+import type { MiniReactElement } from "@/core/types";
 
 describe("MiniReact.render", () => {
 	let container: HTMLElement;
@@ -472,8 +472,8 @@ describe("MiniReact.render", () => {
 
 			const parent = container.querySelector("#add-children") as HTMLElement;
 			expect(parent.children).toHaveLength(2);
-			expect(parent.children[0].textContent).toBe("Child 1");
-			expect(parent.children[1].textContent).toBe("Child 2");
+			expect(parent.children[0]!.textContent).toBe("Child 1");
+			expect(parent.children[1]!.textContent).toBe("Child 2");
 
 			// Update with additional children
 			const element2 = createElement(
@@ -491,8 +491,8 @@ describe("MiniReact.render", () => {
 				"#add-children",
 			) as HTMLElement;
 			expect(updatedParent.children).toHaveLength(4);
-			expect(updatedParent.children[2].textContent).toBe("Child 3");
-			expect(updatedParent.children[3].textContent).toBe("Child 4");
+			expect(updatedParent.children[2]!.textContent).toBe("Child 3");
+			expect(updatedParent.children[3]!.textContent).toBe("Child 4");
 		});
 
 		test("should remove children from the end", () => {
@@ -525,8 +525,8 @@ describe("MiniReact.render", () => {
 				"#remove-children",
 			) as HTMLElement;
 			expect(updatedParent.children).toHaveLength(2);
-			expect(updatedParent.children[0].textContent).toBe("Child 1");
-			expect(updatedParent.children[1].textContent).toBe("Child 2");
+			expect(updatedParent.children[0]!.textContent).toBe("Child 1");
+			expect(updatedParent.children[1]!.textContent).toBe("Child 2");
 
 			// Removed children should no longer be in DOM
 			expect(container.querySelector("#child-3")).toBeNull();
@@ -583,9 +583,9 @@ describe("MiniReact.render", () => {
 
 			const parent = container.querySelector("#reorder-unkeyed") as HTMLElement;
 			const originalNodes = Array.from(parent.children);
-			expect(originalNodes[0].getAttribute("data-item")).toBe("A");
-			expect(originalNodes[1].getAttribute("data-item")).toBe("B");
-			expect(originalNodes[2].getAttribute("data-item")).toBe("C");
+			expect(originalNodes[0]!.getAttribute("data-item")).toBe("A");
+			expect(originalNodes[1]!.getAttribute("data-item")).toBe("B");
+			expect(originalNodes[2]!.getAttribute("data-item")).toBe("C");
 
 			// Reorder to: C, A, B
 			const element2 = createElement(
@@ -604,9 +604,9 @@ describe("MiniReact.render", () => {
 			const reorderedNodes = Array.from(updatedParent.children);
 
 			// Check new order
-			expect(reorderedNodes[0].getAttribute("data-item")).toBe("C");
-			expect(reorderedNodes[1].getAttribute("data-item")).toBe("A");
-			expect(reorderedNodes[2].getAttribute("data-item")).toBe("B");
+			expect(reorderedNodes[0]!.getAttribute("data-item")).toBe("C");
+			expect(reorderedNodes[1]!.getAttribute("data-item")).toBe("A");
+			expect(reorderedNodes[2]!.getAttribute("data-item")).toBe("B");
 
 			// Note: Without keys, nodes may be recreated rather than moved
 			// This test documents the behavior - efficiency depends on implementation
@@ -640,9 +640,9 @@ describe("MiniReact.render", () => {
 
 			const parent = container.querySelector("#reorder-keyed") as HTMLElement;
 			const originalNodes = Array.from(parent.children);
-			const originalA = originalNodes[0];
-			const originalB = originalNodes[1];
-			const originalC = originalNodes[2];
+			const originalA = originalNodes[0]!;
+			const originalB = originalNodes[1]!;
+			const originalC = originalNodes[2]!;
 
 			// Reorder to: C, A, B (with same keys)
 			const element2 = createElement(
@@ -673,14 +673,14 @@ describe("MiniReact.render", () => {
 			const reorderedNodes = Array.from(updatedParent.children);
 
 			// Check new order
-			expect(reorderedNodes[0].getAttribute("data-item")).toBe("C");
-			expect(reorderedNodes[1].getAttribute("data-item")).toBe("A");
-			expect(reorderedNodes[2].getAttribute("data-item")).toBe("B");
+			expect(reorderedNodes[0]!.getAttribute("data-item")).toBe("C");
+			expect(reorderedNodes[1]!.getAttribute("data-item")).toBe("A");
+			expect(reorderedNodes[2]!.getAttribute("data-item")).toBe("B");
 
 			// With proper key-based reconciliation, the same DOM nodes should be reused
-			expect(reorderedNodes[0]).toBe(originalC); // C moved to first
-			expect(reorderedNodes[1]).toBe(originalA); // A moved to second
-			expect(reorderedNodes[2]).toBe(originalB); // B moved to third
+			expect(reorderedNodes[0]!).toBe(originalC); // C moved to first
+			expect(reorderedNodes[1]!).toBe(originalA); // A moved to second
+			expect(reorderedNodes[2]!).toBe(originalB); // B moved to third
 		});
 
 		test("should add new keyed children in correct positions", () => {
@@ -695,8 +695,8 @@ describe("MiniReact.render", () => {
 			render(element1, container);
 
 			const parent = container.querySelector("#add-keyed") as HTMLElement;
-			const originalA = parent.children[0];
-			const originalC = parent.children[1];
+			const originalA = parent.children[0]!;
+			const originalC = parent.children[1]!;
 
 			// Update to: A, B, C, D (adding B and D)
 			const element2 = createElement(
@@ -716,12 +716,12 @@ describe("MiniReact.render", () => {
 			expect(updatedParent.children).toHaveLength(4);
 
 			// Original nodes should be preserved
-			expect(updatedParent.children[0]).toBe(originalA);
-			expect(updatedParent.children[2]).toBe(originalC);
+			expect(updatedParent.children[0]!).toBe(originalA);
+			expect(updatedParent.children[2]!).toBe(originalC);
 
 			// New nodes should be inserted in correct positions
-			expect(updatedParent.children[1].getAttribute("data-item")).toBe("B");
-			expect(updatedParent.children[3].getAttribute("data-item")).toBe("D");
+			expect(updatedParent.children[1]!.getAttribute("data-item")).toBe("B");
+			expect(updatedParent.children[3]!.getAttribute("data-item")).toBe("D");
 		});
 
 		test("should remove keyed children while preserving others", () => {
@@ -738,8 +738,8 @@ describe("MiniReact.render", () => {
 			render(element1, container);
 
 			const parent = container.querySelector("#remove-keyed") as HTMLElement;
-			const originalA = parent.children[0];
-			const originalC = parent.children[2];
+			const originalA = parent.children[0]!;
+			const originalC = parent.children[2]!;
 
 			// Update to: A, C (removing B and D)
 			const element2 = createElement(
@@ -757,8 +757,8 @@ describe("MiniReact.render", () => {
 			expect(updatedParent.children).toHaveLength(2);
 
 			// Preserved nodes should be the same DOM elements
-			expect(updatedParent.children[0]).toBe(originalA);
-			expect(updatedParent.children[1]).toBe(originalC);
+			expect(updatedParent.children[0]!).toBe(originalA);
+			expect(updatedParent.children[1]!).toBe(originalC);
 
 			// Removed nodes should not be in the DOM
 			expect(
@@ -814,18 +814,18 @@ describe("MiniReact.render", () => {
 			expect(updatedNodes).toHaveLength(4);
 
 			// Check order
-			expect(updatedNodes[0].getAttribute("data-item")).toBe("E");
-			expect(updatedNodes[1].getAttribute("data-item")).toBe("A");
-			expect(updatedNodes[2].getAttribute("data-item")).toBe("F");
-			expect(updatedNodes[3].getAttribute("data-item")).toBe("C");
+			expect(updatedNodes[0]!.getAttribute("data-item")).toBe("E");
+			expect(updatedNodes[1]!.getAttribute("data-item")).toBe("A");
+			expect(updatedNodes[2]!.getAttribute("data-item")).toBe("F");
+			expect(updatedNodes[3]!.getAttribute("data-item")).toBe("C");
 
 			// Preserved nodes should be reused
-			expect(updatedNodes[0]).toBe(nodeMap.get("E"));
-			expect(updatedNodes[1]).toBe(nodeMap.get("A"));
-			expect(updatedNodes[3]).toBe(nodeMap.get("C"));
+			expect(updatedNodes[0]!).toBe(nodeMap.get("E"));
+			expect(updatedNodes[1]!).toBe(nodeMap.get("A"));
+			expect(updatedNodes[3]!).toBe(nodeMap.get("C"));
 
 			// F should be a new node
-			expect(updatedNodes[2]).not.toBe(nodeMap.get("F"));
+			expect(updatedNodes[2]!).not.toBe(nodeMap.get("F"));
 		});
 
 		test("should handle mixed keyed and unkeyed children gracefully", () => {
@@ -860,9 +860,9 @@ describe("MiniReact.render", () => {
 			expect(updatedParent.children).toHaveLength(3);
 
 			// Check that the structure is correct
-			expect(updatedParent.children[0].getAttribute("data-item")).toBe("C");
-			expect(updatedParent.children[1].getAttribute("data-item")).toBe("D");
-			expect(updatedParent.children[2].getAttribute("data-item")).toBe("A");
+			expect(updatedParent.children[0]!.getAttribute("data-item")).toBe("C");
+			expect(updatedParent.children[1]!.getAttribute("data-item")).toBe("D");
+			expect(updatedParent.children[2]!.getAttribute("data-item")).toBe("A");
 		});
 	});
 
@@ -959,8 +959,8 @@ describe("MiniReact.render", () => {
 				"#empty-transitions",
 			) as HTMLElement;
 			expect(restoredParent.children).toHaveLength(2);
-			expect(restoredParent.children[0].textContent).toBe("Child 3");
-			expect(restoredParent.children[1].textContent).toBe("Child 4");
+			expect(restoredParent.children[0]!.textContent).toBe("Child 3");
+			expect(restoredParent.children[1]!.textContent).toBe("Child 4");
 		});
 	});
 
@@ -1146,10 +1146,6 @@ describe("MiniReact.render", () => {
 			const parent = container.querySelector("#large-list") as HTMLElement;
 			expect(parent.children).toHaveLength(500);
 
-			// Store references to some DOM nodes
-			const _node100 = parent.children[100];
-			const _node300 = parent.children[300];
-
 			// Update to 600 items (add 100, keep most existing)
 			const largeList2 = createLargeList("updated", 600);
 			render(largeList2, container);
@@ -1161,10 +1157,10 @@ describe("MiniReact.render", () => {
 
 			// Original nodes with matching keys should be reused
 			// (though content will be updated due to key change in this test)
-			expect(updatedParent.children[100].getAttribute("data-index")).toBe(
+			expect(updatedParent.children[100]!.getAttribute("data-index")).toBe(
 				"100",
 			);
-			expect(updatedParent.children[300].getAttribute("data-index")).toBe(
+			expect(updatedParent.children[300]!.getAttribute("data-index")).toBe(
 				"300",
 			);
 		});
@@ -1213,15 +1209,15 @@ describe("MiniReact.render", () => {
 			const reversedNodes = Array.from(updatedParent.children);
 
 			// Verify order is reversed
-			expect(reversedNodes[0].getAttribute("data-item")).toBe("E");
-			expect(reversedNodes[1].getAttribute("data-item")).toBe("D");
-			expect(reversedNodes[2].getAttribute("data-item")).toBe("C");
-			expect(reversedNodes[3].getAttribute("data-item")).toBe("B");
-			expect(reversedNodes[4].getAttribute("data-item")).toBe("A");
+			expect(reversedNodes[0]!.getAttribute("data-item")).toBe("E");
+			expect(reversedNodes[1]!.getAttribute("data-item")).toBe("D");
+			expect(reversedNodes[2]!.getAttribute("data-item")).toBe("C");
+			expect(reversedNodes[3]!.getAttribute("data-item")).toBe("B");
+			expect(reversedNodes[4]!.getAttribute("data-item")).toBe("A");
 
 			// Verify DOM nodes were reused (just reordered)
-			expect(reversedNodes[0]).toBe(originalNodes[4]); // E was last, now first
-			expect(reversedNodes[4]).toBe(originalNodes[0]); // A was first, now last
+			expect(reversedNodes[0]!).toBe(originalNodes[4]!); // E was last, now first
+			expect(reversedNodes[4]!).toBe(originalNodes[0]!); // A was first, now last
 		});
 
 		test("should handle interleaved add/remove/reorder operations", () => {
@@ -1238,8 +1234,8 @@ describe("MiniReact.render", () => {
 			render(element1, container);
 
 			const parent = container.querySelector("#interleaved-ops") as HTMLElement;
-			const nodeA = parent.children[0];
-			const nodeC = parent.children[2];
+			const nodeA = parent.children[0]!;
+			const nodeC = parent.children[2]!;
 
 			// Complex operation: C, A, E, F, D (remove B, add E & F, reorder)
 			const element2 = createElement(
@@ -1266,8 +1262,8 @@ describe("MiniReact.render", () => {
 			expect(items).toEqual(["C", "A", "E", "F", "D"]);
 
 			// Verify reused nodes
-			expect(updatedParent.children[0]).toBe(nodeC); // C reused
-			expect(updatedParent.children[1]).toBe(nodeA); // A reused
+			expect(updatedParent.children[0]!).toBe(nodeC); // C reused
+			expect(updatedParent.children[1]!).toBe(nodeA); // A reused
 
 			// B should no longer exist in DOM
 			expect(container.querySelector('[data-item="B"]')).toBeNull();
@@ -1411,9 +1407,6 @@ describe("MiniReact.render", () => {
 			const parent = container.querySelector(
 				"#keyed-components",
 			) as HTMLElement;
-			const _componentA = parent.querySelector(
-				'[data-component-id="A"]',
-			) as HTMLElement;
 			const elementB = parent.querySelector("span") as HTMLElement;
 
 			// Reorder and update
@@ -1451,7 +1444,9 @@ describe("MiniReact.render", () => {
 			expect(updatedElementB.textContent).toBe("Updated Element B");
 
 			// Component output should be updated
-			expect(updatedParent.children[2].textContent).toBe("Updated Component A");
+			expect(updatedParent.children[2]!.textContent).toBe(
+				"Updated Component A",
+			);
 
 			// Verify order: B, C, A
 			const order = Array.from(updatedParent.children).map((child) => {
@@ -1509,7 +1504,7 @@ describe("MiniReact.render", () => {
 				// Simple shuffle based on seed
 				for (let i = items.length - 1; i > 0; i--) {
 					const j = (seed * (i + 1)) % (i + 1);
-					[items[i], items[j]] = [items[j], items[i]];
+					[items[i], items[j]] = [items[j]!, items[i]!];
 				}
 				return items;
 			};

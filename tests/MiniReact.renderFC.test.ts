@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { createElement, render } from "../src/MiniReact";
-import type { MiniReactElement } from "../src/core/types";
+import { createElement, render } from "@/MiniReact";
+import type { MiniReactElement } from "@/core/types";
 
 describe("MiniReact.render with Functional Components", () => {
 	let container: HTMLElement;
@@ -80,7 +80,7 @@ describe("MiniReact.render with Functional Components", () => {
 
 		expect(spiedComponent).toHaveBeenCalledTimes(1);
 		const expectedProps = { ...propsToPass, children: [] };
-		expect(spiedComponent.mock.calls[0][0]).toEqual(expectedProps);
+		expect(spiedComponent.mock.calls[0]![0]).toEqual(expectedProps);
 
 		expect(container.textContent).toBe("Spy Test");
 		spiedComponent.mockRestore();
@@ -251,10 +251,10 @@ describe("MiniReact.render with Functional Components", () => {
 		expect(list).not.toBeNull();
 		expect(list?.tagName).toBe("UL");
 		expect(list?.children.length).toBe(3);
-		expect(list?.children[0].textContent).toBe("Item 1");
-		expect(list?.children[1].textContent).toBe("Item 2");
-		expect(list?.children[2].textContent).toBe("Item 3");
-		expect(list?.children[2].querySelector("strong")).not.toBeNull();
+		expect(list?.children[0]!.textContent).toBe("Item 1");
+		expect(list?.children[1]!.textContent).toBe("Item 2");
+		expect(list?.children[2]!.textContent).toBe("Item 3");
+		expect(list?.children[2]!.querySelector("strong")).not.toBeNull();
 	});
 
 	test("should handle functional component with mixed children types", () => {
@@ -385,8 +385,8 @@ describe("MiniReact.render with Functional Components", () => {
 		// Test navigation
 		const nav = header?.querySelector("nav ul");
 		expect(nav?.children.length).toBe(3);
-		expect(nav?.children[0].querySelector("a")?.textContent).toBe("Home");
-		expect(nav?.children[0].querySelector("a")?.getAttribute("href")).toBe(
+		expect(nav?.children[0]!.querySelector("a")?.textContent).toBe("Home");
+		expect(nav?.children[0]!.querySelector("a")?.getAttribute("href")).toBe(
 			"#home",
 		);
 
