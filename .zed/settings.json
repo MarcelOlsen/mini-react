@@ -1,0 +1,41 @@
+{
+	"formatter": {
+		"language_server": {
+			"name": "biome"
+		}
+	},
+	"code_actions_on_format": {
+		"source.organizeImports.biome": true,
+		"source.fixAll.biome": true
+	},
+	"languages": {
+		"TypeScript": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			},
+			"prettier": {
+				"allowed": false
+			}
+		},
+		"TSX": {
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			},
+			"prettier": {
+				"allowed": false
+			}
+		}
+	},
+	"lsp": {
+		"biome": {
+			"binary": {
+				"path": "node_modules/.bin/biome",
+				"arguments": ["lsp-proxy"]
+			}
+		}
+	}
+}
