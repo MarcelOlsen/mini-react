@@ -7,14 +7,9 @@
  * Effects are stored as a circular linked list on the fiber's updateQueue.
  */
 
+import { flagsIncludes, flagsOr } from "./bitwise";
 import type { EffectCreate, Fiber } from "./types";
-import {
-	type Effect,
-	HookEffectTag,
-	Passive,
-	WorkTag,
-	createFlags,
-} from "./types";
+import { type Effect, HookEffectTag, Passive, WorkTag } from "./types";
 
 // ============================================
 // Effect Types
@@ -37,7 +32,7 @@ export type FunctionComponentUpdateQueue = {
  * Does not attach it to any fiber — use pushEffectToFiber for that.
  */
 export function createEffect(
-	tag: number,
+	tag: HookEffectTag,
 	create: EffectCreate,
 	destroy: (() => void) | undefined,
 	deps: readonly unknown[] | null,
@@ -463,14 +458,12 @@ function collectEffectsForDeletion(
  * Marks a fiber as having passive effects.
  */
 export function markFiberWithPassiveEffect(fiber: Fiber): void {
-	fiber.flags = createFlags((fiber.flags as number) | (Passive as number));
+	fiber.flags = flagsOr(fiber.flags, Passive);
 
 	// Bubble up to root
 	let parent = fiber.return;
 	while (parent !== null) {
-		parent.subtreeFlags = createFlags(
-			(parent.subtreeFlags as number) | (Passive as number),
-		);
+		parent.subtreeFlags = flagsOr(parent.subtreeFlags, Passive);
 		parent = parent.return;
 	}
 }
@@ -480,8 +473,8 @@ export function markFiberWithPassiveEffect(fiber: Fiber): void {
  */
 export function doesFiberHavePassiveEffects(fiber: Fiber): boolean {
 	return (
-		((fiber.flags as number) & (Passive as number)) !== 0 ||
-		((fiber.subtreeFlags as number) & (Passive as number)) !== 0
+		flagsIncludes(fiber.flags, Passive) ||
+		flagsIncludes(fiber.subtreeFlags, Passive)
 	);
 }
 

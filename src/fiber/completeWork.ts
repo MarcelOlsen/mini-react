@@ -8,6 +8,7 @@
  */
 
 import { eventSystem } from "../events/eventSystem";
+import { flagsOr, unflags, unlanes } from "./bitwise";
 import {
 	createInstance,
 	createTextInstance,
@@ -21,7 +22,7 @@ import {
 	isTextProps,
 } from "./typeGuards";
 import type { Fiber, Lanes } from "./types";
-import { NoFlags, Ref, Update, WorkTag, createFlags } from "./types";
+import { NoFlags, Ref, UpdateEffect, WorkTag, createFlags } from "./types";
 
 // ============================================
 // Complete Work Entry Point
@@ -220,18 +221,14 @@ function appendAllChildren(parent: Element, workInProgress: Fiber): void {
  * Marks a fiber as needing an update.
  */
 function markUpdate(workInProgress: Fiber): void {
-	workInProgress.flags = createFlags(
-		(workInProgress.flags as number) | (Update as number),
-	);
+	workInProgress.flags = flagsOr(workInProgress.flags, UpdateEffect);
 }
 
 /**
  * Marks a fiber as having a ref.
  */
 function markRef(workInProgress: Fiber): void {
-	workInProgress.flags = createFlags(
-		(workInProgress.flags as number) | (Ref as number),
-	);
+	workInProgress.flags = createFlags(flagsOr(workInProgress.flags, Ref));
 }
 
 // ============================================
@@ -247,23 +244,23 @@ function bubbleProperties(completedWork: Fiber): void {
 
 	while (child !== null) {
 		subtreeFlags = createFlags(
-			(subtreeFlags as number) |
-				(child.subtreeFlags as number) |
-				(child.flags as number),
+			unflags(subtreeFlags) |
+				unflags(child.subtreeFlags) |
+				unflags(child.flags),
 		);
 
 		// Also merge child lanes
 		completedWork.childLanes = createFlags(
-			(completedWork.childLanes as number) |
-				(child.lanes as number) |
-				(child.childLanes as number),
+			unlanes(completedWork.childLanes) |
+				unlanes(child.lanes) |
+				unlanes(child.childLanes),
 		) as unknown as Lanes;
 
 		child = child.sibling;
 	}
 
 	completedWork.subtreeFlags = createFlags(
-		(completedWork.subtreeFlags as number) | (subtreeFlags as number),
+		flagsOr(completedWork.subtreeFlags, subtreeFlags),
 	);
 }
 

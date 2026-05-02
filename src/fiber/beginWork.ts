@@ -8,6 +8,7 @@
  */
 
 import type { AnyMiniReactElement, FunctionalComponent } from "../core/types";
+import { laneIncludesAny } from "./bitwise";
 import { mountChildFibers, reconcileChildFibers } from "./childReconciler";
 import { renderWithHooks } from "./fiberHooks";
 import type { Fiber, FiberRoot, Lanes } from "./types";
@@ -345,7 +346,7 @@ function reconcileChildren(
  * Checks if a fiber has scheduled work at the given lanes.
  */
 function hasScheduledWork(fiber: Fiber, lanes: Lanes): boolean {
-	return ((fiber.lanes as number) & (lanes as number)) !== 0;
+	return laneIncludesAny(fiber.lanes, lanes);
 }
 
 /**
@@ -372,7 +373,7 @@ function bailoutOnAlreadyFinishedWork(
  * Checks if any children have scheduled work.
  */
 function hasScheduledWorkInChildren(fiber: Fiber, lanes: Lanes): boolean {
-	return ((fiber.childLanes as number) & (lanes as number)) !== 0;
+	return laneIncludesAny(fiber.childLanes, lanes);
 }
 
 /**

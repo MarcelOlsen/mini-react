@@ -226,10 +226,10 @@ describe("Fiber Reconciliation", () => {
 			expect(container.textContent).toBe("DABC");
 			const spans = container.querySelectorAll("span");
 			expect(spans.length).toBe(4);
-			expect(spans[0]!.textContent).toBe("D");
-			expect(spans[1]!.textContent).toBe("A");
-			expect(spans[2]!.textContent).toBe("B");
-			expect(spans[3]!.textContent).toBe("C");
+			expect(spans[0]?.textContent).toBe("D");
+			expect(spans[1]?.textContent).toBe("A");
+			expect(spans[2]?.textContent).toBe("B");
+			expect(spans[3]?.textContent).toBe("C");
 		});
 	});
 });

@@ -8,6 +8,7 @@
  */
 
 import type { FunctionalComponent } from "../core/types";
+import { flagsOr, laneOr } from "./bitwise";
 import {
 	areHookInputsEqual,
 	createEffect,
@@ -25,13 +26,7 @@ import type {
 	Update,
 	UpdateQueue,
 } from "./types";
-import {
-	HookEffectTag,
-	NoLanes,
-	Passive,
-	createFlags,
-	createLanes,
-} from "./types";
+import { HookEffectTag, NoLanes, Passive } from "./types";
 import { scheduleUpdateOnFiber } from "./workLoop";
 
 // ============================================
@@ -455,7 +450,7 @@ function enqueueUpdate<S>(
 		pending.next = update;
 	}
 	queue.pending = update;
-	queue.lanes = createLanes((queue.lanes as number) | (lane as number));
+	queue.lanes = laneOr(queue.lanes, lane);
 }
 
 function scheduleUpdate(fiber: Fiber, lane: Lane): void {
@@ -512,7 +507,7 @@ function updateLayoutEffect(
 }
 
 function mountEffectImpl(
-	tag: number,
+	tag: HookEffectTag,
 	create: EffectCreate,
 	deps: readonly unknown[] | undefined,
 ): void {
@@ -521,8 +516,9 @@ function mountEffectImpl(
 
 	// Mark fiber as having passive effects
 	if (currentlyRenderingFiber !== null) {
-		currentlyRenderingFiber.flags = createFlags(
-			(currentlyRenderingFiber.flags as number) | (Passive as number),
+		currentlyRenderingFiber.flags = flagsOr(
+			currentlyRenderingFiber.flags,
+			Passive,
 		);
 	}
 
@@ -535,8 +531,8 @@ function mountEffectImpl(
 }
 
 function updateEffectImpl(
-	passiveTag: number,
-	effectTag: number,
+	passiveTag: HookEffectTag,
+	effectTag: HookEffectTag,
 	create: EffectCreate,
 	deps: readonly unknown[] | undefined,
 ): void {
@@ -564,8 +560,9 @@ function updateEffectImpl(
 
 	// Effect needs to run
 	if (currentlyRenderingFiber !== null) {
-		currentlyRenderingFiber.flags = createFlags(
-			(currentlyRenderingFiber.flags as number) | (Passive as number),
+		currentlyRenderingFiber.flags = flagsOr(
+			currentlyRenderingFiber.flags,
+			Passive,
 		);
 	}
 

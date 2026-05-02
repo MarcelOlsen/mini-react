@@ -7,6 +7,18 @@
  * Lanes are a bitmask representation of priority levels.
  */
 
+import {
+	laneHighest as getHighestBit,
+	laneAnd,
+	laneIncludes,
+	laneIncludesAny,
+	laneOr,
+	lanePriority,
+	laneRemove,
+	laneSubset,
+	unlane,
+	unlanes,
+} from "./bitwise";
 import type { Fiber, FiberRoot, Lane, Lanes } from "./types";
 import {
 	DefaultLane,
@@ -22,10 +34,6 @@ import {
 	createLanes,
 } from "./types";
 
-// ============================================
-// Lane Constants Re-exports
-// ============================================
-
 export {
 	NoLane,
 	NoLanes,
@@ -38,266 +46,145 @@ export {
 	OffscreenLane,
 };
 
-// ============================================
-// Additional Lane Constants
-// ============================================
+/* ============================================ */
+/* Constants                                    */
+/* ============================================ */
 
-/**
- * All non-idle lanes.
- */
 export const NonIdleLanes: Lanes =
 	createLanes(0b0001111111111111111111111111111);
 
-/**
- * All transition lanes.
- */
 export const TransitionLanes: Lanes = createLanes(
-	(TransitionLane1 as number) | (TransitionLane2 as number),
+	unlane(TransitionLane1) | unlane(TransitionLane2),
 );
 
-/**
- * All update lanes (sync through transitions).
- */
 export const UpdateLanes: Lanes = createLanes(
-	(SyncLane as number) |
-		(InputContinuousLane as number) |
-		(DefaultLane as number) |
-		(TransitionLanes as number),
+	unlane(SyncLane) |
+		unlane(InputContinuousLane) |
+		unlane(DefaultLane) |
+		unlane(TransitionLanes),
 );
 
-// ============================================
-// Lane Operations
-// ============================================
+/* ============================================ */
+/* Lane operations                              */
+/* ============================================ */
 
-/**
- * Merges two lanes together.
- */
-export function mergeLanes(a: Lanes | Lane, b: Lanes | Lane): Lanes {
-	return createLanes((a as number) | (b as number));
-}
+export const mergeLanes = laneOr;
 
-/**
- * Removes lanes from a set.
- */
-export function removeLanes(set: Lanes, subset: Lanes | Lane): Lanes {
-	return createLanes((set as number) & ~(subset as number));
-}
+export const removeLanes = laneRemove;
 
-/**
- * Intersects two lane sets.
- */
-export function intersectLanes(a: Lanes, b: Lanes): Lanes {
-	return createLanes((a as number) & (b as number));
-}
+export const intersectLanes = laneAnd;
 
-/**
- * Checks if a lane set includes a specific lane.
- */
-export function includesLane(set: Lanes, lane: Lane): boolean {
-	return ((set as number) & (lane as number)) !== 0;
-}
+export const includesLane = laneIncludes;
 
-/**
- * Checks if a lane set includes any of the specified lanes.
- */
-export function includesAnyLanes(set: Lanes, lanes: Lanes): boolean {
-	return ((set as number) & (lanes as number)) !== 0;
-}
+export const includesAnyLanes = laneIncludesAny;
 
-/**
- * Checks if a lane set includes only non-urgent lanes.
- */
 export function includesOnlyNonUrgentLanes(lanes: Lanes): boolean {
 	return (
-		((lanes as number) & (SyncLane as number)) === 0 &&
-		((lanes as number) & (InputContinuousLane as number)) === 0
+		!laneIncludes(lanes, SyncLane) && !laneIncludes(lanes, InputContinuousLane)
 	);
 }
 
-/**
- * Checks if a lane set includes blocking lanes (sync or input continuous).
- */
 export function includesBlockingLane(lanes: Lanes): boolean {
-	return (
-		((lanes as number) &
-			((SyncLane as number) | (InputContinuousLane as number))) !==
-		0
+	return laneIncludesAny(
+		lanes,
+		createLanes(unlane(SyncLane) | unlane(InputContinuousLane)),
 	);
 }
 
-/**
- * Checks if a lane set is empty.
- */
 export function isLaneEmpty(lanes: Lanes): boolean {
 	return lanes === NoLanes;
 }
 
-// ============================================
-// Lane Priority
-// ============================================
+/* ============================================ */
+/* Lane priority                                */
+/* ============================================ */
 
-/**
- * Gets the highest priority lane from a set of lanes.
- * The highest priority is the rightmost bit.
- */
 export function getHighestPriorityLane(lanes: Lanes): Lane {
-	// Get the rightmost bit
-	return createLane((lanes as number) & -(lanes as number));
+	return getHighestBit(lanes);
 }
 
-/**
- * Gets the highest priority lanes (may return multiple if same priority).
- */
 export function getHighestPriorityLanes(lanes: Lanes): Lanes {
-	// For now, just return the highest priority lane
-	// In a real implementation, this would return all lanes of the same priority group
-	const highestLane = getHighestPriorityLane(lanes);
-	return createLanes(highestLane as number);
+	return createLanes(unlane(getHighestBit(lanes)));
 }
 
-/**
- * Checks if lane A is a subset of lanes B.
- */
-export function isSubsetOfLanes(set: Lanes, subset: Lane | Lanes): boolean {
-	return ((set as number) & (subset as number)) === (subset as number);
-}
+export const isSubsetOfLanes = laneSubset;
 
-/**
- * Gets the priority number for a lane (lower is higher priority).
- */
-export function getLanePriority(lane: Lane): number {
-	// Count trailing zeros to get priority
-	// SyncLane (bit 0) = priority 0 (highest)
-	if ((lane as number) === 0) {
-		return 31; // Lowest priority
-	}
+export const getLanePriority = lanePriority;
 
-	let priority = 0;
-	let n = lane as number;
-
-	while ((n & 1) === 0) {
-		priority++;
-		n >>>= 1;
-	}
-
-	return priority;
-}
-
-/**
- * Converts lanes to a human-readable label.
- */
 export function getLanesLabel(lanes: Lanes): string {
 	const labels: string[] = [];
-
-	if ((lanes as number) & (SyncLane as number)) {
-		labels.push("Sync");
-	}
-	if ((lanes as number) & (InputContinuousLane as number)) {
-		labels.push("InputContinuous");
-	}
-	if ((lanes as number) & (DefaultLane as number)) {
-		labels.push("Default");
-	}
-	if ((lanes as number) & (TransitionLanes as number)) {
-		labels.push("Transition");
-	}
-	if ((lanes as number) & (IdleLane as number)) {
-		labels.push("Idle");
-	}
-	if ((lanes as number) & (OffscreenLane as number)) {
-		labels.push("Offscreen");
-	}
-
+	if (laneIncludes(lanes, SyncLane)) labels.push("Sync");
+	if (laneIncludes(lanes, InputContinuousLane)) labels.push("InputContinuous");
+	if (laneIncludes(lanes, DefaultLane)) labels.push("Default");
+	if (laneIncludesAny(lanes, TransitionLanes)) labels.push("Transition");
+	if (laneIncludes(lanes, IdleLane)) labels.push("Idle");
+	if (laneIncludes(lanes, OffscreenLane)) labels.push("Offscreen");
 	return labels.length > 0 ? labels.join(", ") : "None";
 }
 
-// ============================================
-// Root Lane Management
-// ============================================
+/* ============================================ */
+/* Root lane management                         */
+/* ============================================ */
 
-/**
- * Gets the next lanes to work on for a root.
- */
 export function getNextLanes(
 	root: FiberRoot,
 	wipLanes: Lanes = NoLanes,
 ): Lanes {
 	const pendingLanes = root.pendingLanes;
-
-	if (pendingLanes === NoLanes) {
-		return NoLanes;
-	}
+	if (pendingLanes === NoLanes) return NoLanes;
 
 	let nextLanes = NoLanes;
-
-	// Check for suspended lanes
-	const suspendedLanes = root.suspendedLanes;
-	const pingedLanes = root.pingedLanes;
-
-	// Non-suspended lanes
 	const nonIdlePendingLanes = intersectLanes(pendingLanes, NonIdleLanes);
 
 	if (nonIdlePendingLanes !== NoLanes) {
-		// Work on non-idle lanes first
-		const nonSuspendedLanes = removeLanes(nonIdlePendingLanes, suspendedLanes);
-
+		const nonSuspendedLanes = removeLanes(
+			nonIdlePendingLanes,
+			root.suspendedLanes,
+		);
 		if (nonSuspendedLanes !== NoLanes) {
 			nextLanes = getHighestPriorityLanes(nonSuspendedLanes);
 		} else {
-			// All non-idle lanes are suspended, check pinged
 			const nonIdlePingedLanes = intersectLanes(
 				nonIdlePendingLanes,
-				pingedLanes,
+				root.pingedLanes,
 			);
 			if (nonIdlePingedLanes !== NoLanes) {
 				nextLanes = getHighestPriorityLanes(nonIdlePingedLanes);
 			}
 		}
 	} else {
-		// Only idle lanes remain
-		const unblockedLanes = removeLanes(pendingLanes, suspendedLanes);
+		const unblockedLanes = removeLanes(pendingLanes, root.suspendedLanes);
 		if (unblockedLanes !== NoLanes) {
 			nextLanes = getHighestPriorityLanes(unblockedLanes);
 		} else {
-			const idlePingedLanes = intersectLanes(pendingLanes, pingedLanes);
+			const idlePingedLanes = intersectLanes(pendingLanes, root.pingedLanes);
 			if (idlePingedLanes !== NoLanes) {
 				nextLanes = getHighestPriorityLanes(idlePingedLanes);
 			}
 		}
 	}
 
-	if (nextLanes === NoLanes) {
-		return NoLanes;
-	}
+	if (nextLanes === NoLanes) return NoLanes;
 
-	// Check if currently rendering lanes should be prioritized
 	if (
 		wipLanes !== NoLanes &&
 		wipLanes !== nextLanes &&
-		!includesAnyLanes(nextLanes, suspendedLanes)
+		!includesAnyLanes(nextLanes, root.suspendedLanes)
 	) {
-		const wipHighestLane = getHighestPriorityLane(wipLanes);
-		const nextHighestLane = getHighestPriorityLane(nextLanes);
-
-		if ((wipHighestLane as number) <= (nextHighestLane as number)) {
-			// WIP lanes are higher or equal priority
+		if (
+			unlane(getHighestPriorityLane(wipLanes)) <=
+			unlane(getHighestPriorityLane(nextLanes))
+		) {
 			return wipLanes;
 		}
 	}
-
 	return nextLanes;
 }
 
-/**
- * Marks a root as having pending work at the given lanes.
- */
 export function markRootUpdated(root: FiberRoot, updateLane: Lane): void {
 	root.pendingLanes = mergeLanes(root.pendingLanes, updateLane);
 }
 
-/**
- * Marks lanes as finished (removes them from pending).
- */
 export function markRootFinished(root: FiberRoot, finishedLanes: Lanes): void {
 	root.pendingLanes = removeLanes(root.pendingLanes, finishedLanes);
 	root.suspendedLanes = removeLanes(root.suspendedLanes, finishedLanes);
@@ -305,21 +192,14 @@ export function markRootFinished(root: FiberRoot, finishedLanes: Lanes): void {
 	root.expiredLanes = removeLanes(root.expiredLanes, finishedLanes);
 }
 
-/**
- * Marks lanes as suspended.
- */
 export function markRootSuspended(
 	root: FiberRoot,
 	suspendedLanes: Lanes,
 ): void {
 	root.suspendedLanes = mergeLanes(root.suspendedLanes, suspendedLanes);
-	// Remove from pinged since we're suspending
 	root.pingedLanes = removeLanes(root.pingedLanes, suspendedLanes);
 }
 
-/**
- * Marks suspended lanes as pinged (ready to retry).
- */
 export function markRootPinged(root: FiberRoot, pingedLanes: Lanes): void {
 	root.pingedLanes = mergeLanes(
 		root.pingedLanes,
@@ -327,25 +207,16 @@ export function markRootPinged(root: FiberRoot, pingedLanes: Lanes): void {
 	);
 }
 
-/**
- * Marks lanes as expired (must render synchronously).
- */
 export function markRootExpired(root: FiberRoot, expiredLanes: Lanes): void {
 	root.expiredLanes = mergeLanes(root.expiredLanes, expiredLanes);
 }
 
-// ============================================
-// Fiber Lane Management
-// ============================================
+/* ============================================ */
+/* Fiber lane management                        */
+/* ============================================ */
 
-/**
- * Schedules an update lane on a fiber.
- */
 export function scheduleUpdateOnFiber(fiber: Fiber, lane: Lane): void {
-	// Mark the fiber with the update lane
 	fiber.lanes = mergeLanes(fiber.lanes, lane);
-
-	// Bubble up to parents
 	let parent = fiber.return;
 	while (parent !== null) {
 		parent.childLanes = mergeLanes(parent.childLanes, lane);
@@ -353,157 +224,83 @@ export function scheduleUpdateOnFiber(fiber: Fiber, lane: Lane): void {
 	}
 }
 
-/**
- * Checks if a fiber has pending work at the given lanes.
- */
 export function fiberHasWork(fiber: Fiber, lanes: Lanes): boolean {
 	return includesAnyLanes(fiber.lanes, lanes);
 }
 
-/**
- * Checks if a fiber's subtree has pending work at the given lanes.
- */
 export function fiberSubtreeHasWork(fiber: Fiber, lanes: Lanes): boolean {
 	return includesAnyLanes(fiber.childLanes, lanes);
 }
 
-/**
- * Resets fiber lanes after rendering.
- */
 export function resetFiberLanes(fiber: Fiber, renderLanes: Lanes): void {
 	fiber.lanes = removeLanes(fiber.lanes, renderLanes);
 	fiber.childLanes = removeLanes(fiber.childLanes, renderLanes);
 }
 
-// ============================================
-// Lane Request
-// ============================================
+/* ============================================ */
+/* Lane request & entanglement                  */
+/* ============================================ */
 
-/**
- * Current event time for lane calculations.
- */
 let currentEventTime = -1;
 
-/**
- * Requests the current event time.
- */
 export function requestEventTime(): number {
-	if (currentEventTime !== -1) {
-		return currentEventTime;
-	}
+	if (currentEventTime !== -1) return currentEventTime;
 	return performance.now();
 }
 
-/**
- * Sets the current event time.
- */
 export function setCurrentEventTime(time: number): void {
 	currentEventTime = time;
 }
 
-/**
- * Clears the current event time.
- */
 export function clearCurrentEventTime(): void {
 	currentEventTime = -1;
 }
 
-/**
- * Transition lane tracking.
- */
 let currentTransitionLane = 0;
 
-/**
- * Requests an update lane based on current context.
- * In a full implementation, this would consider:
- * - Current execution context (event handlers, effects, etc.)
- * - Whether we're in a transition
- * - User blocking vs non-blocking updates
- */
 export function requestUpdateLane(_fiber: Fiber): Lane {
-	// For now, always return SyncLane for simplicity
-	// A full implementation would check:
-	// - If inside a transition, return TransitionLane
-	// - If inside an event handler, return InputContinuousLane or DefaultLane
-	// - If idle update, return IdleLane
 	return SyncLane;
 }
 
-/**
- * Claims the next transition lane.
- * Used for useTransition/startTransition.
- */
 export function claimNextTransitionLane(): Lane {
 	const lane = 1 << currentTransitionLane;
 	currentTransitionLane = (currentTransitionLane + 1) % 31;
-
-	// Ensure we're in the transition lane range
-	if (lane < (TransitionLane1 as number)) {
-		return TransitionLane1;
-	}
-	if (lane > (TransitionLane2 as number)) {
-		return TransitionLane2;
-	}
-
+	const u = unlane(TransitionLane1);
+	if (lane < u) return TransitionLane1;
+	if (lane > u) return TransitionLane2;
 	return createLane(lane);
 }
 
-// ============================================
-// Entanglement
-// ============================================
-
-/**
- * Entanglements between lanes.
- * When lane A is entangled with lane B, working on A requires also working on B.
- */
 const laneEntanglements: Map<Lane, Lanes> = new Map();
 
-/**
- * Entangles lanes together.
- */
 export function entangleLanes(a: Lane, b: Lanes): void {
 	const existing = laneEntanglements.get(a) ?? NoLanes;
 	laneEntanglements.set(a, mergeLanes(existing, b));
 }
 
-/**
- * Gets the entangled lanes for a lane.
- */
 export function getEntangledLanes(lane: Lane): Lanes {
 	return laneEntanglements.get(lane) ?? NoLanes;
 }
 
-/**
- * Adds entangled lanes to a set.
- */
 export function addEntangledLanes(lanes: Lanes): Lanes {
 	let result = lanes;
 	let remaining = lanes;
-
 	while (remaining !== NoLanes) {
 		const lane = getHighestPriorityLane(remaining);
-		const entangled = getEntangledLanes(lane);
-		result = mergeLanes(result, entangled);
+		result = mergeLanes(result, getEntangledLanes(lane));
 		remaining = removeLanes(remaining, lane);
 	}
-
 	return result;
 }
 
-// ============================================
-// Debug Utilities
-// ============================================
+/* ============================================ */
+/* Debug                                        */
+/* ============================================ */
 
-/**
- * Formats lanes for debugging.
- */
 export function formatLanes(lanes: Lanes): string {
-	return (lanes as number).toString(2).padStart(31, "0");
+	return unlanes(lanes).toString(2).padStart(31, "0");
 }
 
-/**
- * Logs lane information.
- */
 export function logLanes(label: string, lanes: Lanes): void {
 	console.log(`${label}: ${formatLanes(lanes)} (${getLanesLabel(lanes)})`);
 }

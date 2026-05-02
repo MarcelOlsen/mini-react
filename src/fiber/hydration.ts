@@ -9,13 +9,14 @@
 
 import type { AnyMiniReactElement } from "../core/types";
 import { eventSystem } from "../events/eventSystem";
+import { laneOr } from "./bitwise";
 import {
 	type SerializedFiberRoot,
 	createFiberFromSerialized,
 	parseSerializedRoot,
 } from "./resumability";
 import type { Fiber, FiberRoot, Lane } from "./types";
-import { NoFlags, NoLanes, SyncLane, WorkTag, createLanes } from "./types";
+import { NoFlags, NoLanes, SyncLane, WorkTag } from "./types";
 import { scheduleUpdateOnFiber } from "./workLoop";
 
 // ============================================
@@ -132,9 +133,7 @@ export function hydrateRoot(
 	}
 
 	// Schedule hydration
-	root.pendingLanes = createLanes(
-		(root.pendingLanes as number) | (SyncLane as number),
-	);
+	root.pendingLanes = laneOr(root.pendingLanes, SyncLane);
 	scheduleUpdateOnFiber(root, hostRootFiber, SyncLane);
 
 	return root;

@@ -28,7 +28,7 @@ export {
 	NoFlags,
 	PerformedWork,
 	Placement,
-	Update as UpdateFlag,
+	UpdateEffect as UpdateFlag,
 	ChildDeletion,
 	ContentReset,
 	Callback,
@@ -358,14 +358,8 @@ export {
 	isUpdateQueue,
 	assertUpdateQueue,
 	// Branded type helpers
-	mergeLanesUnsafe,
-	intersectLanesUnsafe,
-	removeLanesUnsafe,
 	lanesIncludeLane,
 	isLanesEmpty,
-	flagsInclude,
-	mergeFlags,
-	isFlagsEmpty,
 	// DOM type guards
 	isElement,
 	isTextNode,

@@ -126,10 +126,10 @@ describe("JSX Fragment Support", () => {
 		render(fragmentElement, container);
 
 		expect(container.children.length).toBe(2);
-		expect(container.children[0]!.tagName).toBe("SPAN");
-		expect(container.children[0]!.textContent).toBe("Hello");
-		expect(container.children[1]!.tagName).toBe("SPAN");
-		expect(container.children[1]!.textContent).toBe("World");
+		expect(container.children[0]?.tagName).toBe("SPAN");
+		expect(container.children[0]?.textContent).toBe("Hello");
+		expect(container.children[1]?.tagName).toBe("SPAN");
+		expect(container.children[1]?.textContent).toBe("World");
 	});
 
 	test("Fragment with single child", () => {
@@ -140,8 +140,8 @@ describe("JSX Fragment Support", () => {
 		render(fragmentElement, container);
 
 		expect(container.children.length).toBe(1);
-		expect(container.children[0]!.tagName).toBe("DIV");
-		expect(container.children[0]!.textContent).toBe("Single child");
+		expect(container.children[0]?.tagName).toBe("DIV");
+		expect(container.children[0]?.textContent).toBe("Single child");
 	});
 
 	test("Fragment with no children", () => {
@@ -161,9 +161,9 @@ describe("JSX Fragment Support", () => {
 		render(fragmentElement, container);
 
 		expect(container.childNodes.length).toBe(3);
-		expect(container.childNodes[0]!.textContent).toBe("Text node");
-		expect(container.childNodes[1]!.textContent).toBe("Element");
-		expect(container.childNodes[2]!.textContent).toBe("42");
+		expect(container.childNodes[0]?.textContent).toBe("Text node");
+		expect(container.childNodes[1]?.textContent).toBe("Element");
+		expect(container.childNodes[2]?.textContent).toBe("42");
 	});
 });
 
@@ -178,8 +178,8 @@ describe("JSX with Functional Components", () => {
 		render(element, container);
 
 		expect(container.children.length).toBe(1);
-		expect(container.children[0]!.tagName).toBe("H1");
-		expect(container.children[0]!.textContent).toBe("Hello, JSX!");
+		expect(container.children[0]?.tagName).toBe("H1");
+		expect(container.children[0]?.textContent).toBe("Hello, JSX!");
 	});
 
 	test("jsx() with component children", () => {
@@ -194,8 +194,8 @@ describe("JSX with Functional Components", () => {
 		render(jsx(App, null), container);
 
 		expect(container.children.length).toBe(1);
-		expect(container.children[0]!.tagName).toBe("BUTTON");
-		expect(container.children[0]!.textContent).toBe("Click me");
+		expect(container.children[0]?.tagName).toBe("BUTTON");
+		expect(container.children[0]?.textContent).toBe("Click me");
 	});
 
 	test("jsx() with nested components", () => {
@@ -224,11 +224,11 @@ describe("JSX with Functional Components", () => {
 		const card = container.children[0]! as HTMLElement;
 		expect(card.className).toBe("card");
 		expect(card.children.length).toBe(2);
-		expect(card.children[0]!.tagName).toBe("H2");
-		expect(card.children[0]!.textContent).toBe("My Card");
-		expect(card.children[1]!.className).toBe("content");
-		expect(card.children[1]!.children[0]!.tagName).toBe("P");
-		expect(card.children[1]!.children[0]!.textContent).toBe("Card content");
+		expect(card.children[0]?.tagName).toBe("H2");
+		expect(card.children[0]?.textContent).toBe("My Card");
+		expect(card.children[1]?.className).toBe("content");
+		expect(card.children[1]?.children[0]?.tagName).toBe("P");
+		expect(card.children[1]?.children[0]?.textContent).toBe("Card content");
 	});
 });
 
@@ -284,10 +284,10 @@ describe("JSX with Hooks", () => {
 
 		render(jsx(MultiState, null), container);
 
-		const nameP = container.children[0]!.children[0]! as HTMLElement;
-		const ageP = container.children[0]!.children[1]! as HTMLElement;
-		const nameButton = container.children[0]!.children[2]! as HTMLElement;
-		const ageButton = container.children[0]!.children[3]! as HTMLElement;
+		const nameP = container.children[0]?.children[0]! as HTMLElement;
+		const ageP = container.children[0]?.children[1]! as HTMLElement;
+		const nameButton = container.children[0]?.children[2]! as HTMLElement;
+		const ageButton = container.children[0]?.children[3]! as HTMLElement;
 
 		expect(nameP.textContent).toBe("Name: Anonymous");
 		expect(ageP.textContent).toBe("Age: 0");
@@ -361,7 +361,7 @@ describe("JSX Error Handling", () => {
 		render(element, container);
 
 		expect(container.children.length).toBe(1);
-		expect(container.children[0]!.textContent).toBe("text");
+		expect(container.children[0]?.textContent).toBe("text");
 	});
 
 	test("jsx() handles empty children array", () => {
@@ -370,7 +370,7 @@ describe("JSX Error Handling", () => {
 		render(element, container);
 
 		expect(container.children.length).toBe(1);
-		expect(container.children[0]!.children.length).toBe(0);
+		expect(container.children[0]?.children.length).toBe(0);
 	});
 
 	test("jsx() handles component returning null", () => {
@@ -395,9 +395,9 @@ describe("JSX Performance and Edge Cases", () => {
 		render(element, container);
 
 		expect(container.children.length).toBe(1);
-		expect(container.children[0]!.children.length).toBe(100);
-		expect(container.children[0]!.children[0]!.textContent).toBe("Item 0");
-		expect(container.children[0]!.children[99]!.textContent).toBe("Item 99");
+		expect(container.children[0]?.children.length).toBe(100);
+		expect(container.children[0]?.children[0]?.textContent).toBe("Item 0");
+		expect(container.children[0]?.children[99]?.textContent).toBe("Item 99");
 	});
 
 	test("jsx() maintains referential equality for same inputs", () => {

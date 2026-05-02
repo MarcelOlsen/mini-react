@@ -7,6 +7,7 @@
  * Enables SSR hydration and state persistence.
  */
 
+import { unlanes } from "./bitwise";
 import type { Fiber, FiberRoot } from "./types";
 import { NoFlags, NoLanes, type WorkTag } from "./types";
 
@@ -73,7 +74,7 @@ export function serializeFiberTree(root: FiberRoot): SerializedFiberRoot {
 		version: SERIALIZATION_VERSION,
 		timestamp: Date.now(),
 		root: serializedRoot,
-		pendingLanes: root.pendingLanes as number,
+		pendingLanes: unlanes(root.pendingLanes),
 	};
 }
 

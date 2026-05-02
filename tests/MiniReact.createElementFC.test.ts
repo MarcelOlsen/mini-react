@@ -433,7 +433,7 @@ describe("MiniReact.createElement with Functional Components", () => {
 			"deep-value",
 		);
 		expect(
-			typedProps.deep.level1.level2.level3.level4.level5.array[0]!.nested,
+			typedProps.deep.level1.level2.level3.level4.level5.array[0]?.nested,
 		).toBe("in-array");
 	});
 });

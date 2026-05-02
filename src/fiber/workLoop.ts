@@ -11,10 +11,21 @@ import type { AnyMiniReactElement } from "../core/types";
 import { eventSystem } from "../events/eventSystem";
 import { trackRenderEnd, trackRenderStart } from "../performance";
 import { beginWork } from "./beginWork";
+import { laneHighest, laneIncludes, laneOr, unlanes } from "./bitwise";
 import { commitRoot } from "./commitRoot";
 import { completeWork, unwindInterruptedWork } from "./completeWork";
+import { getNextLanes, markRootFinished } from "./lanes";
+import { Priority, scheduleCallback, shouldYield } from "./scheduler";
 import type { Fiber, FiberRoot, Lane, Lanes } from "./types";
-import { NoFlags, NoLanes, SyncLane, WorkTag, createLanes } from "./types";
+import {
+	DefaultLane,
+	InputContinuousLane,
+	NoFlags,
+	NoLane,
+	NoLanes,
+	SyncLane,
+	WorkTag,
+} from "./types";
 import {
 	getWorkInProgress,
 	getWorkInProgressRoot,
@@ -41,164 +52,151 @@ let executionContext = NoContext;
  */
 let workInProgressRootRenderLanes: Lanes = NoLanes;
 
+/**
+ * The root we are currently working on.
+ */
+let workInProgressRoot: FiberRoot | null = null;
+
 // ============================================
 // Root Entry Points
 // ============================================
 
-/**
- * Schedules an update on the root.
- * This is the main entry point for triggering a re-render.
- */
 export function scheduleUpdateOnFiber(
 	root: FiberRoot,
 	fiber: Fiber,
 	lane: Lane,
 ): void {
-	// Mark the fiber as having pending work
 	markUpdateLaneFromFiberToRoot(fiber, lane);
-
-	// Schedule the work
 	ensureRootIsScheduled(root);
 }
 
-/**
- * Marks update lanes from a fiber up to the root.
- * Handles the case where the fiber might be an alternate.
- */
-function markUpdateLaneFromFiberToRoot(fiber: Fiber, lane: Lane): void {
-	// Mark this fiber with the lane
-	fiber.lanes = createLanes((fiber.lanes as number) | (lane as number));
-
-	// Also mark the alternate if it exists (for double-buffering)
-	if (fiber.alternate !== null) {
-		fiber.alternate.lanes = createLanes(
-			(fiber.alternate.lanes as number) | (lane as number),
-		);
-	}
-
-	// Walk up and mark parent childLanes
-	let node = fiber;
-	let parent = fiber.return;
-	while (parent !== null) {
-		parent.childLanes = createLanes(
-			(parent.childLanes as number) | (lane as number),
-		);
-		// Also mark the alternate parent's childLanes
-		if (parent.alternate !== null) {
-			parent.alternate.childLanes = createLanes(
-				(parent.alternate.childLanes as number) | (lane as number),
-			);
-		}
-		node = parent;
-		parent = parent.return;
-	}
-
-	// node is now the host root fiber - mark the FiberRoot's pendingLanes
-	if (node.tag === WorkTag.HostRoot && node.stateNode !== null) {
-		const root = node.stateNode as FiberRoot;
-		root.pendingLanes = createLanes(
-			(root.pendingLanes as number) | (lane as number),
-		);
-	}
-}
-
-/**
- * Ensures the root has work scheduled.
- */
 function ensureRootIsScheduled(root: FiberRoot): void {
-	// Check if we already have scheduled work
-	const existingCallbackNode = root.callbackNode;
-	const nextLanes = getNextLanes(root);
+	const nextLanes = getNextLanes(root, NoLanes);
 
 	if (nextLanes === NoLanes) {
-		// No work to do
-		if (existingCallbackNode !== null) {
-			root.callbackNode = null;
-			root.callbackPriority = 0 as Lane;
-		}
+		root.callbackNode = null;
+		root.callbackPriority = NoLane;
 		return;
 	}
 
-	// For now, always use sync rendering
-	performSyncWorkOnRoot(root);
-}
+	const newCallbackPriority = laneHighest(nextLanes);
 
-/**
- * Gets the next lanes to work on.
- */
-function getNextLanes(root: FiberRoot): Lanes {
-	const pendingLanes = root.pendingLanes;
-
-	if (pendingLanes === NoLanes) {
-		return NoLanes;
+	if (
+		root.callbackNode !== null &&
+		root.callbackPriority === newCallbackPriority
+	) {
+		return;
 	}
 
-	// For now, just return all pending lanes
-	return pendingLanes;
+	root.callbackNode = null;
+
+	if (newCallbackPriority === SyncLane) {
+		performSyncWorkOnRoot(root);
+		return;
+	}
+
+	const schedulerPriority: Priority =
+		newCallbackPriority <= InputContinuousLane
+			? Priority.UserBlockingPriority
+			: newCallbackPriority <= DefaultLane
+				? Priority.NormalPriority
+				: Priority.IdlePriority;
+
+	root.callbackPriority = newCallbackPriority;
+	root.callbackNode = scheduleCallback(
+		schedulerPriority,
+		performConcurrentWorkOnRoot.bind(null, root),
+	);
 }
 
-// ============================================
-// Sync Work
-// ============================================
-
-/**
- * Performs synchronous work on a root.
- * This is the main entry point for sync rendering.
- */
 export function performSyncWorkOnRoot(root: FiberRoot): void {
-	const lanes = getNextLanes(root);
+	const lanes = getNextLanes(root, NoLanes);
+	if (lanes === NoLanes) return;
 
-	if (lanes === NoLanes) {
-		return;
-	}
-
-	// Track render performance
 	trackRenderStart();
-
-	// Render phase
 	renderRootSync(root, lanes);
 
-	// Commit phase
-	const finishedWork = root.current.alternate;
-	root.finishedWork = finishedWork;
+	root.finishedWork = root.current.alternate;
 	root.finishedLanes = lanes;
-
 	commitRoot(root);
+	markRootFinished(root, lanes);
 
 	trackRenderEnd();
 }
 
-/**
- * Renders the root synchronously.
- */
-function renderRootSync(root: FiberRoot, lanes: Lanes): number {
+export function performConcurrentWorkOnRoot(
+	root: FiberRoot,
+	didTimeout: boolean,
+): boolean {
+	const lanes = getNextLanes(
+		root,
+		workInProgressRoot === root ? workInProgressRootRenderLanes : NoLanes,
+	);
+
+	if (lanes === NoLanes) return false;
+
+	if (includesBlockingLane(lanes) || didTimeout) {
+		performSyncWorkOnRoot(root);
+		return false;
+	}
+
+	// Normal concurrent path
+	const result = renderRootConcurrent(root, lanes);
+
+	if (result === null) {
+		// Root finished rendering normally
+		const finishedWork = root.current.alternate;
+		if (finishedWork !== null) {
+			root.finishedWork = finishedWork;
+			root.finishedLanes = lanes;
+			commitRoot(root);
+			markRootFinished(root, lanes);
+			// More work may have been scheduled during commit
+			if (root.pendingLanes !== NoLanes) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Root yielded (returned early with a continuation)
+	root.callbackNode = result;
+	return true;
+}
+
+function includesBlockingLane(lanes: Lanes): boolean {
+	return laneIncludes(lanes, SyncLane);
+}
+
+// ============================================
+// Sync render
+// ============================================
+
+function renderRootSync(root: FiberRoot, lanes: Lanes): void {
 	const prevExecutionContext = executionContext;
 	executionContext |= RenderContext;
 
-	// Check if we're resuming work or starting fresh
 	if (
 		getWorkInProgressRoot() !== root ||
 		workInProgressRootRenderLanes !== lanes
 	) {
-		// Start fresh
-		prepareFreshStack(root, lanes as number);
+		prepareFreshStack(root, unlanes(lanes));
+		workInProgressRoot = root;
 		workInProgressRootRenderLanes = lanes;
 	}
 
-	// Run the work loop
-	workLoopSync();
-
-	// Reset context
-	executionContext = prevExecutionContext;
-	setWorkInProgressRoot(null);
-
-	return 0; // Success
+	try {
+		workLoopSync();
+	} catch (thrownValue) {
+		handleError(root, thrownValue);
+	} finally {
+		executionContext = prevExecutionContext;
+		workInProgressRoot = null;
+		workInProgressRootRenderLanes = NoLanes;
+		setWorkInProgressRoot(null);
+	}
 }
 
-/**
- * The synchronous work loop.
- * Processes all work without yielding.
- */
 function workLoopSync(): void {
 	let wip = getWorkInProgress();
 	while (wip !== null) {
@@ -208,86 +206,134 @@ function workLoopSync(): void {
 }
 
 // ============================================
-// Unit of Work
+// Concurrent render
 // ============================================
 
-/**
- * Performs one unit of work.
- * This processes a single fiber and returns the next one to work on.
- */
+function renderRootConcurrent(
+	root: FiberRoot,
+	lanes: Lanes,
+): ((didTimeout: boolean) => boolean) | null {
+	const prevExecutionContext = executionContext;
+	executionContext |= RenderContext;
+
+	if (
+		getWorkInProgressRoot() !== root ||
+		workInProgressRootRenderLanes !== lanes
+	) {
+		prepareFreshStack(root, unlanes(lanes));
+		workInProgressRoot = root;
+		workInProgressRootRenderLanes = lanes;
+	}
+
+	try {
+		let wip = getWorkInProgress();
+		while (wip !== null) {
+			if (shouldYield()) {
+				// Yield to the browser — return a continuation callback
+				setWorkInProgressRoot(root);
+				executionContext = prevExecutionContext;
+				return performConcurrentWorkOnRoot.bind(null, root);
+			}
+			performUnitOfWork(wip);
+			wip = getWorkInProgress();
+		}
+	} catch (thrownValue) {
+		handleError(root, thrownValue);
+	} finally {
+		executionContext = prevExecutionContext;
+		workInProgressRoot = null;
+		workInProgressRootRenderLanes = NoLanes;
+		setWorkInProgressRoot(null);
+	}
+
+	return null;
+}
+
+// ============================================
+// Unit of work
+// ============================================
+
 function performUnitOfWork(unitOfWork: Fiber): void {
 	const current = unitOfWork.alternate;
-
-	// Begin phase: render this component
 	const next = beginWork(current, unitOfWork, workInProgressRootRenderLanes);
-
-	// Memoize props after rendering
 	unitOfWork.memoizedProps = unitOfWork.pendingProps;
 
 	if (next === null) {
-		// No more children, complete this unit of work
 		completeUnitOfWork(unitOfWork);
 	} else {
-		// Continue with the child
 		setWorkInProgress(next);
 	}
 }
 
-/**
- * Completes a unit of work and finds the next sibling/uncle.
- */
 function completeUnitOfWork(unitOfWork: Fiber): void {
 	let completedWork: Fiber | null = unitOfWork;
 
 	while (completedWork !== null) {
 		const current = completedWork.alternate;
-
-		// Complete phase: create DOM nodes, bubble flags
 		const next = completeWork(
 			current,
 			completedWork,
 			workInProgressRootRenderLanes,
 		);
 
-		// If this produced more work, do it
 		if (next !== null) {
 			setWorkInProgress(next);
 			return;
 		}
 
-		// Check for sibling
 		const sibling = completedWork.sibling;
 		if (sibling !== null) {
 			setWorkInProgress(sibling);
 			return;
 		}
 
-		// Move up to parent
 		completedWork = completedWork.return;
 		setWorkInProgress(completedWork);
 	}
 }
 
 // ============================================
-// Render Root API
+// Lane propagation (bitwise helpers)
 // ============================================
 
-/**
- * Creates a fiber root for a container.
- */
+function markUpdateLaneFromFiberToRoot(fiber: Fiber, lane: Lane): void {
+	fiber.lanes = laneOr(fiber.lanes, lane);
+
+	if (fiber.alternate !== null) {
+		fiber.alternate.lanes = laneOr(fiber.alternate.lanes, lane);
+	}
+
+	let node = fiber;
+	let parent = fiber.return;
+	while (parent !== null) {
+		parent.childLanes = laneOr(parent.childLanes, lane);
+		if (parent.alternate !== null) {
+			parent.alternate.childLanes = laneOr(parent.alternate.childLanes, lane);
+		}
+		node = parent;
+		parent = parent.return;
+	}
+
+	if (node.tag === WorkTag.HostRoot && node.stateNode !== null) {
+		const root = node.stateNode as FiberRoot;
+		root.pendingLanes = laneOr(root.pendingLanes, lane);
+	}
+}
+
+// ============================================
+// createRoot / updateContainer
+// ============================================
+
 export function createRoot(containerInfo: Element): FiberRoot {
-	// Initialize event system for this container
 	eventSystem.initialize(containerInfo);
 	eventSystem.enableFiberMode();
 
-	// Create the root fiber
 	const hostRootFiber: Fiber = {
 		tag: WorkTag.HostRoot,
 		key: null,
 		elementType: null,
 		type: null,
-		stateNode: null, // Will be set to root
-		return: null,
+		stateNode: null,
 		child: null,
 		sibling: null,
 		index: 0,
@@ -304,11 +350,11 @@ export function createRoot(containerInfo: Element): FiberRoot {
 		lanes: NoLanes,
 		childLanes: NoLanes,
 		alternate: null,
+		return: null,
 	};
 
-	// Create the FiberRoot
 	const root: FiberRoot = {
-		tag: 0, // LegacyRoot
+		tag: 0, // LegacyRoot,
 		containerInfo,
 		current: hostRootFiber,
 		finishedWork: null,
@@ -319,21 +365,16 @@ export function createRoot(containerInfo: Element): FiberRoot {
 		expiredLanes: NoLanes,
 		finishedLanes: NoLanes,
 		callbackNode: null,
-		callbackPriority: 0 as Lane,
+		callbackPriority: NoLane,
 		expirationTimes: new Map(),
 		isDehydrated: false,
 		mutableSourceEagerHydrationData: null,
 	};
 
-	// Link them
 	hostRootFiber.stateNode = root;
-
 	return root;
 }
 
-/**
- * Updates a root with new children.
- */
 export function updateContainer(
 	element: AnyMiniReactElement | null,
 	root: FiberRoot,
@@ -341,85 +382,43 @@ export function updateContainer(
 	const current = root.current;
 	const lane = SyncLane;
 
-	// Store the element to render
 	root.pendingChildren = element;
-
-	// Mark the root as having pending work
-	root.pendingLanes = createLanes(
-		(root.pendingLanes as number) | (lane as number),
-	);
-
-	// Schedule the update
+	root.pendingLanes = laneOr(root.pendingLanes, lane);
 	scheduleUpdateOnFiber(root, current, lane);
 }
 
 // ============================================
-// Flush Operations
+// Flush / context / error
 // ============================================
 
-/**
- * Flushes all sync work.
- */
 export function flushSync<R>(fn?: () => R): R | undefined {
 	const prevExecutionContext = executionContext;
 	executionContext |= RenderContext;
-
 	try {
-		if (fn) {
-			return fn();
-		}
+		return fn?.();
 	} finally {
 		executionContext = prevExecutionContext;
 	}
 }
 
-/**
- * Flushes all passive effects.
- */
 export function flushPassiveEffectsImpl(): boolean {
-	// This will be implemented with effects
 	return false;
 }
 
-// ============================================
-// Context Helpers
-// ============================================
-
-/**
- * Checks if we're in a render context.
- */
 export function isRendering(): boolean {
-	return (executionContext & RenderContext) !== NoContext;
+	return Boolean(executionContext & RenderContext);
 }
 
-/**
- * Checks if we're in a commit context.
- */
 export function isCommitting(): boolean {
-	return (executionContext & CommitContext) !== NoContext;
+	return Boolean(executionContext & CommitContext);
 }
 
-// ============================================
-// Error Handling
-// ============================================
-
-/**
- * Handles an error during rendering.
- */
-export function handleError(_root: FiberRoot, thrownValue: unknown): void {
-	console.error("Error during render:", thrownValue);
-
-	// Unwind the work
-	const workInProgress = getWorkInProgress();
-	if (workInProgress !== null) {
-		unwindInterruptedWork(
-			workInProgress.alternate,
-			workInProgress,
-			workInProgressRootRenderLanes,
-		);
+export function handleError(_root: FiberRoot, thrownValue: unknown): never {
+	const wip = getWorkInProgress();
+	if (wip !== null) {
+		unwindInterruptedWork(wip.alternate, wip, workInProgressRootRenderLanes);
 	}
-
-	// Reset state
 	setWorkInProgress(null);
 	setWorkInProgressRoot(null);
+	throw thrownValue;
 }

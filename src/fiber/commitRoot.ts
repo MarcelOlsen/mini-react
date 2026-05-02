@@ -14,6 +14,7 @@
  * Passive effects (useEffect) are scheduled asynchronously.
  */
 
+import { flagsIncludes, flagsRemove } from "./bitwise";
 import {
 	commitAttachRef,
 	commitDeletion,
@@ -30,7 +31,7 @@ import {
 	schedulePassiveEffects,
 } from "./effectList";
 import { markRootFinished } from "./lanes";
-import type { Fiber, FiberRoot, Lanes } from "./types";
+import type { Fiber, FiberRoot } from "./types";
 import {
 	ChildDeletion,
 	LayoutMask,
@@ -38,9 +39,9 @@ import {
 	Placement,
 	Ref,
 	Snapshot,
-	Update,
+	UpdateEffect,
 	WorkTag,
-	createFlags,
+	createLanes,
 } from "./types";
 
 // ============================================
@@ -63,7 +64,7 @@ export function commitRoot(root: FiberRoot): void {
 
 	// Clear the finished work
 	root.finishedWork = null;
-	root.finishedLanes = 0 as Lanes;
+	root.finishedLanes = createLanes(0);
 
 	// Check if there are any passive effects in either tree
 	const hasPassiveEffectsInNew = doesFiberHavePassiveEffects(finishedWork);
@@ -117,7 +118,7 @@ function commitBeforeMutationEffectsOnFiber(fiber: Fiber): void {
 	const flags = fiber.flags;
 
 	// Process snapshot effects
-	if ((flags as number) & (Snapshot as number)) {
+	if (flagsIncludes(flags, Snapshot)) {
 		switch (fiber.tag) {
 			case WorkTag.FunctionComponent:
 				// Function components don't have getSnapshotBeforeUpdate
@@ -162,7 +163,7 @@ function commitMutationEffectsOnFiber(root: FiberRoot, fiber: Fiber): void {
 	const flags = fiber.flags;
 
 	// Handle deletions first
-	if ((flags as number) & (ChildDeletion as number)) {
+	if (flagsIncludes(flags, ChildDeletion)) {
 		const deletions = fiber.deletions;
 		if (deletions !== null) {
 			for (const childToDelete of deletions) {
@@ -177,9 +178,9 @@ function commitMutationEffectsOnFiber(root: FiberRoot, fiber: Fiber): void {
 	}
 
 	// Process this fiber's mutations
-	if ((flags as number) & (MutationMask as number)) {
+	if (flagsIncludes(flags, MutationMask)) {
 		// Detach ref before mutations
-		if ((flags as number) & (Ref as number)) {
+		if (flagsIncludes(flags, Ref)) {
 			const current = fiber.alternate;
 			if (current !== null) {
 				commitDetachRef(current);
@@ -187,16 +188,14 @@ function commitMutationEffectsOnFiber(root: FiberRoot, fiber: Fiber): void {
 		}
 
 		// Handle placement
-		if ((flags as number) & (Placement as number)) {
+		if (flagsIncludes(flags, Placement)) {
 			commitPlacement(fiber);
 			// Clear the placement flag
-			fiber.flags = createFlags(
-				(fiber.flags as number) & ~(Placement as number),
-			);
+			fiber.flags = flagsRemove(fiber.flags, Placement);
 		}
 
 		// Handle update
-		if ((flags as number) & (Update as number)) {
+		if (flagsIncludes(flags, UpdateEffect)) {
 			commitUpdate(fiber);
 		}
 	}
@@ -233,14 +232,14 @@ function commitLayoutEffectsOnFiber(root: FiberRoot, fiber: Fiber): void {
 	}
 
 	// Process this fiber's layout effects
-	if ((flags as number) & (LayoutMask as number)) {
+	if (flagsIncludes(flags, LayoutMask)) {
 		// Run layout effects for function components
 		if (fiber.tag === WorkTag.FunctionComponent) {
 			commitLayoutEffectOnFunctionComponent(fiber);
 		}
 
 		// Attach ref after DOM is ready
-		if ((flags as number) & (Ref as number)) {
+		if (flagsIncludes(flags, Ref)) {
 			commitAttachRef(fiber);
 		}
 	}

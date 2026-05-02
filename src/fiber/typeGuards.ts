@@ -338,7 +338,7 @@ export function isTextProps(props: unknown): props is TextProps {
 	if (props === null || typeof props !== "object") {
 		return false;
 	}
-	const nv = (props as Record<string, unknown>).nodeValue;
+	const nv = (props as Record<string, unknown>)["nodeValue"];
 	return typeof nv === "string" || typeof nv === "number";
 }
 
@@ -433,69 +433,34 @@ export function isUpdateQueue<S>(value: unknown): value is UpdateQueue<S> {
  * Asserts update queue is not null and returns it.
  * @throws Error if updateQueue is null
  */
-export function assertUpdateQueue<S>(hook: Hook): UpdateQueue<S> {
-	if (!isUpdateQueue<S>(hook.queue)) {
+export function assertUpdateQueue<S>(hook: unknown): UpdateQueue<S> {
+	if (!isUpdateQueue<S>(hook)) {
 		throw new Error("Hook queue is not a valid UpdateQueue");
 	}
-	return hook.queue;
+	return hook;
 }
 
 // ============================================
-// Branded Type Helpers
+// Branded Type Helpers — delegate to bitwise.ts
 // ============================================
 
-/**
- * Performs bitwise OR on branded Lane/Lanes types, returning a merged Lanes bitmask.
- */
-export function mergeLanes(a: Lanes | Lane, b: Lanes | Lane): Lanes {
-	return ((a as number) | (b as number)) as Lanes;
-}
+import { flagsIncludes, flagsOr, laneIncludes } from "./bitwise";
 
-/**
- * Performs bitwise AND on branded Lanes types, returning the intersection.
- */
-export function intersectLanes(a: Lanes, b: Lanes): Lanes {
-	return ((a as number) & (b as number)) as Lanes;
-}
+/** Checks if lanes include a specific lane. */
+export const lanesIncludeLane = laneIncludes;
 
-/**
- * Performs bitwise AND NOT on branded Lanes types, removing subset from set.
- */
-export function removeLanes(set: Lanes, subset: Lanes | Lane): Lanes {
-	return ((set as number) & ~(subset as number)) as Lanes;
-}
-
-/**
- * Checks if lanes include a specific lane.
- */
-export function lanesIncludeLane(lanes: Lanes, lane: Lane): boolean {
-	return ((lanes as number) & (lane as number)) !== 0;
-}
-
-/**
- * Checks if lanes are empty.
- */
-export function isLanesEmpty(lanes: Lanes): boolean {
+/** Checks if lanes are empty. */
+export function isLanesEmpty(lanes: Lanes | Lane): boolean {
 	return lanes === NoLanes;
 }
 
-/**
- * Checks if flags include a specific flag.
- */
-export function flagsInclude(flags: Flags, flag: Flags): boolean {
-	return ((flags as number) & (flag as number)) !== 0;
-}
+/** Checks if flags include a specific flag. */
+export const flagsInclude = flagsIncludes;
 
-/**
- * Merges flags.
- */
-export function mergeFlags(a: Flags, b: Flags): Flags {
-	return ((a as number) | (b as number)) as Flags;
-}
+/** Merges flags. */
+export const mergeFlags = flagsOr;
 
-/**
- * Checks if flags are empty.
- */
+/** Checks if flags are empty. */
 export function isFlagsEmpty(flags: Flags): boolean {
 	return flags === NoFlags;
 }
@@ -507,7 +472,8 @@ export function isFlagsEmpty(flags: Flags): boolean {
 /**
  * Type guard for Element.
  */
-export function isElement(node: Node): node is Element {
+export function isElement(node: Node | null): node is Element {
+	if (node === null) return false;
 	return typeof Node !== "undefined" && node.nodeType === Node.ELEMENT_NODE;
 }
 

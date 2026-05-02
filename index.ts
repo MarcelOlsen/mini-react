@@ -7,6 +7,8 @@ export {
 	useReducer,
 	useRef,
 	useContext,
+	useMemo,
+	useCallback,
 	createContext,
 	createPortal,
 	Fragment,

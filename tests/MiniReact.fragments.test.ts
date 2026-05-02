@@ -181,13 +181,13 @@ describe("MiniReact Fragment Tests", () => {
 			const button = container.querySelector("button");
 			const spans = container.querySelectorAll("span");
 
-			expect(spans[0]!.textContent).toBe("Count: ");
-			expect(spans[1]!.textContent).toBe("0");
+			expect(spans[0]?.textContent).toBe("Count: ");
+			expect(spans[1]?.textContent).toBe("0");
 
 			// Simulate click
 			button?.click();
 
-			expect(spans[1]!.textContent).toBe("1");
+			expect(spans[1]?.textContent).toBe("1");
 		});
 	});
 

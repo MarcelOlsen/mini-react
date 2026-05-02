@@ -15,6 +15,7 @@ import {
 	TEXT_ELEMENT,
 } from "../core/types";
 import type { PortalElement } from "../portals/types";
+import { flagsOr } from "./bitwise";
 import {
 	createFiberFromElement,
 	createFiberFromText,
@@ -27,7 +28,6 @@ import {
 	NoFlags,
 	Placement,
 	WorkTag,
-	createFlags,
 } from "./types";
 
 // ============================================
@@ -51,9 +51,7 @@ export function createChildReconciler(shouldTrackSideEffects: boolean) {
 		const deletions = returnFiber.deletions;
 		if (deletions === null) {
 			returnFiber.deletions = [childToDelete];
-			returnFiber.flags = createFlags(
-				(returnFiber.flags as number) | (ChildDeletion as number),
-			);
+			returnFiber.flags = flagsOr(returnFiber.flags, ChildDeletion);
 		} else {
 			deletions.push(childToDelete);
 		}
@@ -182,9 +180,7 @@ export function createChildReconciler(shouldTrackSideEffects: boolean) {
 
 		if (!shouldTrackSideEffects) {
 			// During initial mount, we don't need to track placements
-			newFiber.flags = createFlags(
-				(newFiber.flags as number) | (Placement as number),
-			);
+			newFiber.flags = flagsOr(newFiber.flags, Placement);
 			return lastPlacedIndex;
 		}
 
@@ -193,18 +189,14 @@ export function createChildReconciler(shouldTrackSideEffects: boolean) {
 			const oldIndex = current.index;
 			if (oldIndex < lastPlacedIndex) {
 				// This is a move - the item moved right
-				newFiber.flags = createFlags(
-					(newFiber.flags as number) | (Placement as number),
-				);
+				newFiber.flags = flagsOr(newFiber.flags, Placement);
 				return lastPlacedIndex;
 			}
 			// This item stayed in place
 			return oldIndex;
 		}
 		// This is an insertion
-		newFiber.flags = createFlags(
-			(newFiber.flags as number) | (Placement as number),
-		);
+		newFiber.flags = flagsOr(newFiber.flags, Placement);
 		return lastPlacedIndex;
 	}
 
@@ -213,9 +205,7 @@ export function createChildReconciler(shouldTrackSideEffects: boolean) {
 	 */
 	function placeSingleChild(newFiber: Fiber): Fiber {
 		if (shouldTrackSideEffects && newFiber.alternate === null) {
-			newFiber.flags = createFlags(
-				(newFiber.flags as number) | (Placement as number),
-			);
+			newFiber.flags = flagsOr(newFiber.flags, Placement);
 		}
 		return newFiber;
 	}

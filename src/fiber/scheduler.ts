@@ -1,23 +1,21 @@
 /* **************** */
-/* Fiber Scheduler - Time Slicing */
+/* Fiber Scheduler - Time Slicing               */
 /* **************** */
 
 /**
  * Implements time-sliced rendering with interruptibility.
- * Uses MessageChannel for scheduling and performance.now() for timing.
+ * Uses MessageChannel for scheduling, performance.now() for timing,
+ * and a binary min-heap for the task queue.
  */
 
+import { peek, pop, push } from "./minHeap";
 import type { Lane, Lanes } from "./types";
 import { DefaultLane, IdleLane, SyncLane, createLane } from "./types";
 
-// ============================================
-// Priority Levels
-// ============================================
+/* ============================================ */
+/* Priority levels                              */
+/* ============================================ */
 
-/**
- * Priority levels for scheduling.
- * Using const object pattern.
- */
 export const Priority = {
 	ImmediatePriority: 1,
 	UserBlockingPriority: 2,
@@ -28,70 +26,36 @@ export const Priority = {
 
 export type Priority = (typeof Priority)[keyof typeof Priority];
 
-// ============================================
-// Scheduler Configuration
-// ============================================
+/* ============================================ */
+/* Configuration                                */
+/* ============================================ */
 
-/**
- * Frame yield interval in milliseconds.
- * React uses ~5ms to leave time for browser painting at 60fps.
- */
 const FRAME_YIELD_INTERVAL = 5;
-
-/**
- * Maximum time to yield for idle work.
- */
 const IDLE_YIELD_INTERVAL = 50;
 
-// ============================================
-// Scheduler State
-// ============================================
-
-/**
- * Current deadline for yielding.
- */
-let deadline = 0;
-
-/**
- * Whether there's pending work scheduled.
- */
-let isMessageLoopRunning = false;
-
-/**
- * The callback to execute during the message loop.
- */
-let scheduledCallback:
-	| ((hasTimeRemaining: boolean, currentTime: number) => boolean)
-	| null = null;
-
-/**
- * MessageChannel for scheduling.
- */
-let channel: MessageChannel | null = null;
-
-/**
- * Current priority level.
- */
-let currentPriorityLevel: Priority = Priority.NormalPriority;
-
-/**
- * Maps priority to timeout in milliseconds.
- */
 const PRIORITY_TIMEOUT: Record<Priority, number> = {
-	[Priority.ImmediatePriority]: -1, // Sync
+	[Priority.ImmediatePriority]: -1,
 	[Priority.UserBlockingPriority]: 250,
 	[Priority.NormalPriority]: 5000,
 	[Priority.LowPriority]: 10000,
-	[Priority.IdlePriority]: 1073741823, // Max int32 (never expires)
+	[Priority.IdlePriority]: 1073741823,
 };
 
-// ============================================
-// Time Functions
-// ============================================
+/* ============================================ */
+/* State                                        */
+/* ============================================ */
 
-/**
- * Gets the current time.
- */
+let deadline = 0;
+let isMessageLoopRunning = false;
+
+let channel: MessageChannel | null = null;
+
+let currentPriorityLevel: Priority = Priority.NormalPriority;
+
+/* ============================================ */
+/* Time                                         */
+/* ============================================ */
+
 export function getCurrentTime(): number {
 	if (
 		typeof performance !== "undefined" &&
@@ -102,90 +66,73 @@ export function getCurrentTime(): number {
 	return Date.now();
 }
 
-/**
- * Checks if we should yield to the browser.
- */
 export function shouldYield(): boolean {
-	const currentTime = getCurrentTime();
-	return currentTime >= deadline;
+	return getCurrentTime() >= deadline;
 }
 
-/**
- * Checks if we should yield for a specific priority.
- */
 export function shouldYieldForPriority(priority: Priority): boolean {
-	if (priority <= Priority.ImmediatePriority) {
-		return false; // Never yield for immediate priority
-	}
+	if (priority <= Priority.ImmediatePriority) return false;
 	return shouldYield();
 }
 
-/**
- * Calculates the deadline based on priority.
- */
 function calculateDeadline(priority: Priority): number {
-	const currentTime = getCurrentTime();
-	const timeout =
-		priority === Priority.IdlePriority
+	const now = getCurrentTime();
+	return (
+		now +
+		(priority === Priority.IdlePriority
 			? IDLE_YIELD_INTERVAL
-			: FRAME_YIELD_INTERVAL;
-	return currentTime + timeout;
+			: FRAME_YIELD_INTERVAL)
+	);
 }
 
-// ============================================
-// Task Scheduling
-// ============================================
+/* ============================================ */
+/* Task type                                    */
+/* ============================================ */
 
-/**
- * Task node for the scheduler queue.
- */
+export type Continuation = (
+	hasTimeRemaining: boolean,
+	currentTime: number,
+) => Continuation | boolean | null;
+
 type Task = {
 	id: number;
-	callback:
-		| ((hasTimeRemaining: boolean, currentTime: number) => boolean | null)
-		| null;
+	callback: Continuation | null;
 	priorityLevel: Priority;
 	startTime: number;
 	expirationTime: number;
 	sortIndex: number;
 };
 
-/**
- * Task ID counter.
- */
 let taskIdCounter = 0;
 
-/**
- * Task queue (min-heap by sortIndex).
- */
+/* ============================================ */
+/* Min-heap task queue                          */
+/* ============================================ */
+
 const taskQueue: Task[] = [];
 
 /**
- * Schedules a callback with the given priority.
+ * Insert a task into the scheduler queue and start the message loop
+ * if it is not already running.
  */
 export function scheduleCallback(
 	priorityLevel: Priority,
 	callback: (hasTimeRemaining: boolean, currentTime: number) => boolean | null,
 ): Task {
-	const currentTime = getCurrentTime();
-	const startTime = currentTime;
-	const timeout = PRIORITY_TIMEOUT[priorityLevel];
-	const expirationTime = startTime + timeout;
+	const now = getCurrentTime();
+	const expirationTime = now + PRIORITY_TIMEOUT[priorityLevel];
 
 	const task: Task = {
 		id: taskIdCounter++,
 		callback,
 		priorityLevel,
-		startTime,
+		startTime: now,
 		expirationTime,
 		sortIndex: expirationTime,
 	};
 
-	// Add to queue (simple push, should use heap for real implementation)
-	taskQueue.push(task);
-	taskQueue.sort((a, b) => a.sortIndex - b.sortIndex);
+	push(taskQueue, task);
 
-	// Start the message loop if not already running
 	if (!isMessageLoopRunning) {
 		isMessageLoopRunning = true;
 		schedulePerformWorkUntilDeadline();
@@ -194,31 +141,20 @@ export function scheduleCallback(
 	return task;
 }
 
-/**
- * Cancels a scheduled task.
- */
 export function cancelCallback(task: Task): void {
-	// Mark the callback as null to cancel
 	task.callback = null;
 }
 
-/**
- * Gets the current priority level.
- */
 export function getCurrentPriorityLevel(): Priority {
 	return currentPriorityLevel;
 }
 
-/**
- * Runs a callback with a specific priority.
- */
 export function runWithPriority<T>(
 	priorityLevel: Priority,
 	callback: () => T,
 ): T {
 	const previousPriorityLevel = currentPriorityLevel;
 	currentPriorityLevel = priorityLevel;
-
 	try {
 		return callback();
 	} finally {
@@ -226,13 +162,10 @@ export function runWithPriority<T>(
 	}
 }
 
-// ============================================
-// Message Loop
-// ============================================
+/* ============================================ */
+/* Message loop                                 */
+/* ============================================ */
 
-/**
- * Schedules the performWorkUntilDeadline function.
- */
 function schedulePerformWorkUntilDeadline(): void {
 	if (typeof MessageChannel !== "undefined") {
 		if (channel === null) {
@@ -241,82 +174,46 @@ function schedulePerformWorkUntilDeadline(): void {
 		}
 		channel.port2.postMessage(null);
 	} else {
-		// Fallback to setTimeout
 		setTimeout(performWorkUntilDeadline, 0);
 	}
 }
 
-/**
- * Performs work until the deadline.
- */
 function performWorkUntilDeadline(): void {
-	if (scheduledCallback !== null) {
-		const currentTime = getCurrentTime();
-		deadline = currentTime + FRAME_YIELD_INTERVAL;
-
-		const hasTimeRemaining = true;
-		let hasMoreWork = true;
-
-		try {
-			hasMoreWork = scheduledCallback(hasTimeRemaining, currentTime);
-		} finally {
-			if (hasMoreWork) {
-				schedulePerformWorkUntilDeadline();
-			} else {
-				isMessageLoopRunning = false;
-				scheduledCallback = null;
-			}
-		}
-	} else {
-		isMessageLoopRunning = false;
-	}
-
-	// Process the task queue
+	isMessageLoopRunning = false;
 	processTaskQueue();
 }
 
-/**
- * Processes tasks from the queue.
- */
 function processTaskQueue(): void {
-	const currentTime = getCurrentTime();
+	const now = getCurrentTime();
 
-	while (taskQueue.length > 0) {
-		const task = taskQueue[0]!;
+	while (true) {
+		const task = peek(taskQueue);
+		if (!task) break;
 
+		// Stale / cancelled → drop and keep going
 		if (task.callback === null) {
-			// Task was cancelled
-			taskQueue.shift();
+			pop(taskQueue);
 			continue;
 		}
 
-		if (task.startTime > currentTime) {
-			// Task is delayed, stop processing
-			break;
-		}
+		// Delayed task → stop (min-heap guarantees nothing else is ready)
+		if (task.startTime > now) break;
 
-		// Calculate deadline for this task
+		// Work on the task
 		deadline = calculateDeadline(task.priorityLevel);
-
-		const callback = task.callback;
 		currentPriorityLevel = task.priorityLevel;
+		const continuation = task.callback(true, now);
 
-		const continuationCallback = callback(true, currentTime);
-
-		if (typeof continuationCallback === "function") {
-			// Task yielded and wants to continue
-			task.callback = continuationCallback as (
-				hasTimeRemaining: boolean,
-				currentTime: number,
-			) => boolean | null;
+		if (typeof continuation === "function") {
+			// Task yielded — keep in queue with updated callback
+			task.callback = continuation as typeof task.callback;
 		} else {
-			// Task completed
-			taskQueue.shift();
+			// Task finished — remove from heap
+			pop(taskQueue);
 		}
 
-		// Check if we should yield
-		if (shouldYield() && taskQueue.length > 0) {
-			// More work to do but we should yield
+		if (shouldYield() && peek(taskQueue) !== undefined) {
+			// More work but we should yield to the browser
 			if (!isMessageLoopRunning) {
 				isMessageLoopRunning = true;
 				schedulePerformWorkUntilDeadline();
@@ -328,35 +225,20 @@ function processTaskQueue(): void {
 	currentPriorityLevel = Priority.NormalPriority;
 }
 
-// ============================================
-// Lane to Priority Mapping
-// ============================================
+/* ============================================ */
+/* Lane mapping                                 */
+/* ============================================ */
 
-/**
- * Converts a lane to a scheduler priority.
- */
-export function lanesToSchedulerPriority(lanes: Lanes): Priority {
-	// Get the highest priority lane
+export function lanesToSchedulerPriority(lanes: Lanes | Lane): Priority {
 	const lane = getHighestPriorityLane(lanes);
+	if (lane === SyncLane) return Priority.ImmediatePriority;
 
-	if (lane === SyncLane) {
-		return Priority.ImmediatePriority;
-	}
-
-	if ((lane as number) <= (DefaultLane as number)) {
-		return Priority.UserBlockingPriority;
-	}
-
-	if ((lane as number) <= (IdleLane as number)) {
-		return Priority.NormalPriority;
-	}
-
+	const n = unlane(lane);
+	if (n <= unlane(DefaultLane)) return Priority.UserBlockingPriority;
+	if (n <= unlane(IdleLane)) return Priority.NormalPriority;
 	return Priority.IdlePriority;
 }
 
-/**
- * Converts a scheduler priority to a lane.
- */
 export function schedulerPriorityToLane(priority: Priority): Lane {
 	switch (priority) {
 		case Priority.ImmediatePriority:
@@ -374,59 +256,36 @@ export function schedulerPriorityToLane(priority: Priority): Lane {
 	}
 }
 
-/**
- * Gets the highest priority lane from a lanes bitmask.
- */
 function getHighestPriorityLane(lanes: Lanes): Lane {
-	// Get the rightmost bit (highest priority)
-	return createLane((lanes as number) & -(lanes as number));
+	return createLane(unlanes(lanes) & -unlanes(lanes));
 }
 
-// ============================================
-// Concurrent Work Loop
-// ============================================
+/* ============================================ */
+/* Concurrent flags                             */
+/* ============================================ */
 
-/**
- * Flag indicating if we're working concurrently.
- */
 let workInProgressIsConcurrent = false;
 
-/**
- * Sets the concurrent mode flag.
- */
 export function setWorkInProgressConcurrent(isConcurrent: boolean): void {
 	workInProgressIsConcurrent = isConcurrent;
 }
 
-/**
- * Checks if we're in concurrent mode.
- */
 export function isWorkInProgressConcurrent(): boolean {
 	return workInProgressIsConcurrent;
 }
 
-/**
- * Requests the current event time.
- */
 export function requestEventTime(): number {
 	return getCurrentTime();
 }
 
-/**
- * Requests a lane for an update.
- */
 export function requestUpdateLane(): Lane {
-	// For now, always use sync lane
 	return SyncLane;
 }
 
-// ============================================
-// Idle Scheduling
-// ============================================
+/* ============================================ */
+/* Idle scheduling                                */
+/* ============================================ */
 
-/**
- * Schedules work to run during idle time.
- */
 export function scheduleIdleCallback(
 	callback: (deadline: {
 		didTimeout: boolean;
@@ -436,21 +295,18 @@ export function scheduleIdleCallback(
 	if (typeof requestIdleCallback !== "undefined") {
 		return requestIdleCallback(callback);
 	}
-
-	// Fallback implementation
 	const start = getCurrentTime();
-	return setTimeout(() => {
-		callback({
-			didTimeout: false,
-			timeRemaining: () =>
-				Math.max(0, IDLE_YIELD_INTERVAL - (getCurrentTime() - start)),
-		});
-	}, 0) as unknown as number;
+	return setTimeout(
+		() =>
+			callback({
+				didTimeout: false,
+				timeRemaining: () =>
+					Math.max(0, IDLE_YIELD_INTERVAL - (getCurrentTime() - start)),
+			}),
+		0,
+	) as unknown as number;
 }
 
-/**
- * Cancels an idle callback.
- */
 export function cancelIdleCallback(id: number): void {
 	if (
 		typeof window !== "undefined" &&
@@ -462,31 +318,27 @@ export function cancelIdleCallback(id: number): void {
 	}
 }
 
-// ============================================
-// Force Flush
-// ============================================
+/* ============================================ */
+/* Force flush                                  */
+/* ============================================ */
 
-/**
- * Forces all pending work to flush synchronously.
- */
 export function flushWork(): boolean {
 	const previousPriorityLevel = currentPriorityLevel;
 	currentPriorityLevel = Priority.ImmediatePriority;
 
 	try {
 		while (taskQueue.length > 0) {
-			const task = taskQueue[0]!;
-
-			if (task.callback === null) {
-				taskQueue.shift();
+			const task = peek(taskQueue);
+			if (!task || task.callback === null) {
+				if (task) pop(taskQueue);
 				continue;
 			}
 
-			const callback = task.callback;
-			const result = callback(true, getCurrentTime());
-
+			const result = task.callback(true, getCurrentTime());
 			if (typeof result !== "function") {
-				taskQueue.shift();
+				pop(taskQueue);
+			} else {
+				task.callback = result as typeof task.callback;
 			}
 		}
 		return true;
@@ -494,3 +346,10 @@ export function flushWork(): boolean {
 		currentPriorityLevel = previousPriorityLevel;
 	}
 }
+
+/* ============================================ */
+/* Bitwise helpers (single source of truth)       */
+/* ============================================ */
+
+const unlane = (lane: Lane): number => lane as unknown as number;
+const unlanes = (lanes: Lanes): number => lanes as unknown as number;

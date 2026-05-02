@@ -39,33 +39,21 @@ export type WorkTag = (typeof WorkTag)[keyof typeof WorkTag];
 // Branded Types - Type-safe numeric identifiers
 // ============================================
 
-/**
- * Lane represents a single priority level.
- * Branded type prevents mixing with regular numbers.
- */
+/** Branded type for lane bitmask (single lane or multiple lanes) */
 declare const LaneBrand: unique symbol;
 export type Lane = number & { readonly [LaneBrand]: typeof LaneBrand };
+export type Lanes = Lane;
 
-/**
- * Lanes represents a bitmask of multiple lanes.
- * Can contain multiple Lane values OR'd together.
- */
-declare const LanesBrand: unique symbol;
-export type Lanes = number & { readonly [LanesBrand]: typeof LanesBrand };
-
-/**
- * Flags represent fiber state flags (effects, placement, etc).
- * Branded type for type safety.
- */
+/** Branded type for fiber flags */
 declare const FlagsBrand: unique symbol;
 export type Flags = number & { readonly [FlagsBrand]: typeof FlagsBrand };
 
-// Factory functions for creating branded types
 export const createLane = (value: number): Lane => value as Lane;
 export const createLanes = (value: number): Lanes => value as Lanes;
 export const createFlags = (value: number): Flags => value as Flags;
+
 export const combineFlags = (...flags: Flags[]): Flags =>
-	createFlags(flags.reduce((acc, f) => acc | (f as number), 0));
+	createFlags(flags.reduce((acc, f) => acc | (f as unknown as number), 0));
 
 // ============================================
 // Lane Constants - Priority levels
@@ -143,7 +131,7 @@ export const HookEffectTag = {
 	Insertion: 0b1000, // useInsertionEffect (reserved)
 } as const satisfies Record<string, number>;
 
-export type HookEffectTag = (typeof HookEffectTag)[keyof typeof HookEffectTag];
+export type HookEffectTag = number;
 
 /**
  * Type for effect create callbacks.
