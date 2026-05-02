@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { createElement, render, useEffect, useState } from "../src/MiniReact";
-import type { FunctionalComponent } from "../src/core/types";
+import { createElement, render, useEffect, useState } from "@/MiniReact";
+import type { FunctionalComponent } from "@/core/types";
 
 describe("MiniReact.useEffect Hook", () => {
 	let container: HTMLElement;

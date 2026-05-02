@@ -31,6 +31,12 @@
 				"noUnusedImports": "error",
 				"noUnusedVariables": "error"
 			},
+			"complexity": {
+				"useLiteralKeys": "off"
+			},
+			"style": {
+				"noNonNullAssertion": "error"
+			},
 			"security": {
 				"noGlobalEval": "warn"
 			}
@@ -45,5 +51,20 @@
 		"formatter": {
 			"indentStyle": "tab"
 		}
-	}
+	},
+	"overrides": [
+		{
+			"include": ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noNonNullAssertion": "off"
+					},
+					"suspicious": {
+						"noExplicitAny": "off"
+					}
+				}
+			}
+		}
+	]
 }

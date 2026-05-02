@@ -7,7 +7,7 @@ import {
 	useContext,
 	useEffect,
 	useState,
-} from "../src/MiniReact";
+} from "@/MiniReact";
 
 describe("MiniReact Portal Tests", () => {
 	let container: HTMLElement;

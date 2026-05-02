@@ -19,7 +19,7 @@ export function jsx(
 	const finalProps = { ...restProps };
 
 	if (key !== undefined) {
-		finalProps.key = key;
+		finalProps["key"] = key;
 	}
 
 	// Handle children
@@ -69,7 +69,7 @@ export function jsxDEV(
 
 	// Store development metadata if needed (for future dev tools support)
 	if (source && typeof element === "object" && element !== null) {
-		(element as unknown as Record<string, unknown>).__source = source;
+		(element as unknown as Record<string, unknown>)["__source"] = source;
 	}
 
 	return element;
