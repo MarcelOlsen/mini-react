@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { createElement, render, useMemo, useState } from "../src/MiniReact";
+import { createElement, render, useMemo, useState } from "@/MiniReact";
 
 describe("MiniReact.useMemo Hook", () => {
 	let container: HTMLElement;

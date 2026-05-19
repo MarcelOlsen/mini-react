@@ -3,6 +3,20 @@
 /* **************** */
 
 import type { SyntheticEvent } from "../events/types";
+import type { PortalElement } from "../portals/types";
+
+// Types for hooks (duplicated here to avoid circular dependency)
+export type DependencyList = readonly unknown[] | undefined;
+export type EffectCallback = () => undefined | (() => void);
+export type MutableRefObject<T> = { current: T };
+export type Reducer<S, A> = (state: S, action: A) => S;
+export type StateOrEffectHook<S> = {
+	state: S;
+	setState?: ((action: S | ((prev: S) => S)) => void) | undefined;
+	effect?: EffectCallback | undefined;
+	cleanup?: (() => void) | undefined;
+	deps?: DependencyList;
+};
 
 export type AnyMiniReactElement =
 	| MiniReactElement
@@ -106,6 +120,8 @@ export interface VDOMInstance {
 	rootContainer?: HTMLElement; // Track root container for root-level instances
 }
 
-// Import hook types from hooks module
-import type { StateOrEffectHook } from "../hooks/types";
-import type { PortalElement } from "../portals/types";
+// ******************* //
+// Public Hook Types    //
+// ******************* //
+
+// Re-exported inline above to avoid missing module issue

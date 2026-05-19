@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createElement, render, useState } from "../src/MiniReact";
-import type { FunctionalComponent, SyntheticEvent } from "../src/MiniReact";
+import { createElement, render, useState } from "@/MiniReact";
+import type { FunctionalComponent, SyntheticEvent } from "@/MiniReact";
 
 describe("MiniReact.events", () => {
 	let container: HTMLElement;
