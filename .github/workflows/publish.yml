@@ -43,6 +43,7 @@ jobs:
     permissions:
       contents: write # to create release (changesets/action)
       pull-requests: write # to create pull request (changesets/action)
+      id-token: write # to publish to npm via OIDC trusted publishing
     name: 🚀 Release
     needs: test
     runs-on: ubuntu-latest
@@ -63,11 +64,16 @@ jobs:
       - name: 🏗️ Build package
         run: bun run build
 
+      - name: ⚙️ Setup Node for npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: 🔄 Create Release Pull Request or Publish to NPM
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: bunx changeset publish
+          publish: bunx changeset publish --provenance
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
