@@ -1,6 +1,6 @@
 {
 	"name": "@marcelolsen/mini-react",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "A minimal React implementation with JSX support",
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
