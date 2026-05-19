@@ -4,4 +4,4 @@
 
 // Export development JSX runtime functions
 export { jsxDEV as jsx, jsxDEV as jsxs } from "./jsx-runtime/index";
-export { Fragment } from "./fragments";
+export { FRAGMENT as Fragment } from "./core/types";

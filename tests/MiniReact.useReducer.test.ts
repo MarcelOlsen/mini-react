@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { createElement, render, useReducer } from "../src/MiniReact";
+import { createElement, render, useReducer } from "@/MiniReact";
 
 describe("MiniReact.useReducer Hook", () => {
 	let container: HTMLElement;

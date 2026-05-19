@@ -5,7 +5,7 @@ import {
 	startProfiling,
 	stopProfiling,
 	useState,
-} from "../src/MiniReact";
+} from "@/MiniReact";
 
 describe("MiniReact.Performance Tools", () => {
 	let container: HTMLElement;

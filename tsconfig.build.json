@@ -11,7 +11,10 @@
 		"skipLibCheck": true,
 		"moduleResolution": "node",
 		"allowImportingTsExtensions": false,
-		"verbatimModuleSyntax": false
+		"verbatimModuleSyntax": false,
+		"paths": {
+			"@/*": ["./src/*"]
+		}
 	},
 	"include": ["src/**/*", "index.ts"],
 	"exclude": [

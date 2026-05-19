@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { createElement } from "../src/MiniReact";
-import type { InternalTextElement, MiniReactElement } from "../src/core/types";
-import { TEXT_ELEMENT } from "../src/core/types";
+import { createElement } from "@/MiniReact";
+import type { InternalTextElement, MiniReactElement } from "@/core/types";
+import { TEXT_ELEMENT } from "@/core/types";
 
 describe("MiniReact.createElement with Functional Components", () => {
 	const MyComponent = (
@@ -433,7 +433,7 @@ describe("MiniReact.createElement with Functional Components", () => {
 			"deep-value",
 		);
 		expect(
-			typedProps.deep.level1.level2.level3.level4.level5.array[0].nested,
+			typedProps.deep.level1.level2.level3.level4.level5.array[0]?.nested,
 		).toBe("in-array");
 	});
 });
